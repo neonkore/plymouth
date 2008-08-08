@@ -436,23 +436,6 @@ check_verbosity (state_t *state)
 }
 
 static bool
-set_console_io_to_vt1 (state_t *state)
-{
-  int fd;
-
-  fd = open ("/dev/tty1", O_RDWR | O_APPEND);
-
-  if (fd < 0)
-    return false;
-
-  dup2 (fd, STDIN_FILENO);
-  dup2 (fd, STDOUT_FILENO);
-  dup2 (fd, STDERR_FILENO);
-
-  return true;
-}
-
-static bool
 initialize_environment (state_t *state)
 {
   ply_trace ("initializing minimal work environment");
@@ -461,9 +444,6 @@ initialize_environment (state_t *state)
     return false;
 
   check_verbosity (state);
-
-  if (!set_console_io_to_vt1 (state))
-    return false;
 
   ply_trace ("initialized minimal work environment");
   return true;
