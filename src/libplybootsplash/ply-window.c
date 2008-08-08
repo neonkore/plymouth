@@ -195,6 +195,14 @@ ply_window_restore_color_palette (ply_window_t *window)
   ply_window_change_color_palette (window);
 }
 
+void
+ply_window_reset_colors (ply_window_t *window)
+{
+  assert (window != NULL);
+
+  ply_window_restore_color_palette (window);
+}
+
 static void
 process_backspace (ply_window_t *window)
 {
