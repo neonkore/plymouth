@@ -156,7 +156,11 @@ on_newroot (state_t    *state,
 static void
 on_system_initialized (state_t *state)
 {
-  ply_trace ("system now initialized, opening boot.log");
+  ply_trace ("system now initialized");
+  if (state->session == NULL)
+    return;
+
+  ply_trace ("opening boot log");
   ply_terminal_session_open_log (state->session,
                                  PLYMOUTH_LOG_DIRECTORY "/boot.log");
 }
@@ -199,7 +203,7 @@ on_show_splash (state_t *state)
 
   if (state->window == NULL)
     {
-      state->window = create_window (state, 1);
+      state->window = create_window (state, 0);
       ply_window_take_console (state->window);
     }
 

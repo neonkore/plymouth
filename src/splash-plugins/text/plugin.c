@@ -136,6 +136,7 @@ stop_animation (ply_boot_splash_plugin_t *plugin)
   assert (plugin->loop != NULL);
 
   ply_text_pulser_stop (plugin->pulser);
+  ply_window_reset_colors (plugin->window);
 }
 
 static void
@@ -273,7 +274,6 @@ hide_splash_screen (ply_boot_splash_plugin_t *plugin,
   ply_window_set_background_color (plugin->window, PLY_WINDOW_COLOR_DEFAULT);
   ply_window_clear_screen (plugin->window);
   ply_window_show_text_cursor (plugin->window);
-  ply_window_reset_colors (plugin->window);
 
   plugin->window = NULL;
 }
