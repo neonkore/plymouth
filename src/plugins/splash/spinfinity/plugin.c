@@ -101,6 +101,15 @@ create_plugin (void)
   return plugin;
 }
 
+static void
+tell_gdm_to_transition (void)
+{
+  int fd;
+
+  fd = creat ("/var/spool/gdm/force-display-on-active-vt", 0644);
+  close (fd);
+}
+
 void
 destroy_plugin (ply_boot_splash_plugin_t *plugin)
 {
@@ -114,6 +123,8 @@ destroy_plugin (ply_boot_splash_plugin_t *plugin)
   ply_throbber_free (plugin->throbber);
   ply_label_free (plugin->label);
 
+  if (plugin->is_visible)
+    tell_gdm_to_transition ();
 
   free (plugin);
 }
