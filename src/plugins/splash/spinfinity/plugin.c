@@ -77,6 +77,7 @@ struct _ply_boot_splash_plugin
   ply_answer_t *pending_password_answer;
 
   uint32_t root_is_mounted : 1;
+  uint32_t is_visible : 1;
 };
 
 static void detach_from_event_loop (ply_boot_splash_plugin_t *plugin);
@@ -383,6 +384,8 @@ show_splash_screen (ply_boot_splash_plugin_t *plugin,
   ply_trace ("starting boot animation");
   start_animation (plugin);
 
+  plugin->is_visible = true;
+
   return true;
 }
 
@@ -422,6 +425,7 @@ hide_splash_screen (ply_boot_splash_plugin_t *plugin,
     }
 
   plugin->frame_buffer = NULL;
+  plugin->is_visible = false;
 }
 
 static void
