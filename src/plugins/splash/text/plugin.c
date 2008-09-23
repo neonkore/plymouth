@@ -82,6 +82,14 @@ create_plugin (void)
   return plugin;
 }
 
+static void
+detach_from_event_loop (ply_boot_splash_plugin_t *plugin)
+{
+  plugin->loop = NULL;
+
+  ply_trace ("detaching from event loop");
+}
+
 void
 destroy_plugin (ply_boot_splash_plugin_t *plugin)
 {
@@ -145,14 +153,6 @@ stop_animation (ply_boot_splash_plugin_t *plugin)
   assert (plugin->loop != NULL);
 
   ply_text_pulser_stop (plugin->pulser);
-}
-
-static void
-detach_from_event_loop (ply_boot_splash_plugin_t *plugin)
-{
-  plugin->loop = NULL;
-
-  ply_trace ("detaching from event loop");
 }
 
 void
