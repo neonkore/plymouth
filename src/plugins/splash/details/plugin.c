@@ -212,15 +212,15 @@ initialize_window (ply_window_t             *window,
 
   ply_window_set_mode (window, PLY_WINDOW_MODE_TEXT);
 
-  ply_window_set_keyboard_input_handler (window,
-                                         (ply_window_keyboard_input_handler_t)
-                                         on_keyboard_input, plugin);
-  ply_window_set_backspace_handler (window,
-                                    (ply_window_backspace_handler_t)
-                                    on_backspace, plugin);
-  ply_window_set_enter_handler (window,
-                                (ply_window_enter_handler_t)
-                                on_enter, plugin);
+   ply_window_add_keyboard_input_handler (window,
+                                          (ply_window_keyboard_input_handler_t)
+                                          on_keyboard_input, plugin);
+   ply_window_add_backspace_handler (window,
+                                     (ply_window_backspace_handler_t)
+                                     on_backspace, plugin);
+   ply_window_add_enter_handler (window,
+                                 (ply_window_enter_handler_t)
+                                 on_enter, plugin);
 
   interface = ply_boot_splash_plugin_get_interface ();
 
@@ -231,9 +231,9 @@ static void
 uninitialize_window (ply_window_t             *window,
                      ply_boot_splash_plugin_t *plugin)
 {
-  ply_window_set_keyboard_input_handler (window, NULL, NULL);
-  ply_window_set_backspace_handler (window, NULL, NULL);
-  ply_window_set_enter_handler (window, NULL, NULL);
+  ply_window_remove_keyboard_input_handler (window, (ply_window_keyboard_input_handler_t) on_keyboard_input);
+  ply_window_remove_backspace_handler (window, (ply_window_backspace_handler_t) on_backspace);
+  ply_window_remove_enter_handler (window, (ply_window_enter_handler_t) on_enter);
 }
 
 bool

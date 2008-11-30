@@ -48,6 +48,12 @@
 #define PLY_MAX_COMMAND_LINE_SIZE 512
 #endif
 
+typedef struct 
+{
+  const char    *keys;
+  ply_trigger_t *trigger;
+} ply_keystroke_trigger_t;
+
 typedef struct
 {
   ply_event_loop_t *loop;
@@ -57,6 +63,7 @@ typedef struct
   ply_terminal_session_t *session;
   ply_buffer_t *boot_buffer;
   ply_progress_t *progress;
+  ply_list_t *keystroke_triggers;
   long ptmx;
 
   char kernel_command_line[PLY_MAX_COMMAND_LINE_SIZE];
@@ -159,6 +166,41 @@ on_ask_for_password (state_t      *state,
   ply_boot_splash_ask_for_password (state->boot_splash,
                                     prompt, answer);
 }
+
+
+static void
+on_watch_for_keystroke (state_t      *state,
+                     const char    *keys,
+                     ply_trigger_t *trigger)
+{
+  ply_keystroke_trigger_t *keystroke_trigger =
+                                  calloc (1, sizeof (ply_keystroke_trigger_t));
+  keystroke_trigger->keys = keys;
+  keystroke_trigger->trigger = trigger;
+  ply_list_append_data (state->keystroke_triggers, keystroke_trigger);
+}
+
+
+static void
+on_ignore_keystroke (state_t      *state,
+                     const char    *keys)
+{
+  ply_list_node_t *node;
+  
+  for (node = ply_list_get_first_node (state->keystroke_triggers); node;
+                    node = ply_list_get_next_node (state->keystroke_triggers, node))
+    {
+      ply_keystroke_trigger_t* keystroke_trigger = ply_list_node_get_data (node);
+      if ((!keystroke_trigger->keys && !keys) ||
+          (keystroke_trigger->keys && keys && strcmp(keystroke_trigger->keys, keys)==0))
+        {
+          ply_trigger_pull (keystroke_trigger->trigger, NULL);
+          ply_list_remove_node (state->keystroke_triggers, node);
+          return;
+        }
+    }
+}
+
 
 static void
 on_newroot (state_t    *state,
@@ -462,6 +504,8 @@ start_boot_server (state_t *state)
 
   server = ply_boot_server_new ((ply_boot_server_update_handler_t) on_update,
                                 (ply_boot_server_ask_for_password_handler_t) on_ask_for_password,
+                                (ply_boot_server_watch_for_keystroke_handler_t) on_watch_for_keystroke,
+                                (ply_boot_server_ignore_keystroke_handler_t) on_ignore_keystroke,
                                 (ply_boot_server_show_splash_handler_t) on_show_splash,
                                 (ply_boot_server_hide_splash_handler_t) on_hide_splash,
                                 (ply_boot_server_newroot_handler_t) on_newroot,
@@ -505,6 +549,27 @@ on_escape_pressed (state_t *state)
     }
 }
 
+static void
+on_keyboard_input (state_t                  *state,
+                   const char               *keyboard_input,
+                   size_t                    character_size)
+{
+  ply_list_node_t *node;
+  
+  for (node = ply_list_get_first_node (state->keystroke_triggers); node;
+                    node = ply_list_get_next_node (state->keystroke_triggers, node))
+    {
+      ply_keystroke_trigger_t* keystroke_trigger = ply_list_node_get_data (node);
+      if (!keystroke_trigger->keys || strstr(keystroke_trigger->keys, keyboard_input))  /* assume strstr works on utf8 arrays */
+        {
+          ply_trigger_pull (keystroke_trigger->trigger, keyboard_input);
+          ply_list_remove_node (state->keystroke_triggers, node);
+          return;
+        }
+    }
+  return;
+}
+
 static ply_window_t *
 create_window (state_t    *state,
                const char *tty_name)
@@ -542,8 +607,11 @@ add_windows_to_boot_splash (state_t           *state,
           ply_trace ("adding window to boot splash");
           ply_boot_splash_add_window (splash, window);
           ply_trace ("listening for escape key");
-          ply_window_set_escape_handler (window, (ply_window_escape_handler_t)
+          ply_window_add_escape_handler (window, (ply_window_escape_handler_t)
                                          on_escape_pressed, state);
+          ply_trace ("listening for keystrokes");
+          ply_window_add_keyboard_input_handler (window,
+               (ply_window_keyboard_input_handler_t) on_keyboard_input, state);
         }
       node = next_node;
     }
@@ -788,6 +856,7 @@ initialize_environment (state_t *state)
   check_logging (state);
 
   state->windows = ply_list_new ();
+  state->keystroke_triggers = ply_list_new ();
   check_for_consoles (state);
 
   if (state->console != NULL)
