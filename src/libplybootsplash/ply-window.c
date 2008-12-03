@@ -234,7 +234,7 @@ process_backspace (ply_window_t *window)
   bytes = ply_buffer_get_bytes (window->line_buffer);
   size = ply_buffer_get_size (window->line_buffer);
 
-  bytes_to_remove = MB_CUR_MAX;
+  bytes_to_remove = MIN(size, MB_CUR_MAX);
   while ((previous_character_size = mbrlen (bytes + size - bytes_to_remove, bytes_to_remove, NULL)) < bytes_to_remove &&
          previous_character_size > 0)
     bytes_to_remove -= previous_character_size;
@@ -242,13 +242,13 @@ process_backspace (ply_window_t *window)
   if (bytes_to_remove <= size)
     {
       ply_buffer_remove_bytes_at_end (window->line_buffer, bytes_to_remove);
+    }
 
-      for (node = ply_list_get_first_node(window->backspace_handler_list); node; node = ply_list_get_next_node(window->backspace_handler_list, node))
-        {
-          ply_window_callback_t *callback = ply_list_node_get_data (node);
-          ply_window_backspace_handler_t backspace_handler = callback->function;
-          backspace_handler (callback->user_data);
-        }
+  for (node = ply_list_get_first_node(window->backspace_handler_list); node; node = ply_list_get_next_node(window->backspace_handler_list, node))
+    {
+      ply_window_callback_t *callback = ply_list_node_get_data (node);
+      ply_window_backspace_handler_t backspace_handler = callback->function;
+      backspace_handler (callback->user_data);
     }
 }
 
@@ -670,7 +670,8 @@ ply_window_set_text_cursor_position (ply_window_t *window,
                                      int           row)
 {
   char *sequence;
-
+  column = MAX(column, 0);
+  row = MAX(row, 0);
   sequence = NULL;
   asprintf (&sequence, MOVE_CURSOR_SEQUENCE, row, column);
   write (window->tty_fd, sequence, strlen (sequence));

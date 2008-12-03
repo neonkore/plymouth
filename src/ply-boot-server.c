@@ -60,6 +60,7 @@ struct _ply_boot_server
   ply_boot_server_show_splash_handler_t show_splash_handler;
   ply_boot_server_hide_splash_handler_t hide_splash_handler;
   ply_boot_server_ask_for_password_handler_t ask_for_password_handler;
+  ply_boot_server_ask_for_clearword_handler_t ask_for_clearword_handler;
   ply_boot_server_watch_for_keystroke_handler_t watch_for_keystroke_handler;
   ply_boot_server_ignore_keystroke_handler_t ignore_keystroke_handler;
   ply_boot_server_quit_handler_t quit_handler;
@@ -71,6 +72,7 @@ struct _ply_boot_server
 ply_boot_server_t *
 ply_boot_server_new (ply_boot_server_update_handler_t  update_handler,
                      ply_boot_server_ask_for_password_handler_t ask_for_password_handler,
+                     ply_boot_server_ask_for_clearword_handler_t ask_for_clearword_handler,
                      ply_boot_server_watch_for_keystroke_handler_t watch_for_keystroke_handler,
                      ply_boot_server_ignore_keystroke_handler_t ignore_keystroke_handler,
                      ply_boot_server_show_splash_handler_t show_splash_handler,
@@ -90,6 +92,7 @@ ply_boot_server_new (ply_boot_server_update_handler_t  update_handler,
   server->is_listening = false;
   server->update_handler = update_handler;
   server->ask_for_password_handler = ask_for_password_handler;
+  server->ask_for_clearword_handler = ask_for_clearword_handler;
   server->watch_for_keystroke_handler = watch_for_keystroke_handler;
   server->ignore_keystroke_handler = ignore_keystroke_handler;
   server->newroot_handler = newroot_handler;
@@ -221,9 +224,6 @@ ply_boot_connection_on_password_answer (ply_boot_connection_t *connection,
 
   uint8_t size;
 
-  /* splash plugin isn't able to ask for password,
-   * punt to client
-   */
   if (password == NULL)
     {
       if (!ply_write (connection->fd,
@@ -255,6 +255,42 @@ ply_boot_connection_on_password_answer (ply_boot_connection_t *connection,
 
 }
 
+
+static void
+ply_boot_connection_on_clearword_answer (ply_boot_connection_t *connection,
+                                        const char            *password)
+{
+
+  uint8_t size;
+
+  if (password == NULL)
+    {
+      if (!ply_write (connection->fd,
+                      PLY_BOOT_PROTOCOL_RESPONSE_TYPE_NO_ANSWER,
+                      strlen (PLY_BOOT_PROTOCOL_RESPONSE_TYPE_NO_ANSWER)))
+        ply_error ("could not write bytes: %m");
+    }
+  else
+    {
+      /* FIXME: support up to 4 billion
+      */
+      if (strlen (password) > 255)
+          ply_error ("password to long to fit in buffer");
+
+      size = (uint8_t) strlen (password);
+
+      if (!ply_write (connection->fd,
+                      PLY_BOOT_PROTOCOL_RESPONSE_TYPE_ANSWER,
+                      strlen (PLY_BOOT_PROTOCOL_RESPONSE_TYPE_ANSWER)) ||
+          !ply_write (connection->fd,
+                      &size, sizeof (uint8_t)) ||
+          !ply_write (connection->fd,
+                      password, size))
+          ply_error ("could not write bytes: %m");
+    }
+
+}
+
 static void
 ply_boot_connection_on_keystroke_answer (ply_boot_connection_t *connection,
                                         const char            *key)
@@ -262,9 +298,6 @@ ply_boot_connection_on_keystroke_answer (ply_boot_connection_t *connection,
 
   uint8_t size;
 
-  /* splash plugin isn't able to ask for password,
-   * punt to client
-   */
   if (key == NULL)
     {
       if (!ply_write (connection->fd,
@@ -439,6 +472,26 @@ ply_boot_connection_on_request (ply_boot_connection_t *connection)
         }
 
       ply_buffer_free (buffer);
+      free(command);
+      return;
+    }
+  else if (strcmp (command, PLY_BOOT_PROTOCOL_REQUEST_TYPE_CLEARWORD) == 0)
+    {
+      ply_trigger_t *answer;
+
+      answer = ply_trigger_new (NULL);
+      ply_trigger_add_handler (answer,
+                               (ply_trigger_handler_t)
+                               ply_boot_connection_on_clearword_answer,
+                               connection);
+
+      if (server->ask_for_clearword_handler != NULL)
+        server->ask_for_clearword_handler (server->user_data,
+                                          argument,
+                                          answer,
+                                          server);
+      /* will reply later
+       */
       free(command);
       return;
     }
@@ -638,6 +691,14 @@ on_ask_for_password (ply_event_loop_t *loop)
 }
 
 static void
+on_ask_for_clearword (ply_event_loop_t *loop)
+{
+  printf ("got clearword request, returning 'password'...\n");
+
+  return;
+}
+
+static void
 on_watch_for_keystroke (ply_event_loop_t *loop)
 {
   printf ("got keystroke request\n");
@@ -668,6 +729,7 @@ main (int    argc,
 
   server = ply_boot_server_new ((ply_boot_server_update_handler_t) on_update,
                                 (ply_boot_server_ask_for_password_handler_t) on_ask_for_password,
+                                (ply_boot_server_ask_for_clearword_handler_t) on_ask_for_clearword,
                                 (ply_boot_server_watch_for_keystroke_handler_t) on_watch_for_keystroke,
                                 (ply_boot_server_ignore_keystroke_handler_t) on_ignore_keystroke,
                                 (ply_boot_server_show_splash_handler_t) on_show_splash,

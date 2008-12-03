@@ -83,6 +83,7 @@ ply_buffer_remove_bytes (ply_buffer_t *buffer,
                buffer->size - bytes_to_remove);
       buffer->size -= bytes_to_remove;
     }
+  buffer->data[buffer->size] = '\0';
 }
 
 void
@@ -94,6 +95,7 @@ ply_buffer_remove_bytes_at_end (ply_buffer_t *buffer,
   bytes_to_remove = MIN (buffer->size, bytes_to_remove);
 
   buffer->size -= bytes_to_remove;
+  buffer->data[buffer->size] = '\0';
 }
 
 ply_buffer_t *
@@ -182,16 +184,17 @@ ply_buffer_append_bytes (ply_buffer_t *buffer,
   assert (buffer != NULL);
   assert (bytes != NULL);
   assert (length != 0);
-
-  if ((buffer->size + length) >= buffer->capacity)
+  
+  if (length >PLY_BUFFER_MAX_BUFFER_CAPACITY){
+    bytes += length - (PLY_BUFFER_MAX_BUFFER_CAPACITY-1);
+    length = (PLY_BUFFER_MAX_BUFFER_CAPACITY-1);
+    }
+  
+  while ((buffer->size + length) >= buffer->capacity)
     {
       if (!ply_buffer_increase_capacity (buffer))
         {
           ply_buffer_remove_bytes (buffer, length);
-
-          if ((buffer->size + length) >= buffer->capacity)
-            if (!ply_buffer_increase_capacity (buffer))
-              return;
         }
     }
 
@@ -201,6 +204,7 @@ ply_buffer_append_bytes (ply_buffer_t *buffer,
           bytes, length);
 
   buffer->size += length;
+  buffer->data[buffer->size] = '\0';
 }
 
 void

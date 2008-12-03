@@ -52,12 +52,17 @@ typedef struct
   int      number_of_tries_left;
 } answer_state_t;
 
-
 typedef struct
 {
   state_t *state;
   char    *command;
   char    *prompt;
+} clearword_answer_state_t;
+
+typedef struct
+{
+  state_t *state;
+  char    *command;
   char    *keys;
 } key_answer_state_t;
 
@@ -105,7 +110,7 @@ split_string (const char *command,
 }
 
 static bool
-answer_via_command (answer_state_t *answer_state,
+answer_via_command (char           *command,
                     const char     *answer,
                     int            *exit_status)
 {
@@ -132,7 +137,7 @@ answer_via_command (answer_state_t *answer_state,
   if (pid == 0)
     {
       char **args;
-      args = split_string (answer_state->command, ' ');
+      args = split_string (command, ' ');
       if (answer != NULL)
         {
           close (command_input_sender_fd);
@@ -181,7 +186,7 @@ on_answer (answer_state_t   *answer_state,
       bool command_started = false;
 
       exit_status = 127;
-      command_started = answer_via_command (answer_state, answer,
+      command_started = answer_via_command (answer_state->command, answer,
                                             &exit_status);
 
       if (command_started && (!WIFEXITED (exit_status) ||
@@ -210,18 +215,36 @@ on_answer (answer_state_t   *answer_state,
   ply_event_loop_exit (answer_state->state->loop, WEXITSTATUS (exit_status));
 }
 
-
 static void
-on_key_reply (answer_state_t   *answer_state,
+on_clearword_reply (clearword_answer_state_t   *answer_state,
            const char       *answer,
            ply_boot_client_t *client)
 {
-  
   if (answer_state->command != NULL)
     {
       bool command_started = false;
 
-      command_started = answer_via_command (answer_state, answer, NULL);
+      command_started = answer_via_command (answer_state->command, answer, NULL);
+    }
+  else
+    {
+      if (answer) write (STDOUT_FILENO, answer, strlen (answer));
+    }
+
+  if (answer) ply_event_loop_exit (answer_state->state->loop, 0);
+  ply_event_loop_exit (answer_state->state->loop, 1);
+}
+
+static void
+on_key_reply (key_answer_state_t   *answer_state,
+           const char       *answer,
+           ply_boot_client_t *client)
+{
+  if (answer_state->command != NULL)
+    {
+      bool command_started = false;
+
+      command_started = answer_via_command (answer_state->command, answer, NULL);
     }
   else
     {
@@ -249,7 +272,7 @@ on_multiple_answers (answer_state_t     *answer_state,
       {
         bool command_started;
         exit_status = 127;
-        command_started = answer_via_command (answer_state, answers[i],
+        command_started = answer_via_command (answer_state->command, answers[i],
                                               &exit_status);
         if (command_started && WIFEXITED (exit_status) &&
             WEXITSTATUS (exit_status) == 0)
@@ -351,6 +374,37 @@ on_password_request (state_t    *state,
                                                (ply_boot_client_response_handler_t)
                                                on_answer_failure, answer_state);
     }
+}
+
+static void
+on_clearword_request (state_t    *state,
+                     const char *command)
+{
+  char *prompt;
+  char *program;
+  int number_of_tries;
+  answer_state_t *answer_state;
+
+  prompt = NULL;
+  program = NULL;
+  number_of_tries = 0;
+  ply_command_parser_get_command_options (state->command_parser,
+                                          command,
+                                          "command", &program,
+                                          "prompt", &prompt,
+                                          NULL);
+
+  answer_state = calloc (1, sizeof (answer_state_t));
+  answer_state->state = state;
+  answer_state->command = program;
+  answer_state->prompt = prompt;
+
+  ply_boot_client_ask_daemon_for_clearword (state->client,
+                                           answer_state->prompt,
+                                           (ply_boot_client_answer_handler_t)
+                                           on_clearword_reply,
+                                           (ply_boot_client_response_handler_t)
+                                           on_failure, answer_state);
 }
 
 static void
@@ -459,6 +513,16 @@ main (int    argc,
                                   PLY_COMMAND_OPTION_TYPE_STRING,
                                   "number-of-tries", "Number of times to ask before giving up (requires --command)",
                                   PLY_COMMAND_OPTION_TYPE_INTEGER,
+                                  NULL);
+
+  ply_command_parser_add_command (state.command_parser,
+                                  "ask-for-clearword", "Ask user for password",
+                                  (ply_command_handler_t)
+                                  on_clearword_request, &state,
+                                  "command", "Command to send clearword to via standard input",
+                                  PLY_COMMAND_OPTION_TYPE_STRING,
+                                  "prompt", "Message to display when asking for clearword",
+                                  PLY_COMMAND_OPTION_TYPE_STRING,
                                   NULL);
 
 

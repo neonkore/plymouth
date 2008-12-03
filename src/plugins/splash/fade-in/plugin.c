@@ -76,8 +76,7 @@ struct _ply_boot_splash_plugin
   ply_window_t *window;
 
   ply_entry_t *entry;
-
-  ply_trigger_t *pending_password_answer;
+  ply_boot_splash_display_type_t state;
 
   double start_time;
   double now;
@@ -98,6 +97,7 @@ create_plugin (void)
   plugin->star_image = ply_image_new (PLYMOUTH_IMAGE_DIR "fade-in/star.png");
   plugin->lock_image = ply_image_new (PLYMOUTH_IMAGE_DIR "fade-in/lock.png");
   plugin->entry = ply_entry_new (PLYMOUTH_IMAGE_DIR "fade-in");
+  plugin->state = PLY_BOOT_SPLASH_DISPLAY_NORMAL;
   plugin->stars = ply_list_new ();
 
   return plugin;
@@ -259,7 +259,6 @@ animate_at_time (ply_boot_splash_plugin_t *plugin,
   ply_frame_buffer_unpause_updates (plugin->frame_buffer);
 }
 
-static void draw_password_entry (ply_boot_splash_plugin_t *plugin);
 static void
 on_timeout (ply_boot_splash_plugin_t *plugin)
 {
@@ -381,31 +380,17 @@ on_keyboard_input (ply_boot_splash_plugin_t *plugin,
                    const char               *keyboard_input,
                    size_t                    character_size)
 {
-  if (plugin->pending_password_answer == NULL)
-    return;
-
-  ply_entry_add_bullet (plugin->entry);
 }
 
 void
 on_backspace (ply_boot_splash_plugin_t *plugin)
 {
-  ply_entry_remove_bullet (plugin->entry);
 }
 
 void
 on_enter (ply_boot_splash_plugin_t *plugin,
           const char               *text)
 {
-
-  if (plugin->pending_password_answer == NULL)
-    return;
-
-  ply_trigger_pull (plugin->pending_password_answer, text);
-  plugin->pending_password_answer = NULL;
-
-  ply_entry_hide (plugin->entry);
-  start_animation (plugin);
 }
 
 void
@@ -424,10 +409,10 @@ on_draw (ply_boot_splash_plugin_t *plugin,
 
   draw_background (plugin, &area);
 
-  if (plugin->pending_password_answer != NULL)
-    ply_entry_draw (plugin->entry);
-  else
+  if (plugin->state != PLY_BOOT_SPLASH_DISPLAY_NORMAL)
     animate_at_time (plugin, plugin->now);
+  else
+    ply_entry_draw (plugin->entry);
 }
 
 void
@@ -613,13 +598,6 @@ hide_splash_screen (ply_boot_splash_plugin_t *plugin,
 {
   assert (plugin != NULL);
 
-  if (plugin->pending_password_answer != NULL)
-    {
-      ply_trigger_pull (plugin->pending_password_answer, "");
-      plugin->pending_password_answer = NULL;
-    }
-
-    (plugin->window, NULL, NULL);
   ply_window_remove_keyboard_input_handler (plugin->window, (ply_window_keyboard_input_handler_t) on_keyboard_input);
   ply_window_remove_backspace_handler (plugin->window, (ply_window_backspace_handler_t) on_backspace);
   ply_window_remove_enter_handler (plugin->window, (ply_window_enter_handler_t) on_enter);
@@ -663,20 +641,46 @@ show_password_entry (ply_boot_splash_plugin_t *plugin)
   x = area.width / 2.0 - (lock_width + entry_width) / 2.0 + lock_width;
   y = area.height / 2.0 - entry_height / 2.0;
 
-  draw_background (plugin, NULL);
-
   ply_entry_show (plugin->entry, plugin->loop, plugin->window, x, y);
 }
 
 void
-ask_for_password (ply_boot_splash_plugin_t *plugin,
-                  const char               *prompt,
-                  ply_trigger_t            *answer)
+update_display (ply_boot_splash_plugin_t *plugin,
+                ply_boot_splash_display_type_t type,
+                ply_boot_splash_display_info_t *info)
 {
-  plugin->pending_password_answer = answer;
-
-  stop_animation (plugin);
-  show_password_entry (plugin);
+  if (type == PLY_BOOT_SPLASH_DISPLAY_NORMAL)
+    {
+      if (plugin->state ==  PLY_BOOT_SPLASH_DISPLAY_CLEARWORD_ENTRY ||
+          plugin->state ==  PLY_BOOT_SPLASH_DISPLAY_PASSWORD_ENTRY)
+        {
+          ply_entry_hide (plugin->entry);
+          start_animation(plugin);
+        }
+    }
+  else if (type == PLY_BOOT_SPLASH_DISPLAY_CLEARWORD_ENTRY || 
+           type == PLY_BOOT_SPLASH_DISPLAY_PASSWORD_ENTRY  )
+    {
+      if (plugin->state !=  PLY_BOOT_SPLASH_DISPLAY_CLEARWORD_ENTRY &&
+          plugin->state !=  PLY_BOOT_SPLASH_DISPLAY_PASSWORD_ENTRY)
+        {
+          stop_animation (plugin);
+          show_password_entry (plugin);
+        }
+      if (type == PLY_BOOT_SPLASH_DISPLAY_CLEARWORD_ENTRY)
+        {
+          ply_entry_set_text (plugin->entry, info->clearword.entry_text);
+        }
+      if (type == PLY_BOOT_SPLASH_DISPLAY_PASSWORD_ENTRY)
+        {
+          ply_entry_set_bullets (plugin->entry, info->password.bullets);
+        }
+    }
+  else
+    {
+      ply_trace ("unkown display type");
+    }
+  plugin->state = type;
 }
 
 ply_boot_splash_plugin_interface_t *
@@ -691,7 +695,7 @@ ply_boot_splash_plugin_get_interface (void)
       .show_splash_screen = show_splash_screen,
       .update_status = update_status,
       .hide_splash_screen = hide_splash_screen,
-      .ask_for_password = ask_for_password,
+      .update_display = update_display,
     };
 
   return &plugin_interface;

@@ -33,7 +33,16 @@
 
 typedef struct _ply_boot_splash_plugin ply_boot_splash_plugin_t;
 
-typedef void (* ply_boot_splash_password_answer_handler_t) (void *answer_data, const char *password);
+typedef enum {
+  PLY_BOOT_SPLASH_DISPLAY_NORMAL,
+  PLY_BOOT_SPLASH_DISPLAY_CLEARWORD_ENTRY,
+  PLY_BOOT_SPLASH_DISPLAY_PASSWORD_ENTRY
+} ply_boot_splash_display_type_t;
+
+typedef union {
+  struct {const char *prompt; const char *entry_text;} clearword;
+  struct {const char *prompt; int bullets;} password;
+} ply_boot_splash_display_info_t;
 
 typedef struct
 {
@@ -59,10 +68,9 @@ typedef struct
   void (* on_root_mounted) (ply_boot_splash_plugin_t *plugin);
   void (* hide_splash_screen) (ply_boot_splash_plugin_t *plugin,
                                ply_event_loop_t         *loop);
-
-  void (* ask_for_password) (ply_boot_splash_plugin_t *plugin,
-                             const char               *prompt,
-                             ply_trigger_t            *answer);
+  void (* update_display) (ply_boot_splash_plugin_t *plugin,
+                           ply_boot_splash_display_type_t type,
+                           ply_boot_splash_display_info_t *info);
   void (* become_idle) (ply_boot_splash_plugin_t       *plugin,
                         ply_trigger_t                  *idle_trigger);
 } ply_boot_splash_plugin_interface_t;

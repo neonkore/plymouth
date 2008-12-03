@@ -53,7 +53,13 @@ typedef void (* ply_boot_server_ask_for_password_handler_t) (void              *
                                                              const char        *prompt,
                                                              ply_trigger_t     *answer,
                                                              ply_boot_server_t *server);
-
+typedef void (* ply_boot_server_clearword_answer_handler_t) (void              *answer_data,
+                                                            const char         *clearword,
+                                                            ply_boot_server_t  *server);
+typedef void (* ply_boot_server_ask_for_clearword_handler_t) (void              *user_data,
+                                                              const char        *prompt,
+                                                              ply_trigger_t     *answer,
+                                                              ply_boot_server_t *server);
 typedef void (* ply_boot_server_watch_for_keystroke_handler_t) (void             *user_data,
                                                              const char        *keys,
                                                              ply_trigger_t     *answer,
@@ -76,6 +82,7 @@ typedef void (* ply_boot_server_quit_handler_t) (void              *user_data,
 #ifndef PLY_HIDE_FUNCTION_DECLARATIONS
 ply_boot_server_t *ply_boot_server_new (ply_boot_server_update_handler_t update_handler,
                                         ply_boot_server_ask_for_password_handler_t ask_for_password_handler,
+                                        ply_boot_server_ask_for_clearword_handler_t ask_for_clearword_handler,
                                         ply_boot_server_watch_for_keystroke_handler_t watch_for_keystroke_handler,
                                         ply_boot_server_ignore_keystroke_handler_t ignore_keystroke_handler,
                                         ply_boot_server_show_splash_handler_t show_splash_handler,
