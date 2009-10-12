@@ -88,6 +88,9 @@ ply_label_load_plugin (ply_label_t *label)
   label->module_handle = ply_open_module (PLYMOUTH_PLUGIN_PATH "label.so");
 
   if (label->module_handle == NULL)
+    label->module_handle = ply_open_module (PLYMOUTH_PLUGIN_PATH "bitmap.so");
+
+  if (label->module_handle == NULL)
     return false;
 
   get_label_plugin_interface = (get_plugin_interface_function_t)

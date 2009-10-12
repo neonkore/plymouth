@@ -1,4 +1,6 @@
+SUBDIRS = bitmap
+
 if ENABLE_PANGO
-SUBDIRS = label
+SUBDIRS += label
 endif
 MAINTAINERCLEANFILES = Makefile.in

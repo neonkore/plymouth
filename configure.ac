@@ -227,6 +227,7 @@ AC_OUTPUT([Makefile
            src/plugins/splash/script/Makefile
            src/plugins/controls/Makefile
            src/plugins/controls/label/Makefile
+           src/plugins/controls/bitmap/Makefile
            src/Makefile
            src/client/Makefile
            src/viewer/Makefile
