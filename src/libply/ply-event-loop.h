@@ -79,6 +79,13 @@ void ply_event_loop_stop_watching_for_timeout (ply_event_loop_t    *loop,
                                                ply_event_loop_timeout_handler_t timeout_handler,
                                                void                 *user_data);
 
+void ply_event_loop_wait_for_fd (ply_event_loop_t           *loop,
+                                 int                         fd,
+                                 ply_event_loop_fd_status_t  status);
+
+void ply_event_loop_wait_for_timeout (ply_event_loop_t           *loop,
+                                      double                      seconds);
+
 int ply_event_loop_run (ply_event_loop_t *loop);
 void ply_event_loop_exit (ply_event_loop_t *loop,
                           int               exit_code);
