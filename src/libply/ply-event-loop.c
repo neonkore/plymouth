@@ -70,6 +70,7 @@ typedef struct
 
 struct _ply_fd_watch
 {
+  ply_event_loop_t *loop;
   ply_event_destination_t *destination;
 };
 
@@ -303,11 +304,13 @@ ply_event_destination_free (ply_event_destination_t *destination)
 }
 
 static ply_fd_watch_t *
-ply_fd_watch_new (ply_event_destination_t *destination)
+ply_fd_watch_new (ply_event_loop_t        *loop,
+                  ply_event_destination_t *destination)
 {
   ply_fd_watch_t *watch;
 
   watch = calloc (1, sizeof (ply_fd_watch_t));
+  watch->loop = loop;
   watch->destination = destination;
 
   return watch;
@@ -411,7 +414,7 @@ ply_event_loop_add_destination_for_source (ply_event_loop_t        *loop,
 
   ply_event_loop_update_source_event_mask (loop, source);
 
-  watch = ply_fd_watch_new (destination);
+  watch = ply_fd_watch_new (loop, destination);
 
   ply_list_append_data (source->fd_watches, watch);
 
