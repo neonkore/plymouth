@@ -98,6 +98,7 @@ typedef struct
 
 typedef struct
 {
+  ply_event_loop_t *loop;
   double timeout;
   ply_event_loop_timeout_handler_t  handler;
   void                             *user_data;
@@ -896,6 +897,7 @@ ply_event_loop_watch_for_timeout (ply_event_loop_t    *loop,
   assert (seconds > 0.0);
 
   timeout_watch = calloc (1, sizeof (ply_event_loop_timeout_watch_t));
+  timeout_watch->loop = loop;
   timeout_watch->timeout = ply_get_timestamp () + seconds;
   timeout_watch->handler = timeout_handler;
   timeout_watch->user_data = user_data;
