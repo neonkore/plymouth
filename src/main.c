@@ -129,7 +129,9 @@ static void add_default_displays_and_keyboard (state_t *state);
 
 static bool attach_to_running_session (state_t *state);
 static void on_escape_pressed (state_t *state);
-static void dump_details_and_quit_splash (state_t *state);
+static void dump_details (state_t *state);
+static void quit_splash (state_t *state,
+                         bool     should_retain_vt);
 static void update_display (state_t *state);
 
 static void on_error_message (ply_buffer_t *debug_buffer,
@@ -710,8 +712,11 @@ on_show_splash (state_t *state)
 
   if (plymouth_should_ignore_show_splash_calls (state))
     {
+      const bool should_retain_vt = false;
+
       ply_trace ("show splash called while ignoring show splash calls");
-      dump_details_and_quit_splash (state);
+      dump_details (state);
+      quit_splash (state, should_retain_vt);
       return;
     }
 
@@ -745,7 +750,8 @@ on_show_splash (state_t *state)
 }
 
 static void
-quit_splash (state_t *state)
+quit_splash (state_t *state,
+             bool     should_retain_vt)
 {
   ply_trace ("quiting splash");
   if (state->boot_splash != NULL)
@@ -767,7 +773,7 @@ quit_splash (state_t *state)
 
   if (state->terminal != NULL)
     {
-      if (!state->should_retain_splash)
+      if (!should_retain_vt)
         {
           ply_trace ("Not retaining splash, so deallocating VT");
           ply_terminal_deactivate_vt (state->terminal);
@@ -787,7 +793,7 @@ quit_splash (state_t *state)
 }
 
 static void
-dump_details_and_quit_splash (state_t *state)
+dump_details (state_t *state)
 {
   state->showing_details = false;
   toggle_between_splash_and_details (state);
@@ -796,13 +802,13 @@ dump_details_and_quit_splash (state_t *state)
     ply_renderer_deactivate (state->renderer);
   if (state->boot_splash != NULL)
     ply_boot_splash_hide (state->boot_splash);
-
-  quit_splash (state);
 }
 
 static void
 on_hide_splash (state_t *state)
 {
+  const bool should_retain_vt = true;
+
   if (state->is_inactive)
     return;
 
@@ -810,7 +816,8 @@ on_hide_splash (state_t *state)
     return;
 
   ply_trace ("hiding boot splash");
-  dump_details_and_quit_splash (state);
+  dump_details (state);
+  quit_splash (state, should_retain_vt);
 }
 
 #ifdef PLY_ENABLE_GDM_TRANSITION
@@ -899,6 +906,8 @@ on_boot_splash_idle (state_t *state)
    */
   if (state->quit_trigger != NULL)
     {
+      bool should_retain_vt;
+
       if (!state->should_retain_splash)
         {
           ply_trace ("hiding splash");
@@ -906,10 +915,16 @@ on_boot_splash_idle (state_t *state)
             ply_renderer_deactivate (state->renderer);
           if (state->boot_splash != NULL)
             ply_boot_splash_hide (state->boot_splash);
+
+          should_retain_vt = false;
+        }
+      else
+        {
+          should_retain_vt = true;
         }
 
       ply_trace ("quitting splash");
-      quit_splash (state);
+      quit_splash (state, should_retain_vt);
       ply_trace ("quitting program");
       quit_program (state);
     }
@@ -999,6 +1014,8 @@ on_quit (state_t       *state,
          bool           retain_splash,
          ply_trigger_t *quit_trigger)
 {
+  bool should_retain_vt = false;
+
   if (state->quit_trigger != NULL)
     {
       ply_trigger_add_handler (state->quit_trigger,
@@ -1015,6 +1032,11 @@ on_quit (state_t       *state,
   state->quit_trigger = quit_trigger;
   state->should_retain_splash = retain_splash;
 
+  if (state->should_retain_splash)
+    {
+      should_retain_vt = true;
+    }
+
   ply_trace ("time to quit, closing log");
   if (state->session != NULL)
     ply_terminal_session_close_log (state->session);
@@ -1030,7 +1052,8 @@ on_quit (state_t       *state,
     {
       /* We've been deactivated and X failed to start
        */
-      dump_details_and_quit_splash (state);
+      dump_details (state);
+      quit_splash (state, should_retain_vt);
       quit_program (state);
     }
   else if (state->boot_splash != NULL)
