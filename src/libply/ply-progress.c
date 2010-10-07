@@ -122,38 +122,63 @@ ply_progress_free (ply_progress_t* progress)
   return;
 }
 
+static int
+ply_progress_message_compare_with_string (ply_progress_message_t *message,
+                                          const char             *string)
+{
+  return strcmp (message->string, string);
+}
 
 static ply_progress_message_t*
 ply_progress_message_search (ply_list_t *message_list, const char* string)
 {
   ply_list_node_t *node;
-  node = ply_list_get_first_node (message_list);
+  ply_progress_message_t *message;
 
-  while (node)
-    {
-      ply_progress_message_t *message = ply_list_node_get_data (node);
-      if (strcmp(string, message->string)==0)
-          return message;
-      node = ply_list_get_next_node (message_list, node);
-    }
-  return NULL;
+  node = ply_list_find_node_by_comparing_data (message_list, (void *) string,
+                                               (ply_list_compare_func_t *)
+                                               ply_progress_message_compare_with_string);
+
+  if (node == NULL)
+    return NULL;
+
+  message = (ply_progress_message_t *) ply_list_node_get_data (node);
+
+  return message;
 }
 
+static int
+ply_progress_message_compare_with_time (ply_progress_message_t *message,
+                                        double                 *time)
+{
+  return message->time - *time;
+}
 
 static ply_progress_message_t*
 ply_progress_message_search_next (ply_list_t *message_list, double time)
 {
+
   ply_list_node_t *node;
-  node = ply_list_get_first_node (message_list);
-  ply_progress_message_t *best=NULL;
-  while (node)
-    {
-      ply_progress_message_t *message = ply_list_node_get_data (node);
-      if (message->time > time && (!best || message->time < best->time))
-          best = message;
-      node = ply_list_get_next_node (message_list, node);
-    }
-  return best;
+
+  node = ply_list_find_node_by_comparing_data (message_list, &time,
+                                               (ply_list_compare_func_t *)
+                                               ply_progress_message_compare_with_time);
+
+  assert (node != NULL);
+
+  node = ply_list_get_next_node (message_list, node);
+
+  if (node == NULL)
+    return NULL;
+
+  return (ply_progress_message_t *) ply_list_node_get_data (node);
+}
+
+static int
+ply_progress_message_compare_with_other_message (ply_progress_message_t *message,
+                                                 ply_progress_message_t *other_message)
+{
+  return message->time - other_message->time;
 }
 
 void
@@ -199,7 +224,10 @@ ply_progress_load_cache (ply_progress_t* progress,
       ply_progress_message_t* message = malloc(sizeof(ply_progress_message_t));
       message->time = time;
       message->string = string;
-      ply_list_append_data(progress->previous_message_list, message);
+      ply_list_insert_and_sort_data (progress->previous_message_list,
+                                     message,
+                                     (ply_list_compare_func_t *)
+                                     ply_progress_message_compare_with_other_message);
     }
   fclose (fp);
 }
@@ -322,7 +350,10 @@ ply_progress_status_update (ply_progress_t* progress,
       message->time = ply_progress_get_time (progress);
       message->string = strdup(status);
       message->disabled = false;
-      ply_list_append_data(progress->current_message_list, message);
+      ply_list_insert_and_sort_data (progress->current_message_list,
+                                     message,
+                                     (ply_list_compare_func_t *)
+                                     ply_progress_message_compare_with_other_message);
     }
 }
 
