@@ -114,6 +114,115 @@ ply_list_find_node (ply_list_t *list,
   return node;
 }
 
+static ply_list_node_t *
+ply_list_find_a_node_equal_to_or_just_less_than_data (ply_list_t *list,
+                                                      void       *data,
+                                                      ply_list_compare_func_t *compare)
+{
+  int i;
+  int search_space;
+  ply_list_node_t *node;
+
+  /* Since we know the list is sorted we can get by with binary search
+   */
+
+  assert (list->is_sorted);
+
+  /* Include the entire list in the initial search space
+   */
+  search_space = list->number_of_nodes;
+
+  /* Start at the end of the list
+   */
+  i = list->number_of_nodes;
+  node = ply_list_get_last_node (list);
+  while (node != NULL && search_space != 1)
+    {
+      int direction;
+
+      direction = compare (node->data, data);
+
+      /* reduce the search_space in half */
+      search_space = search_space / 2;
+
+      if (direction < 0)
+        {
+          i -= search_space;
+
+          /* negative i means "go backward" i nodes
+           */
+          node = ply_list_get_nth_node_starting_at_node (list, -i, node);
+        }
+      else if (direction > 0)
+        {
+          i += search_space;
+          node = ply_list_get_nth_node_starting_at_node (list, i, node);
+        }
+      else
+        break;
+    }
+
+  return node;
+}
+
+static ply_list_node_t *
+ply_list_find_node_by_comparing_sorted_data (ply_list_t *list,
+                                             void       *data,
+                                             ply_list_compare_func_t *compare)
+{
+  ply_list_node_t *node;
+
+  assert (list->is_sorted);
+
+  node = ply_list_find_a_node_equal_to_or_just_less_than_data (list, data, compare);
+
+  if (node == NULL)
+    return NULL;
+
+  if (compare (node->data, data) != 0)
+    return NULL;
+
+  /* Always return the first node in the list that matches
+   */
+  if (node->previous != NULL)
+    {
+      while (compare (node->previous->data, data) == 0)
+        node = node->previous;
+    }
+
+  return node;
+}
+
+static ply_list_node_t *
+ply_list_find_node_by_comparing_unsorted_data (ply_list_t *list,
+                                               void       *data,
+                                               ply_list_compare_func_t *compare)
+{
+  ply_list_node_t *node;
+
+  node = list->first_node;
+  while (node != NULL)
+    {
+      if (compare (node->data, data) == 0)
+        break;
+
+      node = node->next;
+    }
+  return node;
+}
+
+ply_list_node_t *
+ply_list_find_node_by_comparing_data (ply_list_t *list,
+                                      void       *data,
+                                      ply_list_compare_func_t *compare)
+{
+
+  if (list->is_sorted)
+    return ply_list_find_node_by_comparing_sorted_data (list, data, compare);
+  else
+    return ply_list_find_node_by_comparing_unsorted_data (list, data, compare);
+}
+
 static void
 ply_list_insert_node (ply_list_t      *list,
                       ply_list_node_t *node_before,
@@ -175,30 +284,19 @@ ply_list_find_biggest_node_equal_to_or_less_than_data (ply_list_t *list,
                                                        ply_list_compare_func_t *compare)
 {
   ply_list_node_t *node;
-  int difference;
 
-  assert (list->is_sorted);
-
-  node = list->first_node;
+  node = ply_list_find_a_node_equal_to_or_just_less_than_data (list, data, compare);
 
   if (node == NULL)
     return NULL;
 
-  while (node != NULL)
+  if (compare (node->data, data) == 0 && node->next != NULL)
     {
-      difference = compare (data, node->data);
-
-      if (difference > 0)
-        return node->previous;
-
-      node = node->next;
+      while (compare (node->next->data, data) == 0)
+        node = node->next;
     }
 
-  assert (node == list->last_node);
-  assert (list->last_node != NULL);
-  assert (difference == 0);
-
-  return list->last_node;
+  return node;
 }
 
 ply_list_node_t *
@@ -330,16 +428,26 @@ ply_list_node_t *
 ply_list_get_nth_node (ply_list_t *list,
                        int         index)
 {
-  ply_list_node_t *node;
-  node = list->first_node;
-  if (index < 0)
-    return NULL;
-  if (index >= list->number_of_nodes)
-    return NULL;
-  while (index--)
+  return ply_list_get_nth_node_starting_at_node (list, index, list->first_node);
+}
+
+ply_list_node_t *
+ply_list_get_nth_node_starting_at_node (ply_list_t      *list,
+                                        int              number_of_nodes_to_skip,
+                                        ply_list_node_t *node)
+{
+
+  if (number_of_nodes_to_skip > 0)
     {
-      node = node->next;
+      while (number_of_nodes_to_skip-- && node != NULL)
+        node = node->next;
     }
+  else
+    {
+      while (number_of_nodes_to_skip++ && node != NULL)
+        node = node->previous;
+    }
+
   return node;
 }
 

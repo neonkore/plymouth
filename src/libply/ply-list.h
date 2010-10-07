@@ -32,6 +32,9 @@ void ply_list_free (ply_list_t *list);
 int ply_list_get_length (ply_list_t *list);
 ply_list_node_t *ply_list_find_node (ply_list_t *list,
                                      void       *data);
+ply_list_node_t *ply_list_find_node_by_comparing_data (ply_list_t *list,
+                                                       void       *data,
+                                                       ply_list_compare_func_t *compare);
 ply_list_node_t *ply_list_insert_data (ply_list_t *list,
                                        void       *data,
                                        ply_list_node_t *node_before);
@@ -55,6 +58,9 @@ ply_list_node_t *ply_list_get_first_node (ply_list_t *list);
 ply_list_node_t *ply_list_get_last_node (ply_list_t *list);
 ply_list_node_t *ply_list_get_nth_node (ply_list_t *list,
                                         int         index);
+ply_list_node_t *ply_list_get_nth_node_starting_at_node (ply_list_t      *list,
+                                                         int              number_of_nodes_to_skip,
+                                                         ply_list_node_t *node);
 ply_list_node_t *ply_list_get_next_node (ply_list_t      *list,
                                          ply_list_node_t *node);
 void *ply_list_node_get_data (ply_list_node_t *node);
