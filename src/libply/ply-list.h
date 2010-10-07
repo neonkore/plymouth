@@ -33,8 +33,11 @@ int ply_list_get_length (ply_list_t *list);
 ply_list_node_t *ply_list_find_node (ply_list_t *list,
                                      void       *data);
 ply_list_node_t *ply_list_insert_data (ply_list_t *list,
-		                       void       *data,
-		                       ply_list_node_t *node_before);
+                                       void       *data,
+                                       ply_list_node_t *node_before);
+ply_list_node_t *ply_list_insert_and_sort_data (ply_list_t              *list,
+                                                void                    *data,
+                                                ply_list_compare_func_t *compare);
 ply_list_node_t *ply_list_append_data (ply_list_t *list,
                                        void       *data);
 ply_list_node_t *ply_list_prepend_data (ply_list_t *list,

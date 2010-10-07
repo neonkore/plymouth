@@ -26,6 +26,8 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,6 +37,7 @@ struct _ply_list
   ply_list_node_t *last_node;
 
   int number_of_nodes;
+  uint32_t is_sorted : 1;
 };
 
 struct _ply_list_node
@@ -54,6 +57,7 @@ ply_list_new (void)
   list->first_node = NULL;
   list->last_node = NULL;
   list->number_of_nodes = 0;
+  list->is_sorted = true;
 
   return list;
 }
@@ -148,6 +152,7 @@ ply_list_insert_node (ply_list_t      *list,
     }
 
   list->number_of_nodes++;
+  list->is_sorted = false;
 }
 
 ply_list_node_t *
@@ -160,6 +165,63 @@ ply_list_insert_data (ply_list_t      *list,
   node = ply_list_node_new (data);
 
   ply_list_insert_node (list, node_before, node);
+
+  return node;
+}
+
+static ply_list_node_t *
+ply_list_find_biggest_node_equal_to_or_less_than_data (ply_list_t *list,
+                                                       void       *data,
+                                                       ply_list_compare_func_t *compare)
+{
+  ply_list_node_t *node;
+  int difference;
+
+  assert (list->is_sorted);
+
+  node = list->first_node;
+
+  if (node == NULL)
+    return NULL;
+
+  while (node != NULL)
+    {
+      difference = compare (data, node->data);
+
+      if (difference > 0)
+        return node->previous;
+
+      node = node->next;
+    }
+
+  assert (node == list->last_node);
+  assert (list->last_node != NULL);
+  assert (difference == 0);
+
+  return list->last_node;
+}
+
+ply_list_node_t *
+ply_list_insert_and_sort_data (ply_list_t              *list,
+                               void                    *data,
+                               ply_list_compare_func_t *compare)
+{
+  ply_list_node_t *node_before;
+  ply_list_node_t *node;
+
+  if (!list->is_sorted)
+    {
+      ply_list_sort_stable (list, compare);
+    }
+
+  node_before = ply_list_find_biggest_node_equal_to_or_less_than_data (list, data, compare);
+
+  if (node_before != NULL)
+    node = ply_list_insert_data (list, data, node_before);
+  else
+    node = ply_list_prepend_data (list, data);
+
+  list->is_sorted = true;
 
   return node;
 }
@@ -351,6 +413,9 @@ ply_list_sort_stable (ply_list_t              *list,
   ply_list_node_t *top_node;
   ply_list_node_t *cur_node;
 
+  if (list->is_sorted)
+    return;
+
   top_node = ply_list_get_first_node (list);
   if (top_node == NULL) return;
   top_node = top_node->next;
@@ -366,7 +431,8 @@ ply_list_sort_stable (ply_list_t              *list,
         }
       top_node = top_node->next;
     }
-  
+
+  list->is_sorted = true;
 }
 
 void *
