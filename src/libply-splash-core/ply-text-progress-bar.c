@@ -184,6 +184,8 @@ ply_text_progress_bar_draw (ply_text_progress_bar_t *progress_bar)
 
     width = progress_bar->number_of_columns - 2 - strlen (os_string);
 
+    ply_text_display_disable_wrapping (progress_bar->display);
+    ply_text_display_set_scrollable_area (progress_bar->display, 0, progress_bar->row);
     ply_text_display_set_cursor_position (progress_bar->display,
                                           progress_bar->column,
                                           progress_bar->row);
@@ -210,6 +212,7 @@ ply_text_progress_bar_draw (ply_text_progress_bar_t *progress_bar)
 
         ply_text_display_write (progress_bar->display, "%c", ' ');
     }
+    ply_text_display_set_cursor_position (progress_bar->display, 0, 0);
 
     ply_text_display_set_background_color (progress_bar->display,
                                            PLY_TERMINAL_COLOR_BLACK);
@@ -230,10 +233,18 @@ ply_text_progress_bar_draw (ply_text_progress_bar_t *progress_bar)
                                               progress_bar->row);
 
         ply_text_display_write (progress_bar->display, "%s", os_string);
+        ply_text_display_set_cursor_position (progress_bar->display, 0, 0);
 
         ply_text_display_set_foreground_color (progress_bar->display,
                                                PLY_TERMINAL_COLOR_DEFAULT);
     }
+
+    ply_text_display_set_background_color (progress_bar->display,
+                                           PLY_TERMINAL_COLOR_DEFAULT);
+
+    ply_text_display_set_scrollable_area (progress_bar->display, 0, progress_bar->row - 1);
+    ply_text_display_set_cursor_position (progress_bar->display, 0, 0);
+    ply_text_display_enable_wrapping (progress_bar->display);
 }
 
 void

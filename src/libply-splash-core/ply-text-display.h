@@ -54,6 +54,12 @@ int  ply_text_display_get_number_of_columns (ply_text_display_t *display);
 void ply_text_display_set_cursor_position (ply_text_display_t *display,
                                            int                 column,
                                            int                 row);
+void ply_text_display_set_scrollable_area (ply_text_display_t *display,
+                                           int                 top_row,
+                                           int                 bottom_row);
+void ply_text_display_enable_wrapping (ply_text_display_t *display);
+void ply_text_display_disable_wrapping (ply_text_display_t *display);
+
 __attribute__((__format__ (__printf__, 2, 3)))
 void ply_text_display_write (ply_text_display_t *display,
                              const char         *format,

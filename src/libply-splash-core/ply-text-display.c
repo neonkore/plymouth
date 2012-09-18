@@ -58,6 +58,10 @@
 #define MOVE_CURSOR_SEQUENCE "\033[%d;%df"
 #endif
 
+#ifndef SET_TOP_AND_BOTTOM_MARGINS_SEQUENCE
+#define SET_TOP_AND_BOTTOM_MARGINS_SEQUENCE "\033[%d;%dr"
+#endif
+
 #ifndef HIDE_CURSOR_SEQUENCE
 #define HIDE_CURSOR_SEQUENCE "\033[?25l"
 #endif
@@ -68,6 +72,14 @@
 
 #ifndef COLOR_SEQUENCE_FORMAT
 #define COLOR_SEQUENCE_FORMAT "\033[%dm"
+#endif
+
+#ifndef ENABLE_WRAPPING_SEQUENCE
+#define ENABLE_WRAPPING_SEQUENCE "\033[?7h"
+#endif
+
+#ifndef DISABLE_WRAPPING_SEQUENCE
+#define DISABLE_WRAPPING_SEQUENCE "\033[?7l"
 #endif
 
 #ifndef PAUSE_SEQUENCE
@@ -145,6 +157,37 @@ ply_text_display_set_cursor_position (ply_text_display_t *display,
   ply_terminal_write (display->terminal,
                       MOVE_CURSOR_SEQUENCE,
                       row, column);
+}
+
+void
+ply_text_display_set_scrollable_area (ply_text_display_t *display,
+                                      int                 top_row,
+                                      int                 bottom_row)
+{
+  int number_of_rows;
+
+  number_of_rows = ply_text_display_get_number_of_rows (display);
+
+  top_row = CLAMP (top_row, 0, bottom_row);
+  bottom_row = CLAMP (bottom_row, top_row, number_of_rows - 1);
+
+  ply_terminal_write (display->terminal,
+                      SET_TOP_AND_BOTTOM_MARGINS_SEQUENCE,
+                      top_row, bottom_row);
+}
+
+void
+ply_text_display_enable_wrapping (ply_text_display_t *display)
+{
+  ply_terminal_write (display->terminal,
+                      ENABLE_WRAPPING_SEQUENCE);
+}
+
+void
+ply_text_display_disable_wrapping (ply_text_display_t *display)
+{
+  ply_terminal_write (display->terminal,
+                      DISABLE_WRAPPING_SEQUENCE);
 }
 
 void
