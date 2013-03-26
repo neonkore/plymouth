@@ -127,6 +127,7 @@ struct _ply_renderer_backend
   int32_t dither_blue;
 
   uint32_t is_active : 1;
+  uint32_t requires_flush_notification : 1;
 };
 
 ply_renderer_plugin_interface_t *ply_renderer_backend_get_interface (void);
@@ -397,6 +398,7 @@ create_backend (const char *device_name,
   backend->heads = ply_list_new ();
   backend->input_source.key_buffer = ply_buffer_new ();
   backend->terminal = terminal;
+  backend->requires_flush_notification = true;
 
   return backend;
 }
@@ -993,6 +995,70 @@ map_to_device (ply_renderer_backend_t *backend)
   return head_mapped;
 }
 
+static void
+notify_kernel_about_flushed_clip_rects (ply_renderer_backend_t *backend,
+                                        uint32_t                buffer_id,
+                                        struct drm_clip_rect   *clip_rects,
+                                        size_t                  number_of_clip_rects)
+{
+  int ret;
+
+  ret = drmModeDirtyFB (backend->device_fd,
+                        buffer_id,
+                        clip_rects,
+                        number_of_clip_rects);
+
+  if (ret == -ENOSYS)
+    {
+      ply_trace ("drm backend does not require explicit flush notification");
+      backend->requires_flush_notification = false;
+    }
+}
+
+static void
+notify_kernel_about_flushed_areas (ply_renderer_backend_t *backend,
+                                   uint32_t                buffer_id,
+                                   ply_list_t             *flushed_areas)
+{
+  ply_list_node_t *node;
+  struct drm_clip_rect *flushed_clip_rects;
+  size_t i;
+  size_t number_of_flushed_areas;
+
+  if (!backend->requires_flush_notification)
+    return;
+
+  number_of_flushed_areas = ply_list_get_length (flushed_areas);
+  flushed_clip_rects = malloc (number_of_flushed_areas * sizeof (struct drm_clip_rect));
+
+  i = 0;
+  node = ply_list_get_first_node (flushed_areas);
+  while (node != NULL)
+    {
+      ply_list_node_t *next_node;
+      ply_rectangle_t *flushed_area;
+
+      flushed_area = (ply_rectangle_t *) ply_list_node_get_data (node);
+
+      next_node = ply_list_get_next_node (flushed_areas, node);
+
+      flushed_clip_rects[i].x1 = flushed_area->x;
+      flushed_clip_rects[i].y1 = flushed_area->y;
+      flushed_clip_rects[i].x2 = flushed_area->x + flushed_area->width;
+      flushed_clip_rects[i].y2 = flushed_area->y + flushed_area->height;
+
+      node = next_node;
+      i++;
+    }
+
+  notify_kernel_about_flushed_clip_rects (backend,
+                                          buffer_id,
+                                          flushed_clip_rects,
+                                          number_of_flushed_areas);
+
+  free (flushed_clip_rects);
+}
+
 static bool
 ply_renderer_head_set_scan_out_buffer_to_console (ply_renderer_backend_t *backend,
                                                   ply_renderer_head_t    *head,
@@ -1057,6 +1123,20 @@ ply_renderer_head_set_scan_out_buffer_to_console (ply_renderer_backend_t *backen
 
   backend->driver_interface->end_flush (backend->driver,
                                         head->console_buffer_id);
+
+  if (backend->requires_flush_notification)
+    {
+      struct drm_clip_rect clip_rect;
+      clip_rect.x1 = area.x;
+      clip_rect.y1 = area.y;
+      clip_rect.x2 = area.x + area.width;
+      clip_rect.y2 = area.y + area.height;
+
+      notify_kernel_about_flushed_clip_rects (backend,
+                                              head->console_buffer_id,
+                                              &clip_rect,
+                                              1);
+    }
 
   backend->driver_interface->unmap_buffer (backend->driver,
                                            head->console_buffer_id);
@@ -1182,6 +1262,8 @@ flush_head (ply_renderer_backend_t *backend,
 
   backend->driver_interface->end_flush (backend->driver,
                                         head->scan_out_buffer_id);
+
+  notify_kernel_about_flushed_areas (backend, head->scan_out_buffer_id, areas_to_flush);
 
   ply_region_clear (updated_region);
 }
