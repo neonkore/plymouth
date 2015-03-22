@@ -875,7 +875,7 @@ draw_background (view_t             *view,
         if (view->background_image != NULL) {
                 uint32_t *data;
                 data = ply_image_get_data (view->background_image);
-                ply_pixel_buffer_fill_with_argb32_data (pixel_buffer, &area, data);
+                ply_pixel_buffer_fill_with_argb32_data (pixel_buffer, NULL, data);
         }
 
         if (plugin->watermark_image != NULL) {
