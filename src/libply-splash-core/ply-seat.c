@@ -283,22 +283,6 @@ ply_seat_close (ply_seat_t *seat)
         seat->renderer = NULL;
 }
 
-void
-ply_seat_set_splash (ply_seat_t        *seat,
-                     ply_boot_splash_t *splash)
-{
-        if (seat->splash == splash)
-                return;
-
-        if (seat->splash != NULL)
-                ply_boot_splash_detach_from_seat (splash, seat);
-
-        if (splash != NULL)
-                ply_boot_splash_attach_to_seat (splash, seat);
-
-        seat->splash = splash;
-}
-
 static void
 free_pixel_displays (ply_seat_t *seat)
 {

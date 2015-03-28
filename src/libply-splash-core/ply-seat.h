@@ -27,7 +27,6 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "ply-boot-splash.h"
 #include "ply-buffer.h"
 #include "ply-event-loop.h"
 #include "ply-keyboard.h"
@@ -53,8 +52,6 @@ void ply_seat_deactivate_renderer (ply_seat_t *seat);
 void ply_seat_activate_renderer (ply_seat_t *seat);
 void ply_seat_refresh_displays (ply_seat_t *seat);
 void ply_seat_close (ply_seat_t *seat);
-void ply_seat_set_splash (ply_seat_t        *seat,
-                          ply_boot_splash_t *splash);
 
 ply_list_t *ply_seat_get_pixel_displays (ply_seat_t *seat);
 ply_list_t *ply_seat_get_text_displays (ply_seat_t *seat);
