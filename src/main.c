@@ -136,8 +136,8 @@ static ply_boot_splash_t *load_theme (state_t    *state,
 static ply_boot_splash_t *show_theme (state_t    *state,
                                       const char *theme_path);
 
-static void attach_splash_to_seats (state_t           *state,
-                                    ply_boot_splash_t *splash);
+static void attach_splash_to_devices (state_t           *state,
+                                      ply_boot_splash_t *splash);
 static bool attach_to_running_session (state_t *state);
 static void detach_from_running_session (state_t *state);
 static void on_escape_pressed (state_t *state);
@@ -520,14 +520,14 @@ on_ask_for_password (state_t       *state,
                  * arrive shortly so just sit tight
                  */
                 if (state->is_shown) {
-                        bool has_open_seats;
+                        bool has_open_displays;
 
                         cancel_pending_delayed_show (state);
 
-                        has_open_seats = ply_device_manager_has_open_seats (state->device_manager);
+                        has_open_displays = ply_device_manager_has_open_displays (state->device_manager);
 
-                        if (has_open_seats) {
-                                ply_trace ("seats open now, showing splash immediately");
+                        if (has_open_displays) {
+                                ply_trace ("displays open now, showing splash immediately");
                                 show_splash (state);
                         } else {
                                 ply_trace ("splash still coming up, waiting a bit");
@@ -891,7 +891,7 @@ plymouth_should_show_default_splash (state_t *state)
 static void
 on_show_splash (state_t *state)
 {
-        bool has_open_seats;
+        bool has_open_displays;
 
         if (state->is_shown) {
                 ply_trace ("show splash called while already shown");
@@ -910,27 +910,39 @@ on_show_splash (state_t *state)
         }
 
         state->is_shown = true;
-        has_open_seats = ply_device_manager_has_open_seats (state->device_manager);
+        has_open_displays = ply_device_manager_has_open_displays (state->device_manager);
 
-        if (!state->is_attached && state->should_be_attached && has_open_seats)
+        if (!state->is_attached && state->should_be_attached && has_open_displays)
                 attach_to_running_session (state);
 
-        if (has_open_seats) {
-                ply_trace ("at least one seat already open, so loading splash");
+        if (has_open_displays) {
+                ply_trace ("at least one displays already open, so loading splash");
                 show_splash (state);
         } else {
-                ply_trace ("no seats available to show splash on, waiting...");
+                ply_trace ("no displays available to show splash on, waiting...");
         }
 }
 
 static void
-on_seat_removed (state_t    *state,
-                 ply_seat_t *seat)
+on_pixel_display_removed (state_t             *state,
+                          ply_pixel_display_t *pixel_display)
 {
-        ply_keyboard_t *keyboard;
+        if (state->boot_splash != NULL)
+                ply_boot_splash_remove_pixel_display (state->boot_splash, pixel_display);
+}
 
-        keyboard = ply_seat_get_keyboard (seat);
+static void
+on_text_display_removed (state_t             *state,
+                         ply_text_display_t *text_display)
+{
+        if (state->boot_splash != NULL)
+                ply_boot_splash_remove_text_display (state->boot_splash, text_display);
+}
 
+static void
+on_keyboard_removed (state_t    *state,
+                     ply_keyboard_t *keyboard)
+{
         ply_trace ("no longer listening for keystrokes");
         ply_keyboard_remove_input_handler (keyboard,
                                            (ply_keyboard_input_handler_t)
@@ -949,7 +961,7 @@ on_seat_removed (state_t    *state,
                                            on_enter);
 
         if (state->boot_splash != NULL)
-                ply_boot_splash_detach_from_seat (state->boot_splash, seat);
+                ply_boot_splash_remove_keyboard (state->boot_splash, keyboard);
 }
 
 static void
@@ -991,22 +1003,45 @@ show_splash (state_t *state)
 }
 
 static void
-on_seat_added (state_t    *state,
-               ply_seat_t *seat)
+on_pixel_display_added (state_t             *state,
+                        ply_pixel_display_t *pixel_display)
 {
-        ply_keyboard_t *keyboard;
-
         if (state->is_shown && !state->is_inactive) {
                 if (state->boot_splash == NULL) {
-                        ply_trace ("seat added before splash loaded, so loading splash now");
+                        ply_trace ("pixel display added before splash loaded, so loading splash now");
                         show_splash (state);
                 } else {
-                        ply_trace ("seat added after splash loaded, so attaching to splash");
-                        ply_boot_splash_attach_to_seat (state->boot_splash, seat);
+                        ply_trace ("pixel display added after splash loaded, so attaching to splash");
+                        ply_boot_splash_add_pixel_display (state->boot_splash, pixel_display);
                 }
         }
+}
 
-        keyboard = ply_seat_get_keyboard (seat);
+static void
+on_text_display_added (state_t            *state,
+                       ply_text_display_t *text_display)
+{
+        if (state->is_shown && !state->is_inactive) {
+                if (state->boot_splash == NULL) {
+                        ply_trace ("text display added before splash loaded, so loading splash now");
+                        show_splash (state);
+                } else {
+                        ply_trace ("text display added after splash loaded, so attaching to splash");
+                        ply_boot_splash_add_text_display (state->boot_splash, text_display);
+                }
+        }
+}
+
+static void
+on_keyboard_added (state_t        *state,
+                   ply_keyboard_t *keyboard)
+{
+        if (state->is_shown && !state->is_inactive) {
+                if (state->boot_splash != NULL) {
+                        ply_trace ("keyboard added after splash loaded, so attaching to splash");
+                        ply_boot_splash_add_keyboard (state->boot_splash, keyboard);
+                }
+        }
 
         ply_trace ("listening for keystrokes");
         ply_keyboard_add_input_handler (keyboard,
@@ -1033,12 +1068,20 @@ load_devices (state_t                   *state,
         state->device_manager = ply_device_manager_new (state->default_tty, flags);
         state->local_console_terminal = ply_device_manager_get_default_terminal (state->device_manager);
 
-        ply_device_manager_watch_seats (state->device_manager,
-                                        (ply_seat_added_handler_t)
-                                        on_seat_added,
-                                        (ply_seat_removed_handler_t)
-                                        on_seat_removed,
-                                        state);
+        ply_device_manager_watch_devices (state->device_manager,
+                                          (ply_pixel_display_added_handler_t)
+                                          on_pixel_display_added,
+                                          (ply_pixel_display_removed_handler_t)
+                                          on_pixel_display_removed,
+                                          (ply_text_display_added_handler_t)
+                                          on_text_display_added,
+                                          (ply_text_display_removed_handler_t)
+                                          on_text_display_removed,
+                                          (ply_keyboard_added_handler_t)
+                                          on_keyboard_added,
+                                          (ply_keyboard_removed_handler_t)
+                                          on_keyboard_removed,
+                                          state);
 }
 
 static void
@@ -1507,22 +1550,50 @@ on_enter (state_t    *state,
 }
 
 static void
-attach_splash_to_seats (state_t           *state,
-                        ply_boot_splash_t *splash)
+attach_splash_to_devices (state_t           *state,
+                          ply_boot_splash_t *splash)
 {
-        ply_list_t *seats;
+        ply_list_t *pixel_displays, *text_displays, *keyboards;
         ply_list_node_t *node;
 
-        seats = ply_device_manager_get_seats (state->device_manager);
-        node = ply_list_get_first_node (seats);
+        pixel_displays = ply_device_manager_get_pixel_displays (state->device_manager);
+        node = ply_list_get_first_node (pixel_displays);
         while (node != NULL) {
-                ply_seat_t *seat;
+                ply_pixel_display_t *pixel_display;
                 ply_list_node_t *next_node;
 
-                seat = ply_list_node_get_data (node);
-                next_node = ply_list_get_next_node (seats, node);
+                pixel_display = ply_list_node_get_data (node);
+                next_node = ply_list_get_next_node (pixel_displays, node);
 
-                ply_boot_splash_attach_to_seat (splash, seat);
+                ply_boot_splash_add_pixel_display (splash, pixel_display);
+
+                node = next_node;
+        }
+
+        text_displays = ply_device_manager_get_text_displays (state->device_manager);
+        node = ply_list_get_first_node (text_displays);
+        while (node != NULL) {
+                ply_text_display_t *text_display;
+                ply_list_node_t *next_node;
+
+                text_display = ply_list_node_get_data (node);
+                next_node = ply_list_get_next_node (text_displays, node);
+
+                ply_boot_splash_add_text_display (splash, text_display);
+
+                node = next_node;
+        }
+
+        keyboards = ply_device_manager_get_keyboards (state->device_manager);
+        node = ply_list_get_first_node (keyboards);
+        while (node != NULL) {
+                ply_keyboard_t *keyboard;
+                ply_list_node_t *next_node;
+
+                keyboard = ply_list_node_get_data (node);
+                next_node = ply_list_get_next_node (keyboards, node);
+
+                ply_boot_splash_add_keyboard (splash, keyboard);
 
                 node = next_node;
         }
@@ -1623,7 +1694,7 @@ show_theme (state_t    *state,
         if (splash == NULL)
                 return NULL;
 
-        attach_splash_to_seats (state, splash);
+        attach_splash_to_devices (state, splash);
         ply_device_manager_activate_renderers (state->device_manager);
 
         splash_mode = get_splash_mode_from_mode (state->mode);

@@ -36,6 +36,7 @@
 #include "ply-event-loop.h"
 #include "ply-hashtable.h"
 #include "ply-list.h"
+#include "ply-seat.h"
 #include "ply-utils.h"
 
 #define SUBSYSTEM_DRM "drm"
@@ -53,15 +54,23 @@ struct _ply_device_manager
         ply_terminal_t            *local_console_terminal;
         ply_seat_t                *local_console_seat;
         ply_list_t                *seats;
+        ply_list_t                *pixel_displays;
+        ply_list_t                *text_displays;
+        ply_list_t                *keyboards;
         struct udev               *udev_context;
         struct udev_queue         *udev_queue;
         int                        udev_queue_fd;
         ply_fd_watch_t            *udev_queue_fd_watch;
         struct udev_monitor       *udev_monitor;
 
-        ply_seat_added_handler_t   seat_added_handler;
-        ply_seat_removed_handler_t seat_removed_handler;
-        void                      *seat_event_handler_data;
+        void                      *device_event_handler_data;
+
+        ply_pixel_display_added_handler_t   pixel_display_added_handler;
+        ply_pixel_display_removed_handler_t pixel_display_removed_handler;
+        ply_text_display_added_handler_t    text_display_added_handler;
+        ply_text_display_removed_handler_t  text_display_removed_handler;
+        ply_keyboard_added_handler_t        keyboard_added_handler;
+        ply_keyboard_removed_handler_t      keyboard_removed_handler;
 };
 
 static void
@@ -240,6 +249,54 @@ create_seat_for_udev_device (ply_device_manager_t *manager,
 }
 
 static void
+remove_devices (ply_device_manager_t *manager,
+                 ply_seat_t           *seat)
+{
+        ply_list_t *displays;
+        ply_list_node_t *node;
+        ply_keyboard_t *keyboard;
+
+        keyboard = ply_seat_get_keyboard (seat);
+
+        if (keyboard != NULL && manager->keyboard_added_handler != NULL)
+                manager->keyboard_added_handler (manager->device_event_handler_data, keyboard);
+
+        displays = ply_seat_get_text_displays (seat);
+        node = ply_list_get_first_node (displays);
+        while (node != NULL) {
+                ply_text_display_t *display;
+                ply_list_node_t *next_node;
+
+                display = ply_list_node_get_data (node);
+                next_node = ply_list_get_next_node (displays, node);
+
+                ply_list_remove_data (manager->text_displays, display);
+
+                if (manager->text_display_removed_handler != NULL)
+                        manager->text_display_removed_handler (manager->device_event_handler_data, display);
+
+                node = next_node;
+        }
+
+        displays = ply_seat_get_pixel_displays (seat);
+        node = ply_list_get_first_node (displays);
+        while (node != NULL) {
+                ply_pixel_display_t *display;
+                ply_list_node_t *next_node;
+
+                display = ply_list_node_get_data (node);
+                next_node = ply_list_get_next_node (displays, node);
+
+                ply_list_remove_data (manager->pixel_displays, display);
+
+                if (manager->pixel_display_removed_handler != NULL)
+                        manager->pixel_display_removed_handler (manager->device_event_handler_data, display);
+
+                node = next_node;
+        }
+}
+
+static void
 free_seat_from_device_path (ply_device_manager_t *manager,
                             const char           *device_path)
 {
@@ -263,8 +320,7 @@ free_seat_from_device_path (ply_device_manager_t *manager,
                                 if (strcmp (device_path, renderer_device_path) == 0) {
                                         ply_trace ("removing seat associated with %s", device_path);
 
-                                        if (manager->seat_removed_handler != NULL)
-                                                manager->seat_removed_handler (manager->seat_event_handler_data, seat);
+                                        remove_devices (manager, seat);
 
                                         ply_seat_free (seat);
                                         ply_list_remove_node (manager->seats, node);
@@ -428,8 +484,7 @@ free_seats (ply_device_manager_t *manager)
                 seat = ply_list_node_get_data (node);
                 next_node = ply_list_get_next_node (manager->seats, node);
 
-                if (manager->seat_removed_handler != NULL)
-                        manager->seat_removed_handler (manager->seat_event_handler_data, seat);
+                remove_devices (manager, seat);
 
                 ply_seat_free (seat);
                 ply_list_remove_node (manager->seats, node);
@@ -505,6 +560,8 @@ ply_device_manager_new (const char                *default_tty,
                               (void *) ply_terminal_get_name (manager->local_console_terminal),
                               manager->local_console_terminal);
         manager->seats = ply_list_new ();
+        manager->pixel_displays = ply_list_new ();
+        manager->text_displays = ply_list_new ();
         manager->flags = flags;
 
         if (!(flags & PLY_DEVICE_MANAGER_FLAGS_IGNORE_UDEV))
@@ -529,6 +586,9 @@ ply_device_manager_free (ply_device_manager_t *manager)
                                                manager);
         free_seats (manager);
         ply_list_free (manager->seats);
+        ply_list_free (manager->pixel_displays);
+        ply_list_free (manager->text_displays);
+        ply_list_free (manager->keyboards);
 
         free_terminals (manager);
         ply_hashtable_free (manager->terminals);
@@ -615,6 +675,53 @@ add_consoles_from_file (ply_device_manager_t *manager,
 }
 
 static void
+add_devices (ply_device_manager_t *manager,
+             ply_seat_t           *seat)
+{
+        ply_list_t *displays;
+        ply_list_node_t *node;
+        ply_keyboard_t *keyboard;
+
+        displays = ply_seat_get_pixel_displays (seat);
+        node = ply_list_get_first_node (displays);
+        while (node != NULL) {
+                ply_pixel_display_t *display;
+                ply_list_node_t *next_node;
+
+                display = ply_list_node_get_data (node);
+                next_node = ply_list_get_next_node (displays, node);
+
+                ply_list_append_data (manager->pixel_displays, display);
+                if (manager->pixel_display_added_handler != NULL)
+                        manager->pixel_display_added_handler (manager->device_event_handler_data, display);
+
+                node = next_node;
+        }
+
+        displays = ply_seat_get_text_displays (seat);
+        node = ply_list_get_first_node (displays);
+        while (node != NULL) {
+                ply_text_display_t *display;
+                ply_list_node_t *next_node;
+
+                display = ply_list_node_get_data (node);
+                next_node = ply_list_get_next_node (displays, node);
+
+                ply_list_append_data (manager->text_displays, display);
+
+                if (manager->text_display_added_handler != NULL)
+                        manager->text_display_added_handler (manager->device_event_handler_data, display);
+
+                node = next_node;
+        }
+
+        keyboard = ply_seat_get_keyboard (seat);
+
+        if (keyboard != NULL && manager->keyboard_added_handler != NULL)
+                manager->keyboard_added_handler (manager->device_event_handler_data, keyboard);
+}
+
+static void
 create_seat_for_terminal_and_renderer_type (ply_device_manager_t *manager,
                                             const char           *device_path,
                                             ply_terminal_t       *terminal,
@@ -646,8 +753,7 @@ create_seat_for_terminal_and_renderer_type (ply_device_manager_t *manager,
         if (is_local_terminal)
                 manager->local_console_seat = seat;
 
-        if (manager->seat_added_handler != NULL)
-                manager->seat_added_handler (manager->seat_event_handler_data, seat);
+        add_devices (manager, seat);
 }
 
 static void
@@ -771,16 +877,24 @@ watch_for_coldplug_completion (ply_device_manager_t *manager)
 }
 
 void
-ply_device_manager_watch_seats (ply_device_manager_t      *manager,
-                                ply_seat_added_handler_t   seat_added_handler,
-                                ply_seat_removed_handler_t seat_removed_handler,
-                                void                      *data)
+ply_device_manager_watch_devices (ply_device_manager_t      *manager,
+                                  ply_pixel_display_added_handler_t   pixel_display_added_handler,
+                                  ply_pixel_display_removed_handler_t pixel_display_removed_handler,
+                                  ply_text_display_added_handler_t   text_display_added_handler,
+                                  ply_text_display_removed_handler_t text_display_removed_handler,
+                                  ply_keyboard_added_handler_t       keyboard_added_handler,
+                                  ply_keyboard_removed_handler_t     keyboard_removed_handler,
+                                  void                      *data)
 {
         bool done_with_initial_seat_setup;
 
-        manager->seat_added_handler = seat_added_handler;
-        manager->seat_removed_handler = seat_removed_handler;
-        manager->seat_event_handler_data = data;
+        manager->pixel_display_added_handler = pixel_display_added_handler;
+        manager->pixel_display_removed_handler = pixel_display_removed_handler;
+        manager->text_display_added_handler = text_display_added_handler;
+        manager->text_display_removed_handler = text_display_removed_handler;
+        manager->keyboard_added_handler = keyboard_added_handler;
+        manager->keyboard_removed_handler = keyboard_removed_handler;
+        manager->device_event_handler_data = data;
 
         /* Try to create seats for each serial device right away, if possible
          */
@@ -800,7 +914,7 @@ ply_device_manager_watch_seats (ply_device_manager_t      *manager,
 }
 
 bool
-ply_device_manager_has_open_seats (ply_device_manager_t *manager)
+ply_device_manager_has_open_displays (ply_device_manager_t *manager)
 {
         ply_list_node_t *node;
 
@@ -822,9 +936,21 @@ ply_device_manager_has_open_seats (ply_device_manager_t *manager)
 }
 
 ply_list_t *
-ply_device_manager_get_seats (ply_device_manager_t *manager)
+ply_device_manager_get_pixel_displays (ply_device_manager_t *manager)
 {
-        return manager->seats;
+        return manager->pixel_displays;
+}
+
+ply_list_t *
+ply_device_manager_get_text_displays (ply_device_manager_t *manager)
+{
+        return manager->text_displays;
+}
+
+ply_list_t *
+ply_device_manager_get_keyboards (ply_device_manager_t *manager)
+{
+        return manager->keyboards;
 }
 
 ply_terminal_t *
