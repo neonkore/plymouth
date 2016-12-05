@@ -9,4 +9,4 @@
 - maybe watch for VT switches and do things like restoring text color palette and stopping drawing the framebuffer
 - clean up the event loop watch api to always be in terms of watch objects instead of function/user_data pairs.
 - Fix --hide-splash to properly unredirect console until next --show-splash or event better make attach-to-session
-  xa client command, with detach-from-session a separate one
+  xsdfa client command, with detach-from-session a separate one
