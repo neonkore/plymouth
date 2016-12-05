@@ -1,4 +1,4 @@
-o- fix the tests so that they work better with "make check"
+- fix the tests so that they work better with "make check"
 - allow longer than 255 byte replies from server to client
 - make server send immediate ACK for password request and then ANSWER later with a link back to original request in ANSWER
 - Make --ask-for-password take a prompt message
