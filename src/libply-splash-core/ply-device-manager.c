@@ -701,7 +701,7 @@ create_devices_for_terminal_and_renderer_type (ply_device_manager_t *manager,
                                 ply_renderer_free (renderer);
 
                                 renderer = NULL;
-                                return;
+                                return true;
                         }
                 }
         }
