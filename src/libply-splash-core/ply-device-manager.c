@@ -45,12 +45,14 @@
 
 #ifdef HAVE_UDEV
 static void create_devices_from_udev (ply_device_manager_t *manager);
+static void process_udev_event (ply_device_manager_t *manager);
 #endif
 
 static bool create_devices_for_terminal_and_renderer_type (ply_device_manager_t *manager,
                                                            const char           *device_path,
                                                            ply_terminal_t       *terminal,
                                                            ply_renderer_type_t   renderer_type);
+
 struct _ply_device_manager
 {
         ply_device_manager_flags_t flags;
@@ -77,6 +79,9 @@ struct _ply_device_manager
         uint32_t                    serial_consoles_detected : 1;
         uint32_t                    renderers_activated : 1;
         uint32_t                    keyboards_activated : 1;
+        uint32_t                    device_event_pending : 1;
+        uint32_t                    device_timeout_reached : 1;
+        uint32_t                    devices_created : 1;
 };
 
 static void
@@ -331,10 +336,18 @@ create_devices_for_subsystem (ply_device_manager_t *manager,
 }
 
 static void
-on_udev_event (ply_device_manager_t *manager)
+process_udev_event (ply_device_manager_t *manager)
 {
         struct udev_device *device;
         const char *action;
+
+        if (!manager->renderers_activated) {
+                ply_trace ("udev event received while deactivated, ignoring");
+                manager->device_event_pending = true;
+                return;
+        }
+
+        manager->device_event_pending = false;
 
         device = udev_monitor_receive_device (manager->udev_monitor);
         if (device == NULL)
@@ -389,7 +402,7 @@ watch_for_udev_events (ply_device_manager_t *manager)
                                  fd,
                                  PLY_EVENT_LOOP_FD_STATUS_HAS_DATA,
                                  (ply_event_handler_t)
-                                 on_udev_event,
+                                 process_udev_event,
                                  NULL,
                                  manager);
 }
@@ -792,6 +805,15 @@ create_devices_from_udev (ply_device_manager_t *manager)
 {
         bool found_drm_device, found_fb_device;
 
+        manager->device_timeout_reached = true;
+
+        if (!manager->renderers_activated) {
+                ply_trace ("Timeout elapsed while deactivated, not looking for devices from udev");
+                return;
+        }
+
+        manager->devices_created = true;
+
         ply_trace ("Timeout elapsed, looking for devices from udev");
 
         found_drm_device = create_devices_for_subsystem (manager, SUBSYSTEM_DRM);
@@ -909,13 +931,23 @@ activate_renderer (char                 *device_path,
 void
 ply_device_manager_activate_renderers (ply_device_manager_t *manager)
 {
+        manager->renderers_activated = true;
+
+#ifdef HAVE_UDEV
+        if (manager->device_timeout_reached && !manager->devices_created) {
+                ply_trace ("reactivated after device timeout, so creating devices");
+                create_devices_from_udev (manager);
+        } else if (!manager->device_timeout_reached && manager->device_event_pending) {
+                ply_trace ("activated before device timeout and udev event pending, processing it now");
+                process_udev_event (manager);
+        }
+#endif
+
         ply_trace ("activating renderers");
         ply_hashtable_foreach (manager->renderers,
                                (ply_hashtable_foreach_func_t *)
                                activate_renderer,
                                manager);
-
-        manager->renderers_activated = true;
 }
 
 static void
