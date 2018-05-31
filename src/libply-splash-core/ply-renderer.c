@@ -51,6 +51,7 @@ struct _ply_renderer
 
         ply_renderer_type_t                    type;
         char                                  *device_name;
+        char                                  *plugin_device_name;
         ply_terminal_t                        *terminal;
 
         uint32_t                               input_source_is_open : 1;
@@ -100,6 +101,9 @@ ply_renderer_free (ply_renderer_t *renderer)
 const char *
 ply_renderer_get_device_name (ply_renderer_t *renderer)
 {
+        if (renderer->plugin_device_name != NULL)
+                return renderer->plugin_device_name;
+
         return renderer->device_name;
 }
 
@@ -156,8 +160,8 @@ ply_renderer_load_plugin (ply_renderer_t *renderer,
         }
 
         if (renderer->plugin_interface->get_device_name != NULL) {
-                free (renderer->device_name);
-                renderer->device_name = strdup (renderer->plugin_interface->get_device_name (renderer->backend));
+                free (renderer->plugin_device_name);
+                renderer->plugin_device_name = strdup (renderer->plugin_interface->get_device_name (renderer->backend));
         }
 
         return true;
@@ -169,6 +173,9 @@ ply_renderer_unload_plugin (ply_renderer_t *renderer)
         assert (renderer != NULL);
         assert (renderer->plugin_interface != NULL);
         assert (renderer->module_handle != NULL);
+
+        free (renderer->plugin_device_name);
+        renderer->plugin_device_name = NULL;
 
         ply_close_module (renderer->module_handle);
         renderer->plugin_interface = NULL;
