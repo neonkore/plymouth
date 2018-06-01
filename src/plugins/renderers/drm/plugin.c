@@ -145,6 +145,7 @@ static bool reset_scan_out_buffer_if_needed (ply_renderer_backend_t *backend,
                                              ply_renderer_head_t    *head);
 static void flush_head (ply_renderer_backend_t *backend,
                         ply_renderer_head_t    *head);
+static void close_device (ply_renderer_backend_t *backend);
 
 static bool
 ply_renderer_buffer_map (ply_renderer_backend_t *backend,
@@ -880,13 +881,13 @@ open_device (ply_renderer_backend_t *backend)
 
         if (!ply_terminal_open (backend->terminal)) {
                 ply_trace ("could not open terminal: %m");
-                return false;
+                goto failed;
         }
 
         if (!ply_terminal_is_vt (backend->terminal)) {
                 ply_trace ("terminal is not a VT");
                 ply_terminal_close (backend->terminal);
-                return false;
+                goto failed;
         }
 
         ply_terminal_watch_for_active_vt_change (backend->terminal,
@@ -895,6 +896,10 @@ open_device (ply_renderer_backend_t *backend)
                                                  backend);
 
         return true;
+
+failed:
+        close_device (backend);
+        return false;
 }
 
 static void
