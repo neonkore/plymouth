@@ -125,6 +125,15 @@ ply_label_load_plugin (ply_label_t *label)
 
         label->control = label->plugin_interface->create_control ();
 
+        if (label->control == NULL) {
+                ply_save_errno ();
+                label->plugin_interface = NULL;
+                ply_close_module (label->module_handle);
+                label->module_handle = NULL;
+                ply_restore_errno ();
+                return false;
+        }
+
         if (label->text != NULL)
                 label->plugin_interface->set_text_for_control (label->control,
                                                                label->text);
