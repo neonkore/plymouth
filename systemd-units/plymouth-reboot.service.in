@@ -9,5 +9,6 @@ ConditionVirtualization=!container
 [Service]
 ExecStart=@PLYMOUTH_DAEMON_DIR@/plymouthd --mode=reboot --attach-to-session
 ExecStartPost=-@PLYMOUTH_CLIENT_DIR@/plymouth show-splash
+KillMode=none
 Type=forking
 RemainAfterExit=yes

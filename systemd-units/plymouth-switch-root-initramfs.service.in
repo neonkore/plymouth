@@ -1,0 +1,12 @@
+[Unit]
+Description=Tell Plymouth To Jump To initramfs
+DefaultDependencies=no
+After=plymouth-halt.service plymouth-reboot.service plymouth-poweroff.service dracut-shutdown.service
+ConditionPathExists=/run/initramfs/bin/sh
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=-@PLYMOUTH_CLIENT_DIR@/plymouth update-root-fs --new-root-dir=/run/initramfs
+Type=oneshot
+RemainAfterExit=yes

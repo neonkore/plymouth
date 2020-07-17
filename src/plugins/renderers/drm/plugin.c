@@ -158,6 +158,7 @@ struct _ply_renderer_backend
         uint32_t                         is_active : 1;
         uint32_t        requires_explicit_flushing : 1;
         uint32_t                use_preferred_mode : 1;
+        uint32_t          watching_for_termination : 1;
 
         int                              panel_width;
         int                              panel_height;
@@ -170,6 +171,11 @@ static bool open_input_source (ply_renderer_backend_t      *backend,
                                ply_renderer_input_source_t *input_source);
 static void flush_head (ply_renderer_backend_t *backend,
                         ply_renderer_head_t    *head);
+
+static void close_device (ply_renderer_backend_t *backend);
+
+static void watch_for_termination (ply_renderer_backend_t *backend);
+static void stop_watching_for_termination (ply_renderer_backend_t *backend);
 
 /* A small helper to determine if we should try to keep the current mode
  * or pick the best mode ourselves, we keep the current mode only if the
@@ -945,6 +951,8 @@ activate (ply_renderer_backend_t *backend)
                 flush_head (backend, head);
                 node = ply_list_get_next_node (backend->heads, node);
         }
+
+        watch_for_termination (backend);
 }
 
 static void
@@ -953,6 +961,8 @@ deactivate (ply_renderer_backend_t *backend)
         ply_trace ("dropping master");
         drmDropMaster (backend->device_fd);
         backend->is_active = false;
+
+        stop_watching_for_termination (backend);
 }
 
 static void
@@ -1005,6 +1015,54 @@ unload_backend (ply_renderer_backend_t *backend)
 
 }
 
+static void
+on_term_signal (ply_renderer_backend_t *backend)
+{
+        pid_t pid;
+
+        ply_trace ("got SIGTERM, launching drm escrow to protect splash, and dying");
+
+        pid = fork();
+
+        if (pid == 0) {
+                const char *argv[] = { PLYMOUTH_DRM_ESCROW_DIRECTORY "/plymouthd-drm-escrow", NULL };
+
+                dup (backend->device_fd);
+                execve (argv[0], (char * const *) argv, NULL);
+
+		ply_trace ("could not launch drm escrow process: %m");
+
+                _exit (1);
+        }
+
+
+	close_device (backend);
+
+        exit (0);
+}
+
+static void
+watch_for_termination (ply_renderer_backend_t *backend)
+{
+        if (backend->watching_for_termination)
+                return;
+
+	ply_trace ("watching for termination signal");
+        ply_event_loop_watch_signal (backend->loop, SIGTERM, (ply_event_handler_t) on_term_signal, backend);
+        backend->watching_for_termination = true;
+}
+
+static void
+stop_watching_for_termination (ply_renderer_backend_t *backend)
+{
+        if (!backend->watching_for_termination)
+                return;
+
+	ply_trace ("stopping watching for termination signal");
+        ply_event_loop_stop_watching_signal (backend->loop, SIGTERM);
+        backend->watching_for_termination = false;
+}
+
 static bool
 open_device (ply_renderer_backend_t *backend)
 {
@@ -1033,6 +1091,8 @@ open_device (ply_renderer_backend_t *backend)
                                                  on_active_vt_changed,
                                                  backend);
 
+        watch_for_termination (backend);
+
         return true;
 }
 
@@ -1042,6 +1102,8 @@ close_device (ply_renderer_backend_t *backend)
         ply_trace ("closing device");
 
         free_heads (backend);
+
+        stop_watching_for_termination (backend);
 
         if (backend->terminal != NULL) {
                 ply_terminal_stop_watching_for_active_vt_change (backend->terminal,

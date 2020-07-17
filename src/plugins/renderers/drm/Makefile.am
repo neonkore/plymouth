@@ -5,7 +5,8 @@ AM_CPPFLAGS = -I$(top_srcdir)                                                 \
            -I$(srcdir)/../../..                                               \
            -I$(srcdir)/../..                                                  \
            -I$(srcdir)/..                                                     \
-           -I$(srcdir)
+           -I$(srcdir)                                                        \
+           -DPLYMOUTH_DRM_ESCROW_DIRECTORY=\"$(libexecdir)/plymouth\"
 
 plugindir = $(libdir)/plymouth/renderers
 plugin_LTLIBRARIES = drm.la

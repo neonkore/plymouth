@@ -2208,11 +2208,16 @@ main (int    argc,
         }
 
         /* Make the first byte in argv be '@' so that we can survive systemd's killing
-         * spree when going from initrd to /, and so we stay alive all the way until
-         * the power is killed at shutdown.
+         * spree when going from initrd to /
          * http://www.freedesktop.org/wiki/Software/systemd/RootStorageDaemons
+         *
+         * If the system is shutting down, we let systemd slay us because otherwise we
+         * may prevent the root fs from getting remounted read-only.
          */
-        argv[0][0] = '@';
+        if (state.mode != PLY_BOOT_SPLASH_MODE_SHUTDOWN &&
+	    state.mode != PLY_BOOT_SPLASH_MODE_REBOOT) {
+                argv[0][0] = '@';
+        }
 
         state.boot_server = start_boot_server (&state);
 

@@ -6,6 +6,7 @@ AM_CPPFLAGS = -I$(top_srcdir)                                                 \
            -I$(srcdir)/libply                                                 \
            -I$(srcdir)/libply-splash-core                                     \
            -I$(srcdir)                                                        \
+           -DPLYMOUTH_DRM_ESCROW_DIRECTORY=\"$(libexecdir)/plymouth\"         \
            -DPLYMOUTH_LOG_DIRECTORY=\"$(localstatedir)/log\"                  \
            -DPLYMOUTH_SPOOL_DIRECTORY=\"$(localstatedir)/spool/plymouth\"     \
            -DPLYMOUTH_TIME_DIRECTORY=\"$(localstatedir)/lib/plymouth/\"       \
@@ -29,6 +30,12 @@ plymouthd_SOURCES =                                                            \
                    ply-boot-server.c                                          \
                    plugins/splash/details/plugin.c                  \
                    main.c
+
+escrowdir = $(libexecdir)/plymouth
+escrow_PROGRAMS = plymouthd-drm-escrow
+
+plymouthd_drm_escrow_LDFLAGS = -all-static
+plymouthd_drm_escrow_SOURCES = plymouthd-drm-escrow.c
 
 plymouthdrundir = $(localstatedir)/run/plymouth
 plymouthdspooldir = $(localstatedir)/spool/plymouth
