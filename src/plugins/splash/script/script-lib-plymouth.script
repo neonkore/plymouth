@@ -9,6 +9,7 @@ PlymouthSetUpdateStatusFunction = Plymouth.SetUpdateStatusFunction;
 PlymouthSetDisplayNormalFunction = Plymouth.SetDisplayNormalFunction;
 PlymouthSetDisplayPasswordFunction = Plymouth.SetDisplayPasswordFunction;
 PlymouthSetDisplayQuestionFunction = Plymouth.SetDisplayQuestionFunction;
+PlymouthSetValidateInputFunction = Plymouth.SetValidateInputFunction;
 PlymouthSetMessageFunction = Plymouth.SetMessageFunction;
 PlymouthSetQuitFunction = Plymouth.SetQuitFunction;
 PlymouthGetMode = Plymouth.GetMode;

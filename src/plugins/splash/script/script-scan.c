@@ -253,6 +253,10 @@ void script_scan_read_next_token (script_scan_t       *scan,
                                         curchar = '\n';
                                         break;
 
+                                case 'e':
+                                        curchar = '\e';
+                                        break;
+
                                 case '0':
                                         curchar = '\0';
                                         break;

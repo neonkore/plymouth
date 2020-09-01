@@ -99,6 +99,9 @@ typedef struct
                                const char               *prompt,
                                const char               *entry_text,
                                bool                      is_secret);
+        bool (*validate_input) (ply_boot_splash_plugin_t *plugin,
+                                const char               *entry_text,
+                                const char               *add_text);
 } ply_boot_splash_plugin_interface_t;
 
 #endif /* PLY_BOOT_SPLASH_PLUGIN_H */

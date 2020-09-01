@@ -509,6 +509,17 @@ display_question (ply_boot_splash_plugin_t *plugin,
         unpause_displays (plugin);
 }
 
+static bool
+validate_input (ply_boot_splash_plugin_t *plugin,
+                const char               *entry_text,
+                const char               *add_text)
+{
+        return script_lib_plymouth_on_validate_input (plugin->script_state,
+                                                      plugin->script_plymouth_lib,
+                                                      entry_text,
+                                                      add_text);
+}
+
 static void
 display_prompt (ply_boot_splash_plugin_t *plugin,
                 const char               *prompt,
@@ -570,6 +581,7 @@ ply_boot_splash_plugin_get_interface (void)
                 .display_prompt       = display_prompt,
                 .display_message      = display_message,
                 .hide_message         = hide_message,
+                .validate_input       = validate_input,
         };
 
         return &plugin_interface;

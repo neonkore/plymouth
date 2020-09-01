@@ -86,6 +86,9 @@ void ply_boot_splash_display_prompt (ply_boot_splash_t *splash,
                                      const char        *prompt,
                                      const char        *entry_text,
                                      bool               is_secret);
+bool ply_boot_splash_validate_input (ply_boot_splash_t *splash,
+                                     const char        *entry_text,
+                                     const char        *add_text);
 void ply_boot_splash_attach_to_event_loop (ply_boot_splash_t *splash,
                                            ply_event_loop_t  *loop);
 void ply_boot_splash_attach_progress (ply_boot_splash_t *splash,

@@ -105,6 +105,7 @@ script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *st
         data->script_display_password_func = script_obj_new_null ();
         data->script_display_question_func = script_obj_new_null ();
         data->script_display_prompt_func = script_obj_new_null ();
+        data->script_validate_input_func = script_obj_new_null ();
         data->script_display_message_func = script_obj_new_null ();
         data->script_hide_message_func = script_obj_new_null ();
         data->script_quit_func = script_obj_new_null ();
@@ -174,6 +175,12 @@ script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *st
                                     "function",
                                     NULL);
         script_add_native_function (plymouth_hash,
+                                    "SetValidateInputFunction",
+                                    plymouth_set_function,
+                                    &data->script_validate_input_func,
+                                    "function",
+                                    NULL);
+        script_add_native_function (plymouth_hash,
                                     "SetDisplayMessageFunction",
                                     plymouth_set_function,
                                     &data->script_display_message_func,
@@ -223,6 +230,7 @@ void script_lib_plymouth_destroy (script_lib_plymouth_data_t *data)
         script_obj_unref (data->script_display_password_func);
         script_obj_unref (data->script_display_question_func);
         script_obj_unref (data->script_display_prompt_func);
+        script_obj_unref (data->script_validate_input_func);
         script_obj_unref (data->script_display_message_func);
         script_obj_unref (data->script_hide_message_func);
         script_obj_unref (data->script_quit_func);
@@ -371,6 +379,28 @@ void script_lib_plymouth_on_display_prompt (script_state_t             *state,
         script_obj_unref (entry_text_obj);
         script_obj_unref (is_secret_obj);
         script_obj_unref (ret.object);
+}
+
+bool script_lib_plymouth_on_validate_input (script_state_t             *state,
+                                            script_lib_plymouth_data_t *data,
+                                            const char                 *entry_text,
+                                            const char                 *add_text)
+{
+        bool input_valid;
+        script_obj_t *entry_text_obj = script_obj_new_string (entry_text);
+        script_obj_t *add_text_obj = script_obj_new_string (add_text);
+        script_return_t ret = script_execute_object (state,
+                                                     data->script_validate_input_func,
+                                                     NULL,
+                                                     entry_text_obj,
+                                                     add_text_obj,
+                                                     NULL);
+
+        script_obj_unref (add_text_obj);
+        script_obj_unref (entry_text_obj);
+        input_valid = script_obj_as_bool (ret.object);
+        script_obj_unref (ret.object);
+        return input_valid;
 }
 
 void script_lib_plymouth_on_display_message (script_state_t             *state,
