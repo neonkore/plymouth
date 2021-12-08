@@ -1628,9 +1628,9 @@ reset_scan_out_buffer_if_needed (ply_renderer_backend_t *backend,
                         return false;
 
         if (head->scan_out_buffer_needs_reset) {
-                ply_renderer_head_set_scan_out_buffer (backend, head,
-                                                       head->scan_out_buffer_id);
-                head->scan_out_buffer_needs_reset = false;
+                did_reset = ply_renderer_head_set_scan_out_buffer (backend, head,
+                                                                   head->scan_out_buffer_id);
+                head->scan_out_buffer_needs_reset = !did_reset;
                 return true;
         }
 
