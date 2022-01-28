@@ -313,6 +313,7 @@ AC_CONFIG_FILES([Makefile po/Makefile.in
            src/plugins/splash/space-flares/Makefile
            src/plugins/splash/two-step/Makefile
            src/plugins/splash/script/Makefile
+           src/plugins/splash/external-command/Makefile
            src/plugins/controls/Makefile
            src/plugins/controls/label/Makefile
            src/Makefile
