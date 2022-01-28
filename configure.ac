@@ -331,6 +331,7 @@ AC_CONFIG_FILES([Makefile po/Makefile.in
            themes/spinner/Makefile
            themes/script/Makefile
            themes/bgrt/Makefile
+           themes/twincam/Makefile
            images/Makefile
 	   scripts/plymouth-generate-initrd
 	   scripts/plymouth-populate-initrd

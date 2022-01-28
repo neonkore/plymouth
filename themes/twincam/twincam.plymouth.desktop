@@ -1,0 +1,7 @@
+[Plymouth Theme]
+Name=Twincam
+Description=Plugin that shows the system cameras as the splash
+ModuleName=external-command
+
+[external-command]
+Command=/usr/bin/twincam
