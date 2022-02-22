@@ -61,6 +61,21 @@
 #include "ply-renderer.h"
 #include "ply-renderer-plugin.h"
 
+static const char *function_key_escape_sequence[] = {
+        "\033[[A",  /* F1 */
+        "\033[[B",  /* F2 */
+        "\033[[C",  /* F3 */
+        "\033[[D",  /* F4 */
+        "\033[[E",  /* F5 */
+        "\033[17~", /* F6 */
+        "\033[18~", /* F7 */
+        "\033[19~", /* F8 */
+        "\033[20~", /* F9 */
+        "\033[21~", /* F10 */
+        "\033[22~", /* F11 */
+        "\033[23~", /* F12 */
+};
+
 struct _ply_renderer_head
 {
         ply_renderer_backend_t *backend;
@@ -482,6 +497,10 @@ on_key_event (GtkWidget   *widget,
                 ply_buffer_append_bytes (input_source->key_buffer, "\033", 1);
         } else if (event->keyval == GDK_KEY_BackSpace) { /* Backspace */
                 ply_buffer_append_bytes (input_source->key_buffer, "\177", 1);
+        } else if (GDK_KEY_F1  <= event->keyval &&
+                   GDK_KEY_F12  >= event->keyval) {      /* F1-F12 */
+                const char *key = function_key_escape_sequence[event->keyval - GDK_KEY_F1];
+                ply_buffer_append_bytes (input_source->key_buffer, key, strlen(key));
         } else {
                 gchar bytes[7];
                 int byte_count;

@@ -1516,6 +1516,8 @@ on_keyboard_input (state_t    *state,
                         ply_buffer_clear (state->entry_buffer);
                         ply_list_remove_node (state->entry_triggers, node);
                         free (entry_trigger);
+                } else if (character_size >= 2 && keyboard_input[0] == '\033') {
+                        /* Ignore escape sequences */
                 } else {
                         ply_buffer_append_bytes (state->entry_buffer, keyboard_input, character_size);
                 }

@@ -48,6 +48,12 @@
 #define KEY_RETURN '\n'
 #define KEY_BACKSPACE '\177'
 
+#define CSI_SEQUENCE_PREFIX "\033["
+#define CSI_SEQUENCE_MINIMUM_LENGTH (strlen (CSI_SEQUENCE_PREFIX) + 1)
+
+#define FUNCTION_KEY_SEQUENCE_PREFIX (CSI_SEQUENCE_PREFIX "[")
+#define FUNCTION_KEY_SEQUENCE_MINIMUM_LENGTH (strlen (FUNCTION_KEY_SEQUENCE_PREFIX) + 1)
+
 typedef void (*ply_keyboard_handler_t) (void *);
 
 typedef struct
@@ -195,7 +201,11 @@ process_keyboard_input (ply_keyboard_t *keyboard,
         wchar_t key;
         ply_list_node_t *node;
 
-        if ((ssize_t) mbrtowc (&key, keyboard_input, character_size, NULL) > 0) {
+        if (keyboard_input[0] == KEY_ESCAPE && character_size >= 2){
+                /* Escape sequence */
+                ply_buffer_append_bytes (keyboard->line_buffer,
+                                         keyboard_input, character_size);
+        } else if ((ssize_t) mbrtowc (&key, keyboard_input, character_size, NULL) > 0) {
                 switch (key) {
                 case KEY_CTRL_U:
                 case KEY_CTRL_W:
@@ -270,8 +280,46 @@ on_key_event (ply_keyboard_t *keyboard,
         while (i < size) {
                 ssize_t character_size;
                 char *keyboard_input;
+                size_t bytes_left = size - i;
 
-                character_size = (ssize_t) ply_utf8_character_get_size (bytes + i, size - i);
+                /* Control Sequence Introducer sequences
+                 */
+                if(bytes_left >= FUNCTION_KEY_SEQUENCE_MINIMUM_LENGTH &&
+                   strncmp (bytes + i, FUNCTION_KEY_SEQUENCE_PREFIX,
+                            strlen (FUNCTION_KEY_SEQUENCE_PREFIX)) == 0) {
+                        /* Special case - CSI [ after which the next character
+                         * is a function key
+                         */
+                        process_keyboard_input (keyboard, bytes + i, 4);
+                        i += 4;
+                        continue;
+                } else if(bytes_left >= CSI_SEQUENCE_MINIMUM_LENGTH && /* At least CSI + final byte */
+                          strncmp (bytes + i, CSI_SEQUENCE_PREFIX,
+                                   strlen (CSI_SEQUENCE_PREFIX)) == 0) {
+                        ssize_t csi_seq_size;
+                        csi_seq_size = 0;
+                        for (size_t j = strlen (CSI_SEQUENCE_PREFIX); j < bytes_left; j++) {
+                                if ((bytes[i + j] >= 0x40) &&
+                                    (bytes[i + j] <= 0x7E)) {
+                                        /* Final byte found */
+                                        csi_seq_size = j + 1;
+                                        break;
+                                }
+                                /* We presume if we aren't at the final byte, the intermediate
+                                 * bytes will be in the range 0x20-0x2F, but we don't validate
+                                 * that, since it's not really clear how invalid sequences should
+                                 * be handled, and letting them through to the keyboard input
+                                 * handlers seems just as reasonable as alternatives.
+                                 */
+                        }
+                        if (csi_seq_size == 0) /* No final byte found */
+                                continue;
+                        process_keyboard_input (keyboard, bytes + i, csi_seq_size);
+                        i += csi_seq_size;
+                        continue;
+                }
+
+                character_size = (ssize_t) ply_utf8_character_get_size (bytes + i, bytes_left);
 
                 if (character_size < 0)
                         break;
