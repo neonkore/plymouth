@@ -450,14 +450,14 @@ verify_add_or_change (ply_device_manager_t *manager,
         if (strcmp (action, "add") && strcmp (action, "change"))
                 return false;
 
+        if (manager->local_console_managed && manager->local_console_is_text) {
+                ply_trace ("ignoring since we're already using text splash for local console");
+                return false;
+        }
+
         subsystem = udev_device_get_subsystem (device);
 
         if (strcmp (subsystem, SUBSYSTEM_DRM) == 0) {
-                if (manager->local_console_managed && manager->local_console_is_text) {
-                        ply_trace ("ignoring since we're already using text splash for local console");
-                        return false;
-                }
-
                 if (!verify_drm_device (device)) {
                         ply_trace ("ignoring since we only handle SimpleDRM devices after timeout");
                         return false;
