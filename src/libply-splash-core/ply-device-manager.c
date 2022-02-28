@@ -411,7 +411,7 @@ verify_add_or_change (ply_device_manager_t *manager,
                       const char           *device_path,
                       struct udev_device   *device)
 {
-        const char *subsystem = udev_device_get_subsystem (device);
+        const char *subsystem;
 
         if (strcmp (action, "add") && strcmp (action, "change"))
                 return false;
