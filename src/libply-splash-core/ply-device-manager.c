@@ -455,6 +455,9 @@ verify_add_or_change (ply_device_manager_t *manager,
                 return false;
         }
 
+        if (manager->device_timeout_elapsed)
+                return true;
+
         subsystem = udev_device_get_subsystem (device);
 
         if (strcmp (subsystem, SUBSYSTEM_DRM) == 0) {
