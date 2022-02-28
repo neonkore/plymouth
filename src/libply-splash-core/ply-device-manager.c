@@ -279,7 +279,7 @@ create_devices_for_udev_device (ply_device_manager_t *manager,
                 subsystem = udev_device_get_subsystem (device);
                 ply_trace ("device subsystem is %s", subsystem);
 
-                if (subsystem != NULL && strcmp (subsystem, SUBSYSTEM_DRM) == 0) {
+                if (strcmp (subsystem, SUBSYSTEM_DRM) == 0) {
                         ply_trace ("found DRM device %s", device_path);
                         renderer_type = PLY_RENDERER_TYPE_DRM;
                 } else if (strcmp (subsystem, SUBSYSTEM_FRAME_BUFFER) == 0) {
