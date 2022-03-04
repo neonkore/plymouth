@@ -104,6 +104,7 @@ script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *st
         data->script_display_normal_func = script_obj_new_null ();
         data->script_display_password_func = script_obj_new_null ();
         data->script_display_question_func = script_obj_new_null ();
+        data->script_display_prompt_func = script_obj_new_null ();
         data->script_display_message_func = script_obj_new_null ();
         data->script_hide_message_func = script_obj_new_null ();
         data->script_quit_func = script_obj_new_null ();
@@ -167,6 +168,12 @@ script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *st
                                     "function",
                                     NULL);
         script_add_native_function (plymouth_hash,
+                                    "SetDisplayPromptFunction",
+                                    plymouth_set_function,
+                                    &data->script_display_prompt_func,
+                                    "function",
+                                    NULL);
+        script_add_native_function (plymouth_hash,
                                     "SetDisplayMessageFunction",
                                     plymouth_set_function,
                                     &data->script_display_message_func,
@@ -215,6 +222,7 @@ void script_lib_plymouth_destroy (script_lib_plymouth_data_t *data)
         script_obj_unref (data->script_display_normal_func);
         script_obj_unref (data->script_display_password_func);
         script_obj_unref (data->script_display_question_func);
+        script_obj_unref (data->script_display_prompt_func);
         script_obj_unref (data->script_display_message_func);
         script_obj_unref (data->script_hide_message_func);
         script_obj_unref (data->script_quit_func);
@@ -339,6 +347,29 @@ void script_lib_plymouth_on_display_question (script_state_t             *state,
 
         script_obj_unref (prompt_obj);
         script_obj_unref (entry_text_obj);
+        script_obj_unref (ret.object);
+}
+
+void script_lib_plymouth_on_display_prompt (script_state_t             *state,
+                                            script_lib_plymouth_data_t *data,
+                                            const char                 *prompt,
+                                            const char                 *entry_text,
+                                            bool                        is_secret)
+{
+        script_obj_t *prompt_obj = script_obj_new_string (prompt);
+        script_obj_t *entry_text_obj = script_obj_new_string (entry_text);
+        script_obj_t *is_secret_obj = script_obj_new_number (is_secret);
+        script_return_t ret = script_execute_object (state,
+                                                     data->script_display_prompt_func,
+                                                     NULL,
+                                                     prompt_obj,
+                                                     entry_text_obj,
+                                                     is_secret_obj,
+                                                     NULL);
+
+        script_obj_unref (prompt_obj);
+        script_obj_unref (entry_text_obj);
+        script_obj_unref (is_secret_obj);
         script_obj_unref (ret.object);
 }
 

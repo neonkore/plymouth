@@ -640,6 +640,18 @@ void ply_boot_splash_display_question (ply_boot_splash_t *splash,
                 splash->plugin_interface->display_question (splash->plugin, prompt, entry_text);
 }
 
+void ply_boot_splash_display_prompt (ply_boot_splash_t *splash,
+                                     const char        *prompt,
+                                     const char        *entry_text,
+                                     bool               is_secret)
+{
+        assert (splash != NULL);
+        assert (splash->plugin_interface != NULL);
+        assert (splash->plugin != NULL);
+        if (splash->plugin_interface->display_prompt != NULL)
+                splash->plugin_interface->display_prompt (splash->plugin, prompt, entry_text, is_secret);
+}
+
 
 
 void
