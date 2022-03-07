@@ -459,6 +459,15 @@ ply_free_string_array (char **array)
         free (array);
 }
 
+bool
+ply_string_has_prefix (const char *str, const char *prefix)
+{
+        if (str == NULL || prefix == NULL)
+                return false;
+
+        return strncmp (str, prefix, strlen (prefix)) == 0;
+}
+
 double
 ply_get_timestamp (void)
 {
