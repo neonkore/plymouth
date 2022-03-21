@@ -122,6 +122,27 @@ while [ $# -gt 0 ]; do
                 DO_HELP=1
         ;;
 
+        -[!-]*-*)
+                echo "Short options can't have embedded dashes" >&2
+                echo $(usage) >&2
+                exit 1
+        ;;
+
+        -[!-][!-]*)
+                COMPRESSED_OPTIONS="$1"
+                shift
+
+                ARGS=($COMPRESSED_OPTIONS $(echo $COMPRESSED_OPTIONS | sed -e 's/^-//' -e 's/[^-]/-& /g') "$@")
+
+                set -- "${ARGS[@]}"
+        ;;
+
+        -*)
+                echo "Unknown option: '$1'" >&2
+                echo $(usage) >&2
+                exit 1
+        ;;
+
         *)
                 if [ -n "$THEME_NAME" ]; then
                         echo "You can only specify one theme at a time" >&2
