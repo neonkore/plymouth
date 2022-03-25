@@ -89,6 +89,15 @@ static script_return_t script_lib_string_sub_string (script_state_t *state,
         return script_return_obj (substring_obj);
 }
 
+static script_return_t script_lib_string_length (script_state_t *state,
+                                                 void           *user_data)
+{
+        char *text = script_obj_as_string (state->this);
+        size_t text_length = strlen(text);
+        free (text);
+        return script_return_obj (script_obj_new_number (text_length));
+}
+
 script_lib_string_data_t *script_lib_string_setup (script_state_t *state)
 {
         script_lib_string_data_t *data = malloc (sizeof(script_lib_string_data_t));
@@ -107,6 +116,11 @@ script_lib_string_data_t *script_lib_string_setup (script_state_t *state)
                                     NULL,
                                     "start",
                                     "end",
+                                    NULL);
+        script_add_native_function (string_hash,
+                                    "Length",
+                                    script_lib_string_length,
+                                    NULL,
                                     NULL);
         script_obj_unref (string_hash);
         data->script_main_op = script_parse_string (script_lib_string_string, "script-lib-string.script");

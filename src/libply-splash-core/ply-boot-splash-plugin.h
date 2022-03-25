@@ -95,6 +95,10 @@ typedef struct
                                  const char               *entry_text);
         void (*become_idle)(ply_boot_splash_plugin_t *plugin,
                             ply_trigger_t            *idle_trigger);
+        void (*display_prompt)(ply_boot_splash_plugin_t *plugin,
+                               const char               *prompt,
+                               const char               *entry_text,
+                               bool                      is_secret);
 } ply_boot_splash_plugin_interface_t;
 
 #endif /* PLY_BOOT_SPLASH_PLUGIN_H */

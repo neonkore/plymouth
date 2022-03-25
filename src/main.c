@@ -1462,10 +1462,18 @@ update_display (state_t *state)
                         ply_boot_splash_display_password (state->boot_splash,
                                                           entry_trigger->prompt,
                                                           bullets);
+                        ply_boot_splash_display_prompt (state->boot_splash,
+                                                        entry_trigger->prompt,
+                                                        ply_buffer_get_bytes (state->entry_buffer),
+                                                        true);
                 } else if (entry_trigger->type == PLY_ENTRY_TRIGGER_TYPE_QUESTION) {
                         ply_boot_splash_display_question (state->boot_splash,
                                                           entry_trigger->prompt,
                                                           ply_buffer_get_bytes (state->entry_buffer));
+                        ply_boot_splash_display_prompt (state->boot_splash,
+                                                        entry_trigger->prompt,
+                                                        ply_buffer_get_bytes (state->entry_buffer),
+                                                        false);
                 } else {
                         ply_trace ("unkown entry type");
                 }

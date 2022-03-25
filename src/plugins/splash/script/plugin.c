@@ -510,6 +510,21 @@ display_question (ply_boot_splash_plugin_t *plugin,
 }
 
 static void
+display_prompt (ply_boot_splash_plugin_t *plugin,
+                const char               *prompt,
+                const char               *entry_text,
+                bool                      is_secret)
+{
+        pause_displays (plugin);
+        script_lib_plymouth_on_display_prompt (plugin->script_state,
+                                               plugin->script_plymouth_lib,
+                                               prompt,
+                                               entry_text,
+                                               is_secret);
+        unpause_displays (plugin);
+}
+
+static void
 display_message (ply_boot_splash_plugin_t *plugin,
                  const char               *message)
 {
@@ -552,6 +567,7 @@ ply_boot_splash_plugin_get_interface (void)
                 .display_normal       = display_normal,
                 .display_password     = display_password,
                 .display_question     = display_question,
+                .display_prompt       = display_prompt,
                 .display_message      = display_message,
                 .hide_message         = hide_message,
         };

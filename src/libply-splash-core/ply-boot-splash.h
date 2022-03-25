@@ -82,6 +82,10 @@ void ply_boot_splash_display_password (ply_boot_splash_t *splash,
 void ply_boot_splash_display_question (ply_boot_splash_t *splash,
                                        const char        *prompt,
                                        const char        *entry_text);
+void ply_boot_splash_display_prompt (ply_boot_splash_t *splash,
+                                     const char        *prompt,
+                                     const char        *entry_text,
+                                     bool               is_secret);
 void ply_boot_splash_attach_to_event_loop (ply_boot_splash_t *splash,
                                            ply_event_loop_t  *loop);
 void ply_boot_splash_attach_progress (ply_boot_splash_t *splash,
