@@ -17,7 +17,7 @@ fi
 
 function usage ()
 {
-  echo "usage: plymouth-set-default-theme { --list | --reset | <theme-name> [ --rebuild-initrd ] | --help }"
+  echo "usage: plymouth-set-default-theme { --list | --reset [ --rebuild-initrd ] | <theme-name> [ --rebuild-initrd ] | --rebuild-initrd | --help }"
 }
 
 function show_help() {
@@ -122,6 +122,27 @@ while [ $# -gt 0 ]; do
                 DO_HELP=1
         ;;
 
+        -[!-]*-*)
+                echo "Short options can't have embedded dashes" >&2
+                echo $(usage) >&2
+                exit 1
+        ;;
+
+        -[!-][!-]*)
+                COMPRESSED_OPTIONS="$1"
+                shift
+
+                ARGS=($COMPRESSED_OPTIONS $(echo $COMPRESSED_OPTIONS | sed -e 's/^-//' -e 's/[^-]/-& /g') "$@")
+
+                set -- "${ARGS[@]}"
+        ;;
+
+        -*)
+                echo "Unknown option: '$1'" >&2
+                echo $(usage) >&2
+                exit 1
+        ;;
+
         *)
                 if [ -n "$THEME_NAME" ]; then
                         echo "You can only specify one theme at a time" >&2
@@ -168,9 +189,15 @@ if [ `id -u` -ne 0 ]; then
 fi
 
 if [ $DO_RESET -ne 0 ]; then
-        [ -f ${PLYMOUTH_CONFDIR}/plymouthd.conf ] || exit 0
-        sed -i -e '/^Theme[[:blank:]]*=.*/d' ${PLYMOUTH_CONFDIR}/plymouthd.conf
-        exit $?
+        if [ -f ${PLYMOUTH_CONFDIR}/plymouthd.conf ]; then
+                sed -i -e '/^Theme[[:blank:]]*=.*/d' ${PLYMOUTH_CONFDIR}/plymouthd.conf || exit $?
+        fi
+
+        [ $DO_INITRD_REBUILD -eq 0 ] && exit 0
+fi
+
+if [ $DO_INITRD_REBUILD -ne 0 -a -z $THEME_NAME]; then
+        THEME_NAME=$(get_default_theme)
 fi
 
 if [ ! -e ${PLYMOUTH_DATADIR}/plymouth/themes/${THEME_NAME}/${THEME_NAME}.plymouth ]; then
