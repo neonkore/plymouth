@@ -117,6 +117,7 @@ struct _ply_event_loop
         ply_signal_dispatcher_t *signal_dispatcher;
 
         uint32_t                 should_exit : 1;
+        uint32_t                 is_running : 1;
 };
 
 static void ply_event_loop_remove_source (ply_event_loop_t   *loop,
@@ -488,6 +489,7 @@ ply_event_loop_new (void)
         assert (loop->epoll_fd >= 0);
 
         loop->should_exit = false;
+        loop->is_running = false;
         loop->exit_code = 0;
 
         loop->sources = ply_list_new ();
@@ -570,8 +572,7 @@ ply_event_loop_free (ply_event_loop_t *loop)
         if (loop == NULL)
                 return;
 
-        assert (ply_list_get_length (loop->sources) == 0);
-        assert (ply_list_get_length (loop->timeout_watches) == 0);
+        assert (!loop->is_running);
 
         ply_signal_dispatcher_free (loop->signal_dispatcher);
         ply_event_loop_free_exit_closures (loop);
@@ -1306,6 +1307,7 @@ ply_event_loop_exit (ply_event_loop_t *loop,
 int
 ply_event_loop_run (ply_event_loop_t *loop)
 {
+        loop->is_running = true;
         while (!loop->should_exit) {
                 ply_event_loop_process_pending_events (loop);
         }
@@ -1315,6 +1317,7 @@ ply_event_loop_run (ply_event_loop_t *loop)
         ply_event_loop_free_timeout_watches (loop);
 
         loop->should_exit = false;
+        loop->is_running = false;
 
         return loop->exit_code;
 }
