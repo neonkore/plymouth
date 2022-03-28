@@ -147,6 +147,10 @@ ply_command_free (ply_command_t *command)
                 option_node = ply_list_get_next_node (command->options, option_node);
         }
         ply_list_free (command->options);
+        ply_list_free (command->aliases);
+
+        free (command->name);
+        free (command->description);
         free (command);
 }
 
@@ -369,6 +373,7 @@ ply_command_parser_free (ply_command_parser_t *command_parser)
         }
         ply_list_free (command_parser->available_subcommands);
         ply_list_free (command_parser->read_subcommands);
+        ply_list_free (command_parser->arguments);
 
         ply_command_free (command_parser->main_command);
 
