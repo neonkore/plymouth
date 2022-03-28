@@ -1065,7 +1065,8 @@ main (int    argc,
                 ply_error ("%s", help_string);
 
                 free (help_string);
-                return 1;
+                exit_code = 1;
+                goto out;
         }
 
         ply_command_parser_get_options (state.command_parser,
@@ -1097,7 +1098,7 @@ main (int    argc,
                         printf ("%s", help_string);
 
                 free (help_string);
-                return 0;
+                goto out;
         }
 
         if (ply_kernel_command_line_has_argument ("plymouth.debug") && !ply_is_tracing ())
@@ -1108,7 +1109,7 @@ main (int    argc,
 
         if (should_get_plugin_path) {
                 printf ("%s\n", PLYMOUTH_PLUGIN_PATH);
-                return 0;
+                goto out;
         }
 
         is_connected = ply_boot_client_connect (state.client,
@@ -1119,15 +1120,17 @@ main (int    argc,
 
                 if (should_ping) {
                         ply_trace ("ping failed");
-                        return 1;
+                        exit_code = 1;
+                        goto out;
                 }
                 if (should_check_for_active_vt) {
                         ply_trace ("has active vt? failed");
-                        return 1;
+                        exit_code = 1;
+                        goto out;
                 }
                 if (should_wait) {
                         ply_trace ("no need to wait");
-                        return 0;
+                        goto out;
                 }
         }
 
@@ -1214,6 +1217,9 @@ main (int    argc,
         }
 
         exit_code = ply_event_loop_run (state.loop);
+
+out:
+        ply_command_parser_free (state.command_parser);
 
         ply_boot_client_free (state.client);
 
