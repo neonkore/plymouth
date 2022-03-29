@@ -652,6 +652,18 @@ void ply_boot_splash_display_prompt (ply_boot_splash_t *splash,
                 splash->plugin_interface->display_prompt (splash->plugin, prompt, entry_text, is_secret);
 }
 
+bool ply_boot_splash_validate_input (ply_boot_splash_t *splash,
+                                     const char        *entry_text,
+                                     const char        *add_text)
+{
+        bool input_valid = true;
+        assert (splash != NULL);
+        assert (splash->plugin_interface != NULL);
+        assert (splash->plugin != NULL);
+        if (splash->plugin_interface->validate_input != NULL)
+                input_valid = splash->plugin_interface->validate_input (splash->plugin, entry_text, add_text);
+        return input_valid;
+}
 
 
 void

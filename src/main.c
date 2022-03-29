@@ -1445,6 +1445,18 @@ start_boot_server (state_t *state)
         return server;
 }
 
+static bool
+validate_input (state_t *state,
+                const char *entry_text,
+                const char *add_text)
+{
+        bool input_valid;
+        if (!state->boot_splash)
+                return true;
+        input_valid = ply_boot_splash_validate_input (state->boot_splash, entry_text, add_text);
+        return input_valid;
+}
+
 
 static void
 update_display (state_t *state)
@@ -1506,7 +1518,8 @@ static void
 on_escape_pressed (state_t *state)
 {
         ply_trace ("escape key pressed");
-        toggle_between_splash_and_details (state);
+        if (validate_input (state, "", "\e"))
+                toggle_between_splash_and_details (state);
 }
 
 static void
@@ -1518,6 +1531,8 @@ on_keyboard_input (state_t    *state,
 
         node = ply_list_get_first_node (state->entry_triggers);
         if (node) { /* \x3 (ETX) is Ctrl+C and \x4 (EOT) is Ctrl+D */
+                if (!validate_input (state, ply_buffer_get_bytes (state->entry_buffer), keyboard_input))
+                        return;
                 if (character_size == 1 && (keyboard_input[0] == '\x3' || keyboard_input[0] == '\x4')) {
                         ply_entry_trigger_t *entry_trigger = ply_list_node_get_data (node);
                         ply_trigger_pull (entry_trigger->trigger, "\x3");
@@ -1583,6 +1598,8 @@ on_enter (state_t    *state,
         if (node) {
                 ply_entry_trigger_t *entry_trigger = ply_list_node_get_data (node);
                 const char *reply_text = ply_buffer_get_bytes (state->entry_buffer);
+                if (!validate_input (state, reply_text, "\n"))
+                        return;
                 ply_trigger_pull (entry_trigger->trigger, reply_text);
                 ply_buffer_clear (state->entry_buffer);
                 ply_list_remove_node (state->entry_triggers, node);
