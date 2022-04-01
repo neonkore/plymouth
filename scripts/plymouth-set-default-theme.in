@@ -196,7 +196,7 @@ if [ $DO_RESET -ne 0 ]; then
         [ $DO_INITRD_REBUILD -eq 0 ] && exit 0
 fi
 
-if [ $DO_INITRD_REBUILD -ne 0 -a -z $THEME_NAME]; then
+if [ $DO_INITRD_REBUILD -ne 0 -a -z $THEME_NAME ]; then
         THEME_NAME=$(get_default_theme)
 fi
 
