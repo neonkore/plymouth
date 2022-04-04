@@ -17,6 +17,8 @@ fedora-x86_64:
   before_script:
     - dnf install -y gcc libtool intltool gtk3-devel git libpng-devel gettext-devel libxslt docbook-style-xsl cairo-devel systemd-devel systemd-udev kernel-headers libdrm-devel pango-devel make ShellCheck
   <<: *autotools-build
+  only:
+    - merge_requests
 
 debian-stable-x86_64:
   stage: build
@@ -25,3 +27,5 @@ debian-stable-x86_64:
     - apt-get update -qq
     - apt-get install -y -qq --no-install-recommends autoconf automake autopoint bc build-essential docbook-xsl gcc gettext git intltool libdrm-dev libgtk-3-dev libpango1.0-dev libpng-dev libtool libudev-dev make pkg-config libsystemd-dev udev xsltproc shellcheck
   <<: *autotools-build
+  only:
+    - merge_requests
