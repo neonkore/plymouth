@@ -4,6 +4,7 @@ stages:
 
 .autotools-build: &autotools-build
   script:
+    - scripts/check-format.sh
     - NOCONFIGURE=1 ./autogen.sh
     - mkdir _build && cd _build
     - ../configure --prefix /usr
@@ -13,15 +14,19 @@ stages:
 
 fedora-x86_64:
   stage: build
-  image: 'registry.fedoraproject.org/fedora:30'
+  image: 'registry.fedoraproject.org/fedora:35'
   before_script:
-    - dnf install -y gcc libtool intltool gtk3-devel git libpng-devel gettext-devel libxslt docbook-style-xsl cairo-devel systemd-devel systemd-udev kernel-headers libdrm-devel pango-devel make ShellCheck
+    - dnf install -y gcc libtool intltool gtk3-devel git libpng-devel gettext-devel libxslt docbook-style-xsl cairo-devel systemd-devel systemd-udev kernel-headers libdrm-devel pango-devel make ShellCheck uncrustify patchutils
   <<: *autotools-build
+  only:
+    - merge_requests
 
 debian-stable-x86_64:
   stage: build
   image: debian:stable
   before_script:
     - apt-get update -qq
-    - apt-get install -y -qq --no-install-recommends autoconf automake autopoint bc build-essential docbook-xsl gcc gettext git intltool libdrm-dev libgtk-3-dev libpango1.0-dev libpng-dev libtool libudev-dev make pkg-config libsystemd-dev udev xsltproc shellcheck
+    - apt-get install -y -qq --no-install-recommends autoconf automake autopoint bc build-essential docbook-xsl gcc gettext git intltool libdrm-dev libgtk-3-dev libpango1.0-dev libpng-dev libtool libudev-dev make pkg-config libsystemd-dev udev xsltproc shellcheck uncrustify patchutils
   <<: *autotools-build
+  only:
+    - merge_requests
