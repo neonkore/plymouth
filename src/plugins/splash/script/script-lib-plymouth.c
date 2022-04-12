@@ -387,6 +387,10 @@ bool script_lib_plymouth_on_validate_input (script_state_t             *state,
                                             const char                 *add_text)
 {
         bool input_valid;
+
+        if (script_obj_is_null (data->script_validate_input_func))
+                return true;
+
         script_obj_t *entry_text_obj = script_obj_new_string (entry_text);
         script_obj_t *add_text_obj = script_obj_new_string (add_text);
         script_return_t ret = script_execute_object (state,

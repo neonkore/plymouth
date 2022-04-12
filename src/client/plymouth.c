@@ -1219,11 +1219,11 @@ main (int    argc,
         exit_code = ply_event_loop_run (state.loop);
 
 out:
-        ply_command_parser_free (state.command_parser);
-
         ply_boot_client_free (state.client);
 
         ply_event_loop_free (state.loop);
+
+        ply_command_parser_free (state.command_parser);
 
         return exit_code;
 }

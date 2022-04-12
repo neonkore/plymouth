@@ -663,8 +663,6 @@ ply_command_parser_get_command_options (ply_command_parser_t *parser,
         va_start (args, option_name);
         ply_command_parser_get_options_for_command (parser, command, option_name, args);
         va_end (args);
-
-        ply_list_append_data (parser->available_subcommands, command);
 }
 
 static void
