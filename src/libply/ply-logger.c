@@ -73,6 +73,9 @@ struct _ply_logger
 
         uint32_t                  is_enabled : 1;
         uint32_t                  tracing_is_enabled : 1;
+        uint32_t                  syslog_is_enabled : 1;
+        uint32_t                  is_error_default : 1;
+        uint32_t                  is_default : 1;
 };
 
 static bool ply_text_is_loggable (const char *string,
@@ -117,6 +120,13 @@ ply_logger_write_exception (ply_logger_t *logger,
 
         assert (message != NULL);
 
+        if (logger->syslog_is_enabled) {
+                syslog (LOG_WARNING,
+                        "%.*s",
+                        message,
+                        number_of_bytes);
+        }
+
         ply_logger_write (logger, message, number_of_bytes, false);
         free (message);
 }
@@ -154,6 +164,23 @@ ply_logger_flush_buffer (ply_logger_t *logger)
 
         if (logger->buffer_size == 0)
                 return true;
+
+        if (logger->syslog_is_enabled) {
+                int log_priority;
+
+                if (logger->tracing_is_enabled) {
+                        log_priority = LOG_DEBUG;
+                } else if (logger->is_default) {
+                        log_priority = LOG_INFO;
+                } else if (logger->is_error_default) {
+                        log_priority = LOG_WARNING;
+                }
+
+                syslog (log_priority,
+                        "%.*s",
+                        logger->buffer_size,
+                        logger->buffer);
+        }
 
         if (!ply_logger_write (logger, logger->buffer, logger->buffer_size, true))
                 return false;
@@ -252,6 +279,7 @@ ply_logger_get_default (void)
         if (logger == NULL) {
                 logger = ply_logger_new ();
                 ply_logger_set_output_fd (logger, STDOUT_FILENO);
+                logger->is_default = true;
         }
 
         return logger;
@@ -267,6 +295,7 @@ ply_logger_get_error_default (void)
                 ply_logger_set_output_fd (logger, STDERR_FILENO);
                 ply_logger_set_flush_policy (logger,
                                              PLY_LOGGER_FLUSH_POLICY_EVERY_TIME);
+                logger->is_error_default = true;
         }
 
         return logger;
@@ -302,6 +331,10 @@ ply_logger_free (ply_logger_t *logger)
                 if (ply_logger_is_logging (logger))
                         ply_logger_flush (logger);
                 close (logger->output_fd);
+        }
+
+        if (logger->syslog_is_enabled) {
+                ply_logger_close_syslog (logger);
         }
 
         ply_logger_free_filters (logger);
@@ -356,6 +389,18 @@ ply_logger_close_file (ply_logger_t *logger)
 
         close (logger->output_fd);
         ply_logger_set_output_fd (logger, -1);
+}
+
+void
+ply_logger_open_syslog (ply_logger_t *logger)
+{
+        openlog (NULL, 0, LOG_DAEMON);
+}
+
+void
+ply_logger_close_syslog (ply_logger_t *logger)
+{
+        closelog ();
 }
 
 void

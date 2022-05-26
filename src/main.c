@@ -1857,6 +1857,8 @@ static void
 check_verbosity (state_t *state)
 {
         char *stream;
+        char *syslog;
+        bool found_output_target = false;
 
         ply_trace ("checking if tracing should be enabled");
 
@@ -1906,7 +1908,18 @@ check_verbosity (state_t *state)
 
                         free (file);
                 }
-        } else {
+
+                found_output_target = true;
+        }
+
+        syslog = ply_kernel_command_line_get_key_value ("plymouth.debug=syslog");
+
+        if (syslog != NULL) {
+                ply_logger_open_syslog (ply_logger_get_error_default ());
+                found_output_target = true;
+        }
+
+        if (!found_output_target) {
                 ply_trace ("tracing shouldn't be enabled!");
         }
 

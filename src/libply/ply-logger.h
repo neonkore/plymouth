@@ -49,6 +49,8 @@ void ply_logger_free (ply_logger_t *logger);
 bool ply_logger_open_file (ply_logger_t *logger,
                            const char   *filename);
 void ply_logger_close_file (ply_logger_t *logger);
+bool ply_logger_open_syslog (ply_logger_t *logger);
+void ply_logger_close_syslog (ply_logger_t *logger);
 void ply_logger_set_output_fd (ply_logger_t *logger,
                                int           fd);
 int ply_logger_get_output_fd (ply_logger_t *logger);
