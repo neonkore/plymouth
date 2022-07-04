@@ -134,6 +134,8 @@ char *ply_kernel_command_line_get_key_value (const char *key);
 
 double ply_strtod (const char *str);
 
+bool ply_is_secure_boot_enabled (void);
+
 #endif
 
 #endif /* PLY_UTILS_H */

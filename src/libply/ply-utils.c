@@ -76,6 +76,11 @@
 #define PLY_MAX_COMMAND_LINE_SIZE 4096
 #endif
 
+#define EFI_VARIABLES_PATH "/sys/firmware/efi/efivars/"
+#define EFI_GLOBAL_VARIABLES_GUID "8be4df61-93ca-11d2-aa0d-00e098032b8c"
+#define SECURE_BOOT_GLOBAL_VARIABLES_FILE EFI_VARIABLES_PATH "SecureBoot-" EFI_GLOBAL_VARIABLES_GUID
+#define IS_SECURE_BOOT_ENABLED(sb_config) ((sb_config) == 0x1)
+
 static int errno_stack[PLY_ERRNO_STACK_SIZE];
 static int errno_stack_position = 0;
 
@@ -1021,3 +1026,43 @@ double ply_strtod (const char *str)
         return ret;
 }
 
+static bool
+check_secure_boot_settings (const char *filename)
+{
+        int fd;
+        int len;
+        uint8_t buf[5];
+
+        fd = open (filename, O_RDONLY);
+        len = read (fd, buf, 5);
+        close (fd);
+
+        /* /sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c
+         * is in a binary format. The file is exactly 5 bytes long and the last byte
+         * is the secure boot configuration. If it is 0x1, the secure boot is
+         * enabled.
+         */
+        if (len == 5)
+                if (IS_SECURE_BOOT_ENABLED (buf[4]))
+                        return true;
+
+        return false;
+}
+
+bool
+ply_is_secure_boot_enabled (void)
+{
+        static int is_secure_boot_enabled = -1;
+
+        if (is_secure_boot_enabled != -1)
+                return is_secure_boot_enabled;
+
+        if (check_secure_boot_settings (SECURE_BOOT_GLOBAL_VARIABLES_FILE))
+                is_secure_boot_enabled = true;
+        else
+                is_secure_boot_enabled = false;
+
+        return is_secure_boot_enabled;
+}
+
+/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */
