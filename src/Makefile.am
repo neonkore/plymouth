@@ -37,7 +37,7 @@ escrow_PROGRAMS = plymouthd-fd-escrow
 
 plymouthd_fd_escrow_SOURCES = plymouthd-fd-escrow.c
 
-plymouthdrundir = $(localstatedir)/run/plymouth
+plymouthdrundir = $(plymouthruntimedir)
 plymouthdspooldir = $(localstatedir)/spool/plymouth
 plymouthdtimedir = $(localstatedir)/lib/plymouth
 
