@@ -117,14 +117,14 @@ typedef struct
 
 typedef struct
 {
-        bool                      suppress_messages;
-        bool                      progress_bar_show_percent_complete;
-        bool                      use_progress_bar;
-        bool                      use_animation;
-        bool                      use_end_animation;
-        bool                      use_firmware_background;
-        char                     *title;
-        char                     *subtitle;
+        bool  suppress_messages;
+        bool  progress_bar_show_percent_complete;
+        bool  use_progress_bar;
+        bool  use_animation;
+        bool  use_end_animation;
+        bool  use_firmware_background;
+        char *title;
+        char *subtitle;
 } mode_settings_t;
 
 struct _ply_boot_splash_plugin
@@ -197,7 +197,8 @@ static void display_message (ply_boot_splash_plugin_t *plugin,
                              const char               *message);
 static void become_idle (ply_boot_splash_plugin_t *plugin,
                          ply_trigger_t            *idle_trigger);
-static void view_show_message (view_t *view, const char *message);
+static void view_show_message (view_t     *view,
+                               const char *message);
 
 static view_t *
 view_new (ply_boot_splash_plugin_t *plugin,
@@ -323,25 +324,26 @@ view_load_end_animation (view_t *view)
 }
 
 static bool
-get_bgrt_sysfs_info(int *x_offset, int *y_offset,
-                    ply_pixel_buffer_rotation_t *rotation)
+get_bgrt_sysfs_info (int                         *x_offset,
+                     int                         *y_offset,
+                     ply_pixel_buffer_rotation_t *rotation)
 {
         bool ret = false;
         char buf[64];
         int status;
         FILE *f;
 
-        f = fopen("/sys/firmware/acpi/bgrt/status", "r");
+        f = fopen ("/sys/firmware/acpi/bgrt/status", "r");
         if (!f)
                 return false;
 
-        if (!fgets(buf, sizeof(buf), f))
+        if (!fgets (buf, sizeof(buf), f))
                 goto out;
 
-        if (sscanf(buf, "%d", &status) != 1)
+        if (sscanf (buf, "%d", &status) != 1)
                 goto out;
 
-        fclose(f);
+        fclose (f);
 
         switch (status & BGRT_STATUS_ORIENTATION_OFFSET_MASK) {
         case BGRT_STATUS_ORIENTATION_OFFSET_0:
@@ -358,31 +360,31 @@ get_bgrt_sysfs_info(int *x_offset, int *y_offset,
                 break;
         }
 
-        f = fopen("/sys/firmware/acpi/bgrt/xoffset", "r");
+        f = fopen ("/sys/firmware/acpi/bgrt/xoffset", "r");
         if (!f)
                 return false;
 
-        if (!fgets(buf, sizeof(buf), f))
+        if (!fgets (buf, sizeof(buf), f))
                 goto out;
 
-        if (sscanf(buf, "%d", x_offset) != 1)
+        if (sscanf (buf, "%d", x_offset) != 1)
                 goto out;
 
-        fclose(f);
+        fclose (f);
 
-        f = fopen("/sys/firmware/acpi/bgrt/yoffset", "r");
+        f = fopen ("/sys/firmware/acpi/bgrt/yoffset", "r");
         if (!f)
                 return false;
 
-        if (!fgets(buf, sizeof(buf), f))
+        if (!fgets (buf, sizeof(buf), f))
                 goto out;
 
-        if (sscanf(buf, "%d", y_offset) != 1)
+        if (sscanf (buf, "%d", y_offset) != 1)
                 goto out;
 
         ret = true;
 out:
-        fclose(f);
+        fclose (f);
         return ret;
 }
 
@@ -411,8 +413,8 @@ view_set_bgrt_background (view_t *view)
         if (!view->plugin->background_bgrt_image)
                 return;
 
-        if (!get_bgrt_sysfs_info(&sysfs_x_offset, &sysfs_y_offset,
-                                 &bgrt_rotation)) {
+        if (!get_bgrt_sysfs_info (&sysfs_x_offset, &sysfs_y_offset,
+                                  &bgrt_rotation)) {
                 ply_trace ("get bgrt sysfs info failed");
                 return;
         }
@@ -440,7 +442,7 @@ view_set_bgrt_background (view_t *view)
         if (have_panel_props &&
             (panel_rotation == PLY_PIXEL_BUFFER_ROTATE_CLOCKWISE ||
              panel_rotation == PLY_PIXEL_BUFFER_ROTATE_COUNTER_CLOCKWISE) &&
-            (panel_width  - view->plugin->background_bgrt_raw_width) / 2 != sysfs_x_offset &&
+            (panel_width - view->plugin->background_bgrt_raw_width) / 2 != sysfs_x_offset &&
             (panel_height - view->plugin->background_bgrt_raw_width) / 2 == sysfs_x_offset)
                 bgrt_rotation = panel_rotation;
 
@@ -458,7 +460,7 @@ view_set_bgrt_background (view_t *view)
          */
         if (bgrt_rotation != PLY_PIXEL_BUFFER_ROTATE_UPRIGHT) {
                 if (bgrt_rotation != panel_rotation) {
-                        ply_trace ("bgrt orientation mismatch, bgrt_rot %d panel_rot %d", (int)bgrt_rotation, (int)panel_rotation);
+                        ply_trace ("bgrt orientation mismatch, bgrt_rot %d panel_rot %d", (int) bgrt_rotation, (int) panel_rotation);
                         return;
                 }
 
@@ -543,7 +545,7 @@ view_set_bgrt_background (view_t *view)
          * yoffset perfectly center the image and in that case we use them.
          */
         if (!have_panel_props && screen_scale == 1 &&
-            (screen_width  - width ) / 2 == sysfs_x_offset &&
+            (screen_width - width) / 2 == sysfs_x_offset &&
             (screen_height - height) / 2 == sysfs_y_offset) {
                 x_offset = sysfs_x_offset;
                 y_offset = sysfs_y_offset;
@@ -599,9 +601,9 @@ view_load (view_t *view)
         screen_width = ply_pixel_display_get_width (view->display);
         screen_height = ply_pixel_display_get_height (view->display);
 
-        buffer = ply_renderer_get_buffer_for_head(
-                        ply_pixel_display_get_renderer (view->display),
-                        ply_pixel_display_get_renderer_head (view->display));
+        buffer = ply_renderer_get_buffer_for_head (
+                ply_pixel_display_get_renderer (view->display),
+                ply_pixel_display_get_renderer_head (view->display));
         screen_scale = ply_pixel_buffer_get_device_scale (buffer);
 
         view_set_bgrt_background (view);
@@ -673,7 +675,7 @@ view_load (view_t *view)
 
         if (plugin->mode_settings[plugin->mode].title) {
                 ply_label_set_text (view->title_label,
-                                    _(plugin->mode_settings[plugin->mode].title));
+                                    _ (plugin->mode_settings[plugin->mode].title));
                 title_height = ply_label_get_height (view->title_label);
         } else {
                 ply_label_hide (view->title_label);
@@ -681,7 +683,7 @@ view_load (view_t *view)
 
         if (plugin->mode_settings[plugin->mode].subtitle) {
                 ply_label_set_text (view->subtitle_label,
-                                    _(plugin->mode_settings[plugin->mode].subtitle));
+                                    _ (plugin->mode_settings[plugin->mode].subtitle));
                 subtitle_height = ply_label_get_height (view->subtitle_label);
         } else {
                 ply_label_hide (view->subtitle_label);
@@ -927,18 +929,18 @@ view_show_prompt (view_t     *view,
                         view->dialog_area = view->box_area;
                 } else {
                         view->dialog_area.width = view->lock_area.width + entry_width;
-                        view->dialog_area.height = MAX(view->lock_area.height, entry_height);
+                        view->dialog_area.height = MAX (view->lock_area.height, entry_height);
                         view->dialog_area.x = (screen_width - view->dialog_area.width) * plugin->dialog_horizontal_alignment;
                         view->dialog_area.y = (screen_height - view->dialog_area.height) * plugin->dialog_vertical_alignment;
                 }
 
                 view->lock_area.x =
-                    view->dialog_area.x +
-                    (view->dialog_area.width -
-                     (view->lock_area.width + entry_width)) / 2.0;
+                        view->dialog_area.x +
+                        (view->dialog_area.width -
+                         (view->lock_area.width + entry_width)) / 2.0;
                 view->lock_area.y =
-                    view->dialog_area.y +
-                    (view->dialog_area.height - view->lock_area.height) / 2.0;
+                        view->dialog_area.y +
+                        (view->dialog_area.height - view->lock_area.height) / 2.0;
 
                 x = view->lock_area.x + view->lock_area.width;
                 y = view->dialog_area.y +
@@ -976,7 +978,7 @@ view_show_prompt (view_t     *view,
         if (show_keyboard_indicators) {
                 keyboard_indicator_width =
                         ply_keymap_icon_get_width (view->keymap_icon);
-                keyboard_indicator_height = MAX(
+                keyboard_indicator_height = MAX (
                         ply_capslock_icon_get_height (view->capslock_icon),
                         ply_keymap_icon_get_height (view->keymap_icon));
 
@@ -1775,7 +1777,7 @@ update_progress_animation (ply_boot_splash_plugin_t *plugin,
                 ply_progress_bar_set_fraction_done (view->progress_bar, fraction_done);
                 if (!ply_progress_bar_is_hidden (view->progress_bar) &&
                     plugin->mode_settings[plugin->mode].progress_bar_show_percent_complete) {
-                        snprintf (buf, sizeof(buf), _("%d%% complete"), (int)(fraction_done * 100));
+                        snprintf (buf, sizeof(buf), _ ("%d%% complete"), (int) (fraction_done * 100));
                         view_show_message (view, buf);
                 }
 
@@ -1923,7 +1925,7 @@ hide_prompt (ply_boot_splash_plugin_t *plugin)
 
 static void
 view_show_message (view_t     *view,
-                   const char  *message)
+                   const char *message)
 {
         ply_boot_splash_plugin_t *plugin = view->plugin;
         int x, y, width, height;

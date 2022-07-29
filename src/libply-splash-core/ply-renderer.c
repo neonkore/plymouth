@@ -277,11 +277,12 @@ ply_renderer_open (ply_renderer_t *renderer)
         renderer->is_active = false;
         for (i = 0; known_plugins[i].type != PLY_RENDERER_TYPE_NONE; i++) {
                 if (renderer->type == known_plugins[i].type ||
-                    renderer->type == PLY_RENDERER_TYPE_AUTO)
+                    renderer->type == PLY_RENDERER_TYPE_AUTO) {
                         if (ply_renderer_open_plugin (renderer, known_plugins[i].path)) {
                                 renderer->is_active = true;
                                 goto out;
                         }
+                }
         }
 
         ply_trace ("could not find suitable rendering plugin");
@@ -312,7 +313,7 @@ ply_renderer_activate (ply_renderer_t *renderer)
         assert (renderer->plugin_interface != NULL);
 
         if (renderer->is_active)
-              return;
+                return;
 
         renderer->plugin_interface->activate (renderer->backend);
         renderer->is_active = true;

@@ -416,8 +416,8 @@ static script_return_t sprite_window_set_background_bottom_color (script_state_t
         return script_return_obj_null ();
 }
 
-static void script_lib_draw_brackground (ply_pixel_buffer_t *pixel_buffer,
-                                         ply_rectangle_t *clip_area,
+static void script_lib_draw_brackground (ply_pixel_buffer_t       *pixel_buffer,
+                                         ply_rectangle_t          *clip_area,
                                          script_lib_sprite_data_t *data)
 {
         if (data->background_color_start == data->background_color_end) {
@@ -455,15 +455,15 @@ static void script_lib_sprite_draw_area (script_lib_display_t *display,
 
         /* Check If the first sprite should be rendered opaque */
         if (sprite->image && !sprite->remove_me &&
-            ply_pixel_buffer_is_opaque (sprite->image) && sprite->opacity == 1.0)  {
+            ply_pixel_buffer_is_opaque (sprite->image) && sprite->opacity == 1.0) {
                 int position_x = sprite->x - display->x;
                 int position_y = sprite->y - display->y;
 
                 /* In that case only draw the background if the sprite doesn't
                  * cover the complete area */
                 if (position_x > x || position_y > y ||
-                    ((int)ply_pixel_buffer_get_width (sprite->image) + position_x) < (x + width) ||
-                    ((int)ply_pixel_buffer_get_height (sprite->image) + position_y) < (y + height))
+                    ((int) ply_pixel_buffer_get_width (sprite->image) + position_x) < (x + width) ||
+                    ((int) ply_pixel_buffer_get_height (sprite->image) + position_y) < (y + height))
                         script_lib_draw_brackground (pixel_buffer, &clip_area, data);
         } else {
                 script_lib_draw_brackground (pixel_buffer, &clip_area, data);
@@ -560,6 +560,7 @@ script_lib_sprite_data_t *script_lib_sprite_setup (script_state_t *state,
         }
 
         script_obj_t *sprite_hash = script_obj_hash_get_element (state->global, "Sprite");
+
         script_add_native_function (sprite_hash,
                                     "_New",
                                     sprite_new,
@@ -624,6 +625,7 @@ script_lib_sprite_data_t *script_lib_sprite_setup (script_state_t *state,
 
 
         script_obj_t *window_hash = script_obj_hash_get_element (state->global, "Window");
+
         script_add_native_function (window_hash,
                                     "GetWidth",
                                     sprite_window_get_width,
@@ -685,12 +687,14 @@ script_lib_sprite_data_t *script_lib_sprite_setup (script_state_t *state,
         data->background_color_end = 0x000000;
         data->full_refresh = true;
         script_return_t ret = script_execute (state, data->script_main_op);
+
         script_obj_unref (ret.object);
         return data;
 }
 
 static int
-sprite_compare_z (void *data_a, void *data_b)
+sprite_compare_z (void *data_a,
+                  void *data_b)
 {
         sprite_t *sprite_a = data_a;
         sprite_t *sprite_b = data_b;
@@ -714,27 +718,26 @@ region_add_area (ply_region_t *region,
         ply_region_add_rectangle (region, &rectangle);
 }
 
-void script_lib_sprite_pixel_display_removed (script_lib_sprite_data_t *data, ply_pixel_display_t *pixel_display)
+void script_lib_sprite_pixel_display_removed (script_lib_sprite_data_t *data,
+                                              ply_pixel_display_t      *pixel_display)
 {
-    ply_list_node_t *node;
-    ply_list_node_t *next_node;
-    script_lib_display_t* display;
+        ply_list_node_t *node;
+        ply_list_node_t *next_node;
+        script_lib_display_t *display;
 
-    if (!data)
-        return;
+        if (!data)
+                return;
 
-    node = ply_list_get_first_node (data->displays);
-    while (node)
-    {
-        next_node = ply_list_get_next_node (data->displays, node);
-        display = ply_list_node_get_data (node);
+        node = ply_list_get_first_node (data->displays);
+        while (node) {
+                next_node = ply_list_get_next_node (data->displays, node);
+                display = ply_list_node_get_data (node);
 
-        if (display->pixel_display == pixel_display)
-        {
-            ply_list_remove_node (data->displays, node);
+                if (display->pixel_display == pixel_display) {
+                        ply_list_remove_node (data->displays, node);
+                }
+                node = next_node;
         }
-        node = next_node;
-    }
 }
 
 void
@@ -745,7 +748,7 @@ script_lib_sprite_refresh (script_lib_sprite_data_t *data)
         ply_list_t *rectable_list;
 
         if (!data)
-            return;
+                return;
 
         region = ply_region_new ();
 

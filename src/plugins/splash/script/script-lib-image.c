@@ -70,6 +70,7 @@ static script_return_t image_new (script_state_t *state,
                 asprintf (&path_filename, "%s/%s", data->image_dir, filename);
         }
         ply_image_t *file_image = ply_image_new (path_filename);
+
         if (ply_image_load (file_image)) {
                 ply_pixel_buffer_t *buffer = ply_image_convert_to_pixel_buffer (file_image);
                 reply = script_obj_new_native (buffer, data->class);
@@ -166,7 +167,7 @@ static script_return_t image_scale (script_state_t *state,
 }
 
 static script_return_t image_tile (script_state_t *state,
-                                    void           *user_data)
+                                   void           *user_data)
 {
         script_lib_image_data_t *data = user_data;
         ply_pixel_buffer_t *image = script_obj_as_native_of_class (state->this, data->class);
@@ -331,6 +332,7 @@ script_lib_image_data_t *script_lib_image_setup (script_state_t *state,
         script_obj_unref (image_hash);
         data->script_main_op = script_parse_string (script_lib_image_string, "script-lib-image.script");
         script_return_t ret = script_execute (state, data->script_main_op);
+
         script_obj_unref (ret.object);
         return data;
 }

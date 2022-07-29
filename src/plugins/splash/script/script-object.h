@@ -29,14 +29,14 @@
 typedef enum
 {
         SCRIPT_OBJ_CMP_RESULT_EQ = 1 << 1,
-                SCRIPT_OBJ_CMP_RESULT_GT = 1 << 2,
-                SCRIPT_OBJ_CMP_RESULT_LT = 1 << 3,
-                SCRIPT_OBJ_CMP_RESULT_NE = 1 << 4,
+        SCRIPT_OBJ_CMP_RESULT_GT = 1 << 2,
+        SCRIPT_OBJ_CMP_RESULT_LT = 1 << 3,
+        SCRIPT_OBJ_CMP_RESULT_NE = 1 << 4,
 } script_obj_cmp_result_t;
 
 
 typedef void *(*script_obj_direct_func_t)(script_obj_t *,
-                                          void         *);
+                                          void *);
 
 
 void script_obj_free (script_obj_t *obj);

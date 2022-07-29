@@ -56,36 +56,36 @@ static void create_pixel_displays_for_renderer (ply_device_manager_t *manager,
 
 struct _ply_device_manager
 {
-        ply_device_manager_flags_t flags;
-        ply_event_loop_t          *loop;
-        ply_hashtable_t           *terminals;
-        ply_hashtable_t           *renderers;
-        ply_terminal_t            *local_console_terminal;
-        ply_list_t                *keyboards;
-        ply_list_t                *text_displays;
-        ply_list_t                *pixel_displays;
-        struct udev               *udev_context;
-        struct udev_monitor       *udev_monitor;
-        ply_fd_watch_t            *fd_watch;
+        ply_device_manager_flags_t          flags;
+        ply_event_loop_t                   *loop;
+        ply_hashtable_t                    *terminals;
+        ply_hashtable_t                    *renderers;
+        ply_terminal_t                     *local_console_terminal;
+        ply_list_t                         *keyboards;
+        ply_list_t                         *text_displays;
+        ply_list_t                         *pixel_displays;
+        struct udev                        *udev_context;
+        struct udev_monitor                *udev_monitor;
+        ply_fd_watch_t                     *fd_watch;
 
-        ply_keyboard_added_handler_t         keyboard_added_handler;
-        ply_keyboard_removed_handler_t       keyboard_removed_handler;
-        ply_pixel_display_added_handler_t    pixel_display_added_handler;
-        ply_pixel_display_removed_handler_t  pixel_display_removed_handler;
-        ply_text_display_added_handler_t     text_display_added_handler;
-        ply_text_display_removed_handler_t   text_display_removed_handler;
-        void                                *event_handler_data;
+        ply_keyboard_added_handler_t        keyboard_added_handler;
+        ply_keyboard_removed_handler_t      keyboard_removed_handler;
+        ply_pixel_display_added_handler_t   pixel_display_added_handler;
+        ply_pixel_display_removed_handler_t pixel_display_removed_handler;
+        ply_text_display_added_handler_t    text_display_added_handler;
+        ply_text_display_removed_handler_t  text_display_removed_handler;
+        void                               *event_handler_data;
 
-        uint32_t                    local_console_managed : 1;
-        uint32_t                    local_console_is_text : 1;
-        uint32_t                    serial_consoles_detected : 1;
-        uint32_t                    renderers_activated : 1;
-        uint32_t                    keyboards_activated : 1;
+        uint32_t                            local_console_managed : 1;
+        uint32_t                            local_console_is_text : 1;
+        uint32_t                            serial_consoles_detected : 1;
+        uint32_t                            renderers_activated : 1;
+        uint32_t                            keyboards_activated : 1;
 
-        uint32_t                    paused : 1;
-        uint32_t                    device_timeout_elapsed : 1;
-        uint32_t                    found_drm_device : 1;
-        uint32_t                    found_fb_device : 1;
+        uint32_t                            paused : 1;
+        uint32_t                            device_timeout_elapsed : 1;
+        uint32_t                            found_drm_device : 1;
+        uint32_t                            found_fb_device : 1;
 };
 
 static void
@@ -132,7 +132,6 @@ free_displays_for_renderer (ply_device_manager_t *manager,
                                 manager->pixel_display_removed_handler (manager->event_handler_data, display);
                         ply_pixel_display_free (display);
                         ply_list_remove_node (manager->pixel_displays, node);
-
                 }
 
                 node = next_node;
@@ -141,7 +140,7 @@ free_displays_for_renderer (ply_device_manager_t *manager,
 
 static void
 free_keyboards_for_renderer (ply_device_manager_t *manager,
-                            ply_renderer_t       *renderer)
+                             ply_renderer_t       *renderer)
 {
         ply_list_node_t *node;
 
@@ -474,7 +473,8 @@ verify_add_or_change (ply_device_manager_t *manager,
 }
 
 static bool
-duplicate_device_path (ply_list_t *events, const char *device_path)
+duplicate_device_path (ply_list_t *events,
+                       const char *device_path)
 {
         struct udev_device *device;
         ply_list_node_t *node;
@@ -491,7 +491,8 @@ duplicate_device_path (ply_list_t *events, const char *device_path)
 }
 
 static void
-process_udev_add_or_change_events (ply_device_manager_t *manager, ply_list_t *events)
+process_udev_add_or_change_events (ply_device_manager_t *manager,
+                                   ply_list_t           *events)
 {
         const char *action, *device_path;
         struct udev_device *device;
@@ -553,7 +554,7 @@ on_udev_event (ply_device_manager_t *manager)
                         goto unref;
                 }
 
-                ply_list_append_data (pending_events, udev_device_ref(device));
+                ply_list_append_data (pending_events, udev_device_ref (device));
 unref:
                 udev_device_unref (device);
         }
@@ -728,8 +729,8 @@ ply_device_manager_free (ply_device_manager_t *manager)
 
 #ifdef HAVE_UDEV
         ply_event_loop_stop_watching_for_timeout (manager->loop,
-                                         (ply_event_loop_timeout_handler_t)
-                                         create_devices_from_udev, manager);
+                                                  (ply_event_loop_timeout_handler_t)
+                                                  create_devices_from_udev, manager);
 
         if (manager->udev_monitor != NULL)
                 udev_monitor_unref (manager->udev_monitor);
@@ -848,24 +849,24 @@ static void
 create_text_displays_for_terminal (ply_device_manager_t *manager,
                                    ply_terminal_t       *terminal)
 {
-  ply_text_display_t *display;
+        ply_text_display_t *display;
 
-  if (!ply_terminal_is_open (terminal)) {
-          if (!ply_terminal_open (terminal)) {
-                  ply_trace ("could not add terminal %s: %m",
-                             ply_terminal_get_name (terminal));
-                  return;
-          }
-  }
+        if (!ply_terminal_is_open (terminal)) {
+                if (!ply_terminal_open (terminal)) {
+                        ply_trace ("could not add terminal %s: %m",
+                                   ply_terminal_get_name (terminal));
+                        return;
+                }
+        }
 
-  ply_trace ("adding text display for terminal %s",
-             ply_terminal_get_name (terminal));
+        ply_trace ("adding text display for terminal %s",
+                   ply_terminal_get_name (terminal));
 
-  display = ply_text_display_new (terminal);
-  ply_list_append_data (manager->text_displays, display);
+        display = ply_text_display_new (terminal);
+        ply_list_append_data (manager->text_displays, display);
 
-  if (manager->text_display_added_handler != NULL)
-          manager->text_display_added_handler (manager->event_handler_data, display);
+        if (manager->text_display_added_handler != NULL)
+                manager->text_display_added_handler (manager->event_handler_data, display);
 }
 
 static bool
@@ -1039,15 +1040,15 @@ create_fallback_devices (ply_device_manager_t *manager)
 }
 
 void
-ply_device_manager_watch_devices (ply_device_manager_t                *manager,
-                                  double                               device_timeout,
-                                  ply_keyboard_added_handler_t         keyboard_added_handler,
-                                  ply_keyboard_removed_handler_t       keyboard_removed_handler,
-                                  ply_pixel_display_added_handler_t    pixel_display_added_handler,
-                                  ply_pixel_display_removed_handler_t  pixel_display_removed_handler,
-                                  ply_text_display_added_handler_t     text_display_added_handler,
-                                  ply_text_display_removed_handler_t   text_display_removed_handler,
-                                  void                                *data)
+ply_device_manager_watch_devices (ply_device_manager_t               *manager,
+                                  double                              device_timeout,
+                                  ply_keyboard_added_handler_t        keyboard_added_handler,
+                                  ply_keyboard_removed_handler_t      keyboard_removed_handler,
+                                  ply_pixel_display_added_handler_t   pixel_display_added_handler,
+                                  ply_pixel_display_removed_handler_t pixel_display_removed_handler,
+                                  ply_text_display_added_handler_t    text_display_added_handler,
+                                  ply_text_display_removed_handler_t  text_display_removed_handler,
+                                  void                               *data)
 {
         bool done_with_initial_devices_setup;
 
@@ -1082,9 +1083,9 @@ ply_device_manager_watch_devices (ply_device_manager_t                *manager,
         watch_for_udev_events (manager);
         create_devices_for_subsystem (manager, SUBSYSTEM_DRM);
         ply_event_loop_watch_for_timeout (manager->loop,
-                                         device_timeout,
-                                         (ply_event_loop_timeout_handler_t)
-                                         create_devices_from_udev, manager);
+                                          device_timeout,
+                                          (ply_event_loop_timeout_handler_t)
+                                          create_devices_from_udev, manager);
 #endif
 }
 
@@ -1092,7 +1093,7 @@ bool
 ply_device_manager_has_displays (ply_device_manager_t *manager)
 {
         return ply_list_get_length (manager->pixel_displays) > 0 ||
-                ply_list_get_length (manager->text_displays) > 0;
+               ply_list_get_length (manager->text_displays) > 0;
 }
 
 ply_list_t *

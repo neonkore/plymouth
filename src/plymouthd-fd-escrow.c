@@ -2,7 +2,8 @@
 #include <unistd.h>
 
 int
-main(int argc, char **argv)
+main (int    argc,
+      char **argv)
 {
         signal (SIGTERM, SIG_IGN);
 
@@ -12,7 +13,8 @@ main(int argc, char **argv)
          */
         argv[0][0] = '@';
 
-        while (pause());
+        while (pause ()) {
+        }
 
         return 0;
 }

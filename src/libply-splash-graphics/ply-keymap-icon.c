@@ -103,7 +103,7 @@ ply_keymap_icon_fill_keymap_info (ply_keymap_icon_t *keymap_icon)
         }
 
         if (keymap_icon->keymap_offset == -1)
-                ply_trace("Error no pre-rendered text for '%s' keymap", keymap);
+                ply_trace ("Error no pre-rendered text for '%s' keymap", keymap);
 
         free (keymap);
 }
@@ -155,14 +155,14 @@ ply_keymap_icon_load (ply_keymap_icon_t *keymap_icon)
         asprintf (&filename, "%s/keyboard.png", keymap_icon->image_dir);
         icon_image = ply_image_new (filename);
         success = ply_image_load (icon_image);
-        ply_trace("loading '%s': %s", filename, success ? "success" : "failed");
+        ply_trace ("loading '%s': %s", filename, success ? "success" : "failed");
         free (filename);
 
         if (success) {
                 asprintf (&filename, "%s/keymap-render.png", keymap_icon->image_dir);
                 keymap_image = ply_image_new (filename);
                 success = ply_image_load (keymap_image);
-                ply_trace("loading '%s': %s", filename, success ? "success" : "failed");
+                ply_trace ("loading '%s': %s", filename, success ? "success" : "failed");
                 free (filename);
         }
 
@@ -178,7 +178,7 @@ ply_keymap_icon_load (ply_keymap_icon_t *keymap_icon)
         keymap_icon->width =
                 ply_pixel_buffer_get_width (keymap_icon->icon_buffer) +
                 SPACING + keymap_icon->keymap_width;
-        keymap_icon->height = MAX(
+        keymap_icon->height = MAX (
                 ply_pixel_buffer_get_height (keymap_icon->icon_buffer),
                 ply_pixel_buffer_get_height (keymap_icon->keymap_buffer));
 

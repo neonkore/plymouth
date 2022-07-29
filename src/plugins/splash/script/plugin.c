@@ -280,6 +280,7 @@ start_script_animation (ply_boot_splash_plugin_t *plugin)
         ply_trace ("executing script file");
         script_return_t ret = script_execute (plugin->script_state,
                                               plugin->script_main_op);
+
         script_obj_unref (ret.object);
         if (plugin->keyboard != NULL)
                 ply_keyboard_add_input_handler (plugin->keyboard,
@@ -429,7 +430,7 @@ static void
 system_update (ply_boot_splash_plugin_t *plugin,
                int                       progress)
 {
-        script_lib_plymouth_on_system_update( plugin->script_state,
+        script_lib_plymouth_on_system_update (plugin->script_state,
                                               plugin->script_plymouth_lib,
                                               progress);
 }

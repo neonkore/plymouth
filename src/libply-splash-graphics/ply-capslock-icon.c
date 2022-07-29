@@ -114,7 +114,7 @@ on_timeout (void             *user_data,
         bool old_is_on = capslock_icon->is_on;
 
         ply_capslock_icon_update_state (capslock_icon);
-        
+
         if (capslock_icon->is_on != old_is_on)
                 ply_capslock_icon_draw (capslock_icon);
 
@@ -211,7 +211,7 @@ ply_capslock_icon_draw_area (ply_capslock_icon_t *capslock_icon,
                 return;
 
         ply_capslock_icon_update_state (capslock_icon);
-        
+
         if (!capslock_icon->is_on)
                 return;
 

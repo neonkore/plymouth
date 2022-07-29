@@ -460,7 +460,8 @@ ply_free_string_array (char **array)
 }
 
 bool
-ply_string_has_prefix (const char *str, const char *prefix)
+ply_string_has_prefix (const char *str,
+                       const char *prefix)
 {
         if (str == NULL || prefix == NULL)
                 return false;
@@ -856,8 +857,8 @@ out:
 void
 ply_set_device_scale (int device_scale)
 {
-    overridden_device_scale = device_scale;
-    ply_trace ("Device scale is set to %d", device_scale);
+        overridden_device_scale = device_scale;
+        ply_trace ("Device scale is set to %d", device_scale);
 }
 
 /* The minimum resolution at which we turn on a device-scale of 2 */
@@ -894,11 +895,11 @@ ply_get_device_scale (uint32_t width,
                 return 1;
 
         if (width_mm > 0 && height_mm > 0) {
-                dpi_x = (double)width / (width_mm / 25.4);
-                dpi_y = (double)height / (height_mm / 25.4);
+                dpi_x = (double) width / (width_mm / 25.4);
+                dpi_y = (double) height / (height_mm / 25.4);
                 /* We don't completely trust these values so both
-                   must be high, and never pick higher ratio than
-                   2 automatically */
+                 * must be high, and never pick higher ratio than
+                 * 2 automatically */
                 if (dpi_x > HIDPI_LIMIT && dpi_y > HIDPI_LIMIT)
                         device_scale = 2;
         }
@@ -954,7 +955,7 @@ ply_get_kernel_command_line (void)
 const char *
 ply_kernel_command_line_get_string_after_prefix (const char *prefix)
 {
-        const char *command_line = ply_get_kernel_command_line();
+        const char *command_line = ply_get_kernel_command_line ();
         char *argument;
 
         if (!command_line)
@@ -997,7 +998,7 @@ ply_kernel_command_line_get_key_value (const char *key)
         if (value == NULL || value[0] == '\0')
                 return NULL;
 
-        return strndup(value, strcspn (value, " \n"));
+        return strndup (value, strcspn (value, " \n"));
 }
 
 void
@@ -1008,15 +1009,15 @@ ply_kernel_command_line_override (const char *command_line)
         kernel_command_line_is_set = true;
 }
 
-double ply_strtod(const char *str)
+double ply_strtod (const char *str)
 {
         char *old_locale;
         double ret;
 
         /* Ensure strtod uses '.' as decimal separator, as we use this in our cfg files. */
-        old_locale = setlocale(LC_NUMERIC, "C");
-        ret = strtod(str, NULL);
-        setlocale(LC_NUMERIC, old_locale);
+        old_locale = setlocale (LC_NUMERIC, "C");
+        ret = strtod (str, NULL);
+        setlocale (LC_NUMERIC, old_locale);
 
         return ret;
 }

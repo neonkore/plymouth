@@ -461,7 +461,9 @@ static script_exp_t *script_parse_exp_pi (script_scan_t *scan)
                                 return NULL;
                         }
                         curtoken = script_scan_get_next_token (scan);
-                } else { break; }
+                } else {
+                        break;
+                }
                 exp = script_parse_new_exp_dual (SCRIPT_EXP_TYPE_HASH, exp, key, &location);
         }
         return exp;
@@ -483,6 +485,7 @@ static script_exp_t *script_parse_exp_pr (script_scan_t *scan)
         entry = script_parse_operator_table_entry_lookup (scan, operator_table);
         if (entry->presedence < 0) return script_parse_exp_pi (scan);
         script_debug_location_t location = script_scan_get_current_token (scan)->location;
+
         script_parse_advance_scan_by_string (scan, entry->symbol);
         return script_parse_new_exp_single (entry->exp_type, script_parse_exp_pr (scan), &location);
 }
@@ -507,7 +510,8 @@ static script_exp_t *script_parse_exp_po (script_scan_t *scan)
         return exp;
 }
 
-static script_exp_t *script_parse_exp_ltr (script_scan_t *scan, int presedence)
+static script_exp_t *script_parse_exp_ltr (script_scan_t *scan,
+                                           int            presedence)
 {
         static const script_parse_operator_table_entry_t operator_table[] =
         {
@@ -536,6 +540,7 @@ static script_exp_t *script_parse_exp_ltr (script_scan_t *scan, int presedence)
 
         if (presedence > 6) return script_parse_exp_po (scan);
         script_exp_t *exp = script_parse_exp_ltr (scan, presedence + 1);
+
         if (!exp) return NULL;
 
         while (true) {
@@ -572,11 +577,14 @@ static script_exp_t *script_parse_exp_as (script_scan_t *scan)
         if (!lhs) return NULL;
 
         const script_parse_operator_table_entry_t *entry;
+
         entry = script_parse_operator_table_entry_lookup (scan, operator_table);
         if (entry->presedence < 0) return lhs;
         script_debug_location_t location = script_scan_get_current_token (scan)->location;
+
         script_parse_advance_scan_by_string (scan, entry->symbol);
         script_exp_t *rhs = script_parse_exp_as (scan);
+
         if (!rhs) {
                 script_parse_error (&script_scan_get_current_token (scan)->location,
                                     "An invalid RHS of an assign");
@@ -610,6 +618,7 @@ static script_op_t *script_parse_op_block (script_scan_t *scan)
         curtoken = script_scan_get_next_token (scan);
 
         script_op_t *op = script_parse_new_op_block (sublist, &location);
+
         return op;
 }
 
@@ -625,6 +634,7 @@ static script_op_t *script_parse_if_while (script_scan_t *scan)
         else return NULL;
 
         script_debug_location_t location = curtoken->location;
+
         curtoken = script_scan_get_next_token (scan);
         if (!script_scan_token_is_symbol_of_value (curtoken, '(')) {
                 script_parse_error (&curtoken->location,
@@ -634,6 +644,7 @@ static script_op_t *script_parse_if_while (script_scan_t *scan)
         curtoken = script_scan_get_next_token (scan);
 
         script_exp_t *cond = script_parse_exp (scan);
+
         curtoken = script_scan_get_current_token (scan);
         if (!cond) {
                 script_parse_error (&curtoken->location, "Expected a valid condition expression");
@@ -655,6 +666,7 @@ static script_op_t *script_parse_if_while (script_scan_t *scan)
                 else_op = script_parse_op (scan);
         }
         script_op_t *op = script_parse_new_op_cond (type, cond, cond_op, else_op, &location);
+
         return op;
 }
 
@@ -665,8 +677,10 @@ static script_op_t *script_parse_do_while (script_scan_t *scan)
         if (!script_scan_token_is_identifier_of_value (curtoken, "do"))
                 return NULL;
         script_debug_location_t location = curtoken->location;
+
         curtoken = script_scan_get_next_token (scan);
         script_op_t *cond_op = script_parse_op (scan);
+
         curtoken = script_scan_get_current_token (scan);
 
         if (!script_scan_token_is_identifier_of_value (curtoken, "while")) {
@@ -683,6 +697,7 @@ static script_op_t *script_parse_do_while (script_scan_t *scan)
         }
         curtoken = script_scan_get_next_token (scan);
         script_exp_t *cond = script_parse_exp (scan);
+
         curtoken = script_scan_get_current_token (scan);
         if (!cond) {
                 script_parse_error (&curtoken->location, "Expected a valid condition expression");
@@ -701,6 +716,7 @@ static script_op_t *script_parse_do_while (script_scan_t *scan)
         }
         script_scan_get_next_token (scan);
         script_op_t *op = script_parse_new_op_cond (SCRIPT_OP_TYPE_DO_WHILE, cond, cond_op, NULL, &location);
+
         return op;
 }
 
@@ -710,6 +726,7 @@ static script_op_t *script_parse_for (script_scan_t *scan)
 
         if (!script_scan_token_is_identifier_of_value (curtoken, "for")) return NULL;
         script_debug_location_t location_for = curtoken->location;
+
         curtoken = script_scan_get_next_token (scan);
         if (!script_scan_token_is_symbol_of_value (curtoken, '(')) {
                 script_parse_error (&curtoken->location,
@@ -720,6 +737,7 @@ static script_op_t *script_parse_for (script_scan_t *scan)
         script_debug_location_t location_first = curtoken->location;
 
         script_exp_t *first = script_parse_exp (scan);
+
         if (!first) {
                 script_parse_error (&curtoken->location, "Expected a valid first expression");
                 return NULL;
@@ -733,6 +751,7 @@ static script_op_t *script_parse_for (script_scan_t *scan)
         script_scan_get_next_token (scan);
 
         script_exp_t *cond = script_parse_exp (scan);
+
         if (!cond) {
                 script_parse_error (&curtoken->location, "Expected a valid condition expression");
                 return NULL;
@@ -746,6 +765,7 @@ static script_op_t *script_parse_for (script_scan_t *scan)
         script_debug_location_t location_last = curtoken->location;
 
         script_exp_t *last = script_parse_exp (scan);
+
         if (!last) {
                 script_parse_error (&curtoken->location, "Expected a valid last expression");
                 return NULL;
@@ -763,6 +783,7 @@ static script_op_t *script_parse_for (script_scan_t *scan)
         script_op_t *op_for = script_parse_new_op_cond (SCRIPT_OP_TYPE_FOR, cond, op_body, op_last, &location_for);
 
         ply_list_t *op_list = ply_list_new ();
+
         ply_list_append_data (op_list, op_first);
         ply_list_append_data (op_list, op_for);
 
@@ -777,6 +798,7 @@ static script_op_t *script_parse_function (script_scan_t *scan)
 
         if (!script_scan_token_is_identifier_of_value (curtoken, "fun")) return NULL;
         script_debug_location_t location = curtoken->location;
+
         curtoken = script_scan_get_next_token (scan);
         if (!script_scan_token_is_identifier (curtoken)) {
                 script_parse_error (&curtoken->location,
@@ -788,11 +810,13 @@ static script_op_t *script_parse_function (script_scan_t *scan)
         curtoken = script_scan_get_next_token (scan); /* FIXME parse any type of exp as target and do an assign*/
 
         script_function_t *function = script_parse_function_def (scan);
+
         if (!function) return NULL;
         script_exp_t *func_exp = script_parse_new_exp_function_def (function, &location);
         script_exp_t *func_def = script_parse_new_exp_dual (SCRIPT_EXP_TYPE_ASSIGN, name, func_exp, &location);
 
         script_op_t *op = script_parse_new_op_exp (func_def, &location);
+
         return op;
 }
 
@@ -813,6 +837,7 @@ static script_op_t *script_parse_return (script_scan_t *scan)
         curtoken = script_scan_get_next_token (scan);
 
         script_op_t *op = script_parse_new_op (type, &curtoken->location);
+
         if (type == SCRIPT_OP_TYPE_RETURN) {
                 op->data.exp = script_parse_exp (scan);        /* May be NULL */
                 curtoken = script_scan_get_current_token (scan);
@@ -1043,6 +1068,7 @@ script_op_t *script_parse_file (const char *filename)
                 return NULL;
         }
         script_op_t *op = script_parse_new_op_block (list, &location);
+
         script_scan_free (scan);
         return op;
 }
@@ -1067,6 +1093,7 @@ script_op_t *script_parse_string (const char *string,
                 return NULL;
         }
         script_op_t *op = script_parse_new_op_block (list, &location);
+
         script_scan_free (scan);
         return op;
 }

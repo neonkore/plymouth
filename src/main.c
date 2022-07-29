@@ -262,9 +262,9 @@ show_messages (state_t *state)
 }
 
 static bool
-get_theme_path (const char  *splash_string,
-                const char  *configured_theme_dir,
-                char       **theme_path)
+get_theme_path (const char *splash_string,
+                const char *configured_theme_dir,
+                char      **theme_path)
 {
         const char *paths[] = { PLYMOUTH_RUNTIME_THEME_PATH,
                                 configured_theme_dir,
@@ -311,18 +311,18 @@ load_settings (state_t    *state,
         if (splash_string != NULL) {
                 char *configured_theme_dir;
                 configured_theme_dir = ply_key_file_get_value (key_file, "Daemon",
-                                                                         "ThemeDir");
+                                                               "ThemeDir");
                 get_theme_path (splash_string, configured_theme_dir, theme_path);
                 free (configured_theme_dir);
         }
 
         if (isnan (state->splash_delay)) {
-                state->splash_delay = ply_key_file_get_double(key_file, "Daemon", "ShowDelay", NAN);
+                state->splash_delay = ply_key_file_get_double (key_file, "Daemon", "ShowDelay", NAN);
                 ply_trace ("Splash delay is set to %lf", state->splash_delay);
         }
 
         if (isnan (state->device_timeout)) {
-                state->device_timeout = ply_key_file_get_double(key_file, "Daemon", "DeviceTimeout", NAN);
+                state->device_timeout = ply_key_file_get_double (key_file, "Daemon", "DeviceTimeout", NAN);
                 ply_trace ("Device timeout is set to %lf", state->device_timeout);
         }
 
@@ -590,7 +590,7 @@ on_hide_message (state_t    *state,
                         free (list_message);
                         ply_list_remove_node (state->messages, node);
                         if (state->boot_splash != NULL) {
-                            ply_boot_splash_hide_message (state->boot_splash, message);
+                                ply_boot_splash_hide_message (state->boot_splash, message);
                         }
                 }
                 node = next_node;
@@ -666,7 +666,7 @@ on_newroot (state_t    *state,
         chroot (".");
         chdir ("/");
         /* Update local now that we have /usr/share/locale available */
-        setlocale(LC_ALL, "");
+        setlocale (LC_ALL, "");
         ply_progress_load_cache (state->progress, get_cache_file_for_mode (state->mode));
         if (state->boot_splash != NULL)
                 ply_boot_splash_root_mounted (state->boot_splash);
@@ -858,7 +858,7 @@ sh_is_init (state_t *state)
         if (init_string) {
                 length = strlen (init_string);
                 if (length > 2 && init_string[length - 2] == 's' &&
-                                  init_string[length - 1] == 'h')
+                    init_string[length - 1] == 'h')
                         result = true;
 
                 free (init_string);
@@ -1018,25 +1018,25 @@ static void
 on_keyboard_removed (state_t        *state,
                      ply_keyboard_t *keyboard)
 {
-    ply_trace ("no longer listening for keystrokes");
-    ply_keyboard_remove_input_handler (keyboard,
-                                       (ply_keyboard_input_handler_t)
-                                       on_keyboard_input);
-    ply_trace ("no longer listening for escape");
-    ply_keyboard_remove_escape_handler (keyboard,
-                                        (ply_keyboard_escape_handler_t)
-                                        on_escape_pressed);
-    ply_trace ("no longer listening for backspace");
-    ply_keyboard_remove_backspace_handler (keyboard,
-                                           (ply_keyboard_backspace_handler_t)
-                                           on_backspace);
-    ply_trace ("no longer listening for enter");
-    ply_keyboard_remove_enter_handler (keyboard,
-                                       (ply_keyboard_enter_handler_t)
-                                       on_enter);
+        ply_trace ("no longer listening for keystrokes");
+        ply_keyboard_remove_input_handler (keyboard,
+                                           (ply_keyboard_input_handler_t)
+                                           on_keyboard_input);
+        ply_trace ("no longer listening for escape");
+        ply_keyboard_remove_escape_handler (keyboard,
+                                            (ply_keyboard_escape_handler_t)
+                                            on_escape_pressed);
+        ply_trace ("no longer listening for backspace");
+        ply_keyboard_remove_backspace_handler (keyboard,
+                                               (ply_keyboard_backspace_handler_t)
+                                               on_backspace);
+        ply_trace ("no longer listening for enter");
+        ply_keyboard_remove_enter_handler (keyboard,
+                                           (ply_keyboard_enter_handler_t)
+                                           on_enter);
 
-    if (state->boot_splash != NULL)
-            ply_boot_splash_unset_keyboard (state->boot_splash);
+        if (state->boot_splash != NULL)
+                ply_boot_splash_unset_keyboard (state->boot_splash);
 }
 
 static void
@@ -1227,7 +1227,6 @@ deactivate_console (state_t *state)
         /* do not let any tty opened where we could write after deactivate */
         if (ply_kernel_command_line_has_argument ("plymouth.debug"))
                 ply_logger_close_file (ply_logger_get_error_default ());
-
 }
 
 static void
@@ -1446,11 +1445,12 @@ start_boot_server (state_t *state)
 }
 
 static bool
-validate_input (state_t *state,
+validate_input (state_t    *state,
                 const char *entry_text,
                 const char *add_text)
 {
         bool input_valid;
+
         if (!state->boot_splash)
                 return true;
         input_valid = ply_boot_splash_validate_input (state->boot_splash, entry_text, add_text);
@@ -2069,7 +2069,7 @@ on_crash (int signum)
 
         ioctl (fd, KDSETMODE, KD_TEXT);
 
-        write (fd, show_cursor_sequence, sizeof (show_cursor_sequence) - 1);
+        write (fd, show_cursor_sequence, sizeof(show_cursor_sequence) - 1);
 
         tcgetattr (fd, &term_attributes);
 
@@ -2172,7 +2172,7 @@ main (int    argc,
 
         /* Initialize the translations if they are available (!initrd) */
         if (ply_directory_exists (PLYMOUTH_LOCALE_DIRECTORY))
-                setlocale(LC_ALL, "");
+                setlocale (LC_ALL, "");
 
         ply_command_parser_add_options (state.command_parser,
                                         "help", "This help message", PLY_COMMAND_OPTION_TYPE_FLAG,

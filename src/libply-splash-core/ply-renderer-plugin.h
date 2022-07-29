@@ -37,8 +37,8 @@ typedef struct _ply_renderer_backend ply_renderer_backend_t;
 
 typedef struct
 {
-        ply_renderer_backend_t * (*create_backend)(const char *device_name,
-                                                   ply_terminal_t * terminal);
+        ply_renderer_backend_t * (*create_backend)(const char     *device_name,
+                                                   ply_terminal_t *terminal);
         void (*destroy_backend)(ply_renderer_backend_t *backend);
         bool (*open_device)(ply_renderer_backend_t *backend);
         void (*close_device)(ply_renderer_backend_t *backend);
@@ -51,12 +51,12 @@ typedef struct
         void (*flush_head)(ply_renderer_backend_t *backend,
                            ply_renderer_head_t    *head);
 
-        ply_list_t * (*get_heads)(ply_renderer_backend_t * backend);
+        ply_list_t * (*get_heads)(ply_renderer_backend_t *backend);
 
-        ply_pixel_buffer_t * (*get_buffer_for_head)(ply_renderer_backend_t * backend,
-                                                    ply_renderer_head_t * head);
+        ply_pixel_buffer_t * (*get_buffer_for_head)(ply_renderer_backend_t *backend,
+                                                    ply_renderer_head_t    *head);
 
-        ply_renderer_input_source_t * (*get_input_source)(ply_renderer_backend_t * backend);
+        ply_renderer_input_source_t * (*get_input_source)(ply_renderer_backend_t *backend);
         bool (*open_input_source)(ply_renderer_backend_t      *backend,
                                   ply_renderer_input_source_t *input_source);
 

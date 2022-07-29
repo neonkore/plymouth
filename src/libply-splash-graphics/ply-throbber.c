@@ -78,7 +78,8 @@ struct _ply_throbber
         uint32_t             is_stopped : 1;
 };
 
-static void ply_throbber_stop_now (ply_throbber_t *throbber, bool redraw);
+static void ply_throbber_stop_now (ply_throbber_t *throbber,
+                                   bool            redraw);
 
 ply_throbber_t *
 ply_throbber_new (const char *image_dir,
@@ -161,7 +162,7 @@ animate_at_time (ply_throbber_t *throbber,
                  * frame and loop around. Clamp it to the last frame.
                  */
                 if (last_frame_number > throbber->frame_number)
-                      throbber->frame_number = number_of_frames - 1;
+                        throbber->frame_number = number_of_frames - 1;
 
                 if (throbber->frame_number == number_of_frames - 1)
                         should_continue = false;
@@ -281,7 +282,7 @@ out:
         }
         free (entries);
 
-        return (ply_array_get_size (throbber->frames) > 0);
+        return ply_array_get_size (throbber->frames) > 0;
 }
 
 bool
@@ -324,7 +325,8 @@ ply_throbber_start (ply_throbber_t      *throbber,
 }
 
 static void
-ply_throbber_stop_now (ply_throbber_t *throbber, bool redraw)
+ply_throbber_stop_now (ply_throbber_t *throbber,
+                       bool            redraw)
 {
         throbber->is_stopped = true;
 

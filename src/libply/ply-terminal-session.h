@@ -43,9 +43,9 @@ typedef void (*ply_terminal_session_hangup_handler_t)(void                   *us
 
 typedef enum
 {
-        PLY_TERMINAL_SESSION_FLAGS_NONE = 0x0,
-        PLY_TERMINAL_SESSION_FLAGS_RUN_IN_PARENT = 0x1,
-        PLY_TERMINAL_SESSION_FLAGS_LOOK_IN_PATH = 0x2,
+        PLY_TERMINAL_SESSION_FLAGS_NONE             = 0x0,
+        PLY_TERMINAL_SESSION_FLAGS_RUN_IN_PARENT    = 0x1,
+        PLY_TERMINAL_SESSION_FLAGS_LOOK_IN_PATH     = 0x2,
         PLY_TERMINAL_SESSION_FLAGS_REDIRECT_CONSOLE = 0x4,
 } ply_terminal_session_flags_t;
 

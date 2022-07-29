@@ -208,7 +208,8 @@ script_obj_t *script_obj_new_ref (script_obj_t *sub_obj)
         return obj;
 }
 
-script_obj_t *script_obj_new_extend (script_obj_t *obj_a, script_obj_t *obj_b)
+script_obj_t *script_obj_new_extend (script_obj_t *obj_a,
+                                     script_obj_t *obj_b)
 {
         script_obj_t *obj = malloc (sizeof(script_obj_t));
 
@@ -439,11 +440,13 @@ script_obj_t *script_obj_hash_get_element (script_obj_t *hash,
 
         if (obj) return obj;
         script_obj_t *realhash = script_obj_as_obj_type (hash, SCRIPT_OBJ_TYPE_HASH);
+
         if (!realhash) {
                 realhash = script_obj_new_hash (); /* If it wasn't a hash then make it into one */
                 script_obj_assign (hash, realhash);
         }
         script_variable_t *variable = malloc (sizeof(script_variable_t));
+
         variable->name = strdup (name);
         variable->object = script_obj_new_null ();
         ply_hashtable_insert (realhash->data.hash, variable->name, variable);

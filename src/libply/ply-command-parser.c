@@ -410,12 +410,13 @@ ply_command_parser_add_options (ply_command_parser_t *parser,
 
 void
 ply_command_parser_add_command (ply_command_parser_t *parser,
-                                const char *name, const char *description,
+                                const char           *name,
+                                const char           *description,
                                 ply_command_handler_t handler,
-                                void *handler_data,
-                                const char *first_variadic_argument, /*
-                                                                      * const char *option_description,
-                                                                      * ply_command_option_type_t option_type */
+                                void                 *handler_data,
+                                const char           *first_variadic_argument, /*
+                                                                                * const char *option_description,
+                                                                                * ply_command_option_type_t option_type */
                                 ...)
 {
         ply_command_t *command;

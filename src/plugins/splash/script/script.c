@@ -91,6 +91,7 @@ void script_add_native_function (script_obj_t            *hash,
                                                                   user_data,
                                                                   parameter_list);
         script_obj_t *obj = script_obj_new_function (function);
+
         script_obj_hash_add_element (hash, obj, name);
         script_obj_unref (obj);
 }
@@ -127,7 +128,8 @@ script_state_t *script_state_new (void *user_data)
         return state;
 }
 
-script_state_t *script_state_init_sub (script_state_t *oldstate, script_obj_t *this)
+script_state_t *script_state_init_sub (script_state_t *oldstate,
+                                       script_obj_t   *this)
 {
         script_state_t *newstate = malloc (sizeof(script_state_t));
         script_obj_t *local_hash = script_obj_new_hash ();

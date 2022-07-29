@@ -139,7 +139,7 @@ ply_terminal_parse_keymap_conf (ply_terminal_t *terminal)
         /* The keymap name in vconsole.conf might be quoted, strip these */
         if (keymap && keymap[0] == '"' && keymap[strlen (keymap) - 1] == '"') {
                 old_keymap = keymap;
-                keymap = strndup(keymap + 1, strlen (keymap) - 2);
+                keymap = strndup (keymap + 1, strlen (keymap) - 2);
                 free (old_keymap);
         }
 
@@ -904,7 +904,7 @@ ply_terminal_get_capslock_state (ply_terminal_t *terminal)
         if (ioctl (terminal->fd, KDGETLED, &state) < 0)
                 return false;
 
-        return (state & LED_CAP);
+        return state & LED_CAP;
 }
 
 int

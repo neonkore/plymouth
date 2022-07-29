@@ -633,7 +633,8 @@ free_sprite (sprite_t *sprite)
 }
 
 static int
-sprite_compare_z (void *data_a, void *data_b)
+sprite_compare_z (void *data_a,
+                  void *data_b)
 {
         sprite_t *sprite_a = data_a;
         sprite_t *sprite_b = data_b;
@@ -642,7 +643,9 @@ sprite_compare_z (void *data_a, void *data_b)
 }
 
 static void
-stretch_image (ply_image_t *scaled_image, ply_image_t *orig_image, int width)
+stretch_image (ply_image_t *scaled_image,
+               ply_image_t *orig_image,
+               int          width)
 {
         int x, y;
         int stretched_width = ply_image_get_width (scaled_image);
@@ -676,7 +679,9 @@ stretch_image (ply_image_t *scaled_image, ply_image_t *orig_image, int width)
 }
 
 static void
-progress_update (view_t *view, sprite_t *sprite, double time)
+progress_update (view_t   *view,
+                 sprite_t *sprite,
+                 double    time)
 {
         progress_t *progress = sprite->data;
         ply_boot_splash_plugin_t *plugin = view->plugin;
@@ -691,7 +696,12 @@ progress_update (view_t *view, sprite_t *sprite, double time)
 
 
 static inline uint32_t
-star_bg_gradient_colour (int x, int y, int width, int height, bool star, float time)
+star_bg_gradient_colour (int   x,
+                         int   y,
+                         int   width,
+                         int   height,
+                         bool  star,
+                         float time)
 {
         int full_dist = sqrt (width * width + height * height);
         int my_dist = sqrt (x * x + y * y);
@@ -744,7 +754,9 @@ star_bg_gradient_colour (int x, int y, int width, int height, bool star, float t
 
 
 static void
-star_bg_update (view_t *view, sprite_t *sprite, double time)
+star_bg_update (view_t   *view,
+                sprite_t *sprite,
+                double    time)
 {
         star_bg_t *star_bg = sprite->data;
         int width = ply_image_get_width (sprite->image);
@@ -759,7 +771,7 @@ star_bg_update (view_t *view, sprite_t *sprite, double time)
                 x = star_bg->star_x[i];
                 y = star_bg->star_y[i];
                 uint32_t pixel_colour = star_bg_gradient_colour (x, y, width, height, true, time);
-                if (abs ((int)((image_data[x + y * width] >> 16) & 0xff) - (int)((pixel_colour >> 16) & 0xff)) > 8) {
+                if (abs ((int) ((image_data[x + y * width] >> 16) & 0xff) - (int) ((pixel_colour >> 16) & 0xff)) > 8) {
                         image_data[x + y * width] = pixel_colour;
                         star_bg->star_refresh[i] = 1;
                 }
@@ -770,7 +782,9 @@ star_bg_update (view_t *view, sprite_t *sprite, double time)
 }
 
 static void
-satellite_move (view_t *view, sprite_t *sprite, double time)
+satellite_move (view_t   *view,
+                sprite_t *sprite,
+                double    time)
 {
         ply_boot_splash_plugin_t *plugin = view->plugin;
         satellite_t *satellite = sprite->data;
@@ -785,11 +799,13 @@ satellite_move (view_t *view, sprite_t *sprite, double time)
 
         float distance = sqrt (sprite->z * sprite->z + sprite->y * sprite->y);
         float angle_zy = atan2 (sprite->y, sprite->z) - M_PI * 0.4;
+
         sprite->z = distance * cos (angle_zy);
         sprite->y = distance * sin (angle_zy);
 
         float angle_offset = atan2 (sprite->x, sprite->y);
         float cresent_angle = atan2 (sqrt (sprite->x * sprite->x + sprite->y * sprite->y), sprite->z);
+
         screen_width = ply_pixel_display_get_width (view->display);
         screen_height = ply_pixel_display_get_height (view->display);
 
@@ -896,7 +912,8 @@ sprite_list_sort (view_t *view)
 }
 
 static void
-flare_reset (flare_t *flare, int index)
+flare_reset (flare_t *flare,
+             int      index)
 {
         flare->rotate_yz[index] = ((float) (rand () % 1000) / 1000) * 2 * M_PI;
         flare->rotate_xy[index] = ((float) (rand () % 1000) / 1000) * 2 * M_PI;
@@ -908,7 +925,8 @@ flare_reset (flare_t *flare, int index)
 }
 
 static void
-flare_update (sprite_t *sprite, double time)
+flare_update (sprite_t *sprite,
+              double    time)
 {
         int width;
         int height;
@@ -933,6 +951,7 @@ flare_update (sprite_t *sprite, double time)
 
 
         int b;
+
         for (b = 0; b < FLARE_COUNT; b++) {
                 int flare_line;
                 flare->stretch[b] += (flare->stretch[b] * flare->increase_speed[b]) * (1 - (1 / (3.01 - flare->stretch[b])));
@@ -1025,7 +1044,9 @@ flare_update (sprite_t *sprite, double time)
 }
 
 static void
-sprite_move (view_t *view, sprite_t *sprite, double time)
+sprite_move (view_t   *view,
+             sprite_t *sprite,
+             double    time)
 {
         sprite->oldx = sprite->x;
         sprite->oldy = sprite->y;
@@ -1049,7 +1070,8 @@ sprite_move (view_t *view, sprite_t *sprite, double time)
 }
 
 static void
-view_animate_attime (view_t *view, double time)
+view_animate_attime (view_t *view,
+                     double  time)
 {
         ply_list_node_t *node;
         ply_boot_splash_plugin_t *plugin;

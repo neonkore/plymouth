@@ -31,10 +31,10 @@ typedef struct _ply_fd_watch ply_fd_watch_t;
 
 typedef enum
 {
-        PLY_EVENT_LOOP_FD_STATUS_NONE = 0,
-        PLY_EVENT_LOOP_FD_STATUS_HAS_DATA = 0x1,
+        PLY_EVENT_LOOP_FD_STATUS_NONE             = 0,
+        PLY_EVENT_LOOP_FD_STATUS_HAS_DATA         = 0x1,
         PLY_EVENT_LOOP_FD_STATUS_HAS_CONTROL_DATA = 0x2,
-        PLY_EVENT_LOOP_FD_STATUS_CAN_TAKE_DATA = 0x4,
+        PLY_EVENT_LOOP_FD_STATUS_CAN_TAKE_DATA    = 0x4,
 } ply_event_loop_fd_status_t;
 
 typedef void (*ply_event_handler_t) (void *user_data,

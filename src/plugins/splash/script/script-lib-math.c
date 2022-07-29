@@ -72,6 +72,7 @@ script_lib_math_data_t *script_lib_math_setup (script_state_t *state)
         srand ((int) ply_get_timestamp ());
 
         script_obj_t *math_hash = script_obj_hash_get_element (state->global, "Math");
+
         script_add_native_function (math_hash,
                                     "Cos",
                                     script_lib_math_double_from_double_function,
@@ -118,6 +119,7 @@ script_lib_math_data_t *script_lib_math_setup (script_state_t *state)
 
         data->script_main_op = script_parse_string (script_lib_math_string, "script-lib-math.script");
         script_return_t ret = script_execute (state, data->script_main_op);
+
         script_obj_unref (ret.object);
 
         return data;

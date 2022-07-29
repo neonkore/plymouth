@@ -238,7 +238,7 @@ add_text_display (ply_boot_splash_plugin_t *plugin,
 
         terminal = ply_text_display_get_terminal (view->display);
         if (ply_terminal_open (terminal)) {
-                ply_text_display_clear_screen (view->display);        
+                ply_text_display_clear_screen (view->display);
                 ply_terminal_activate_vt (terminal);
         }
 

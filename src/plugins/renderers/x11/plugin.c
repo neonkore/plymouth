@@ -238,10 +238,10 @@ create_fullscreen_single_head_setup (ply_renderer_backend_t *backend)
         GdkRectangle monitor_geometry;
         int width_mm, height_mm;
 
-#if GTK_CHECK_VERSION(3,22,0)
-        GdkDisplay* const display = gdk_display_get_default();
-        GdkMonitor* const monitor = gdk_display_get_primary_monitor(display);
-        gdk_monitor_get_geometry(monitor, &monitor_geometry);
+#if GTK_CHECK_VERSION (3, 22, 0)
+        GdkDisplay * const display = gdk_display_get_default ();
+        GdkMonitor * const monitor = gdk_display_get_primary_monitor (display);
+        gdk_monitor_get_geometry (monitor, &monitor_geometry);
         width_mm = gdk_monitor_get_width_mm (monitor);
         height_mm = gdk_monitor_get_height_mm (monitor);
 #else
@@ -497,10 +497,10 @@ on_key_event (GtkWidget   *widget,
                 ply_buffer_append_bytes (input_source->key_buffer, "\033", 1);
         } else if (event->keyval == GDK_KEY_BackSpace) { /* Backspace */
                 ply_buffer_append_bytes (input_source->key_buffer, "\177", 1);
-        } else if (GDK_KEY_F1  <= event->keyval &&
-                   GDK_KEY_F12  >= event->keyval) {      /* F1-F12 */
+        } else if (GDK_KEY_F1 <= event->keyval &&
+                   GDK_KEY_F12 >= event->keyval) {       /* F1-F12 */
                 const char *key = function_key_escape_sequence[event->keyval - GDK_KEY_F1];
-                ply_buffer_append_bytes (input_source->key_buffer, key, strlen(key));
+                ply_buffer_append_bytes (input_source->key_buffer, key, strlen (key));
         } else {
                 gchar bytes[7];
                 int byte_count;
