@@ -72,6 +72,7 @@ script_scan_t *script_scan_file (const char *filename)
 
         if (fd < 0) return NULL;
         script_scan_t *scan = script_scan_new ();
+
         scan->name = strdup (filename);
         scan->source.fd = fd;
         scan->source_is_file = true;

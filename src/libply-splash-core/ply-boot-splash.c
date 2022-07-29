@@ -657,6 +657,7 @@ bool ply_boot_splash_validate_input (ply_boot_splash_t *splash,
                                      const char        *add_text)
 {
         bool input_valid = true;
+
         assert (splash != NULL);
         assert (splash->plugin_interface != NULL);
         assert (splash->plugin != NULL);

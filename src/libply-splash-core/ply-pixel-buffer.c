@@ -41,15 +41,15 @@
 
 struct _ply_pixel_buffer
 {
-        uint32_t       *bytes;
+        uint32_t                   *bytes;
 
-        ply_rectangle_t area; /* in device pixels */
-        ply_rectangle_t logical_area; /* in logical pixels */
-        ply_list_t     *clip_areas; /* in device pixels */
+        ply_rectangle_t             area;          /* in device pixels */
+        ply_rectangle_t             logical_area;  /* in logical pixels */
+        ply_list_t                 *clip_areas;    /* in device pixels */
 
-        ply_region_t   *updated_areas; /* in device pixels */
-        uint32_t        is_opaque : 1;
-        int             device_scale;
+        ply_region_t               *updated_areas; /* in device pixels */
+        uint32_t                    is_opaque : 1;
+        int                         device_scale;
 
         ply_pixel_buffer_rotation_t device_rotation;
 };
@@ -315,7 +315,7 @@ ply_pixel_buffer_fill_area_with_pixel_value (ply_pixel_buffer_t *buffer,
         /* If we're filling the entire buffer with a fully opaque color,
          * then make note of it
          */
-        if (memcmp(fill_area, &buffer->area, sizeof(ply_rectangle_t)) == 0 &&
+        if (memcmp (fill_area, &buffer->area, sizeof(ply_rectangle_t)) == 0 &&
             (pixel_value >> 24) == 0xff) {
                 buffer->is_opaque = true;
         }
@@ -360,7 +360,7 @@ ply_pixel_buffer_new (unsigned long width,
                       unsigned long height)
 {
         return ply_pixel_buffer_new_with_device_rotation (
-                        width, height, PLY_PIXEL_BUFFER_ROTATE_UPRIGHT);
+                width, height, PLY_PIXEL_BUFFER_ROTATE_UPRIGHT);
 }
 
 ply_pixel_buffer_t *
@@ -738,29 +738,30 @@ ply_pixel_buffer_fill_with_argb32_data_at_opacity_with_clip_and_scale (ply_pixel
                 return;
 
         opacity_as_byte = (uint8_t) (opacity * 255.0);
-        scale_factor = (double)scale / buffer->device_scale;
+        scale_factor = (double) scale / buffer->device_scale;
         x = cropped_area.x;
         y = cropped_area.y;
 
         /* column, row are the point we want to write into, in
-           pixel_buffer coordinate space (device pixels)
-
-           scale_factor * (column - fill_area->x), scale_factor * (row - fill_area->y)
-           is the point we want to source from, in the data coordinate
-           space */
+         * pixel_buffer coordinate space (device pixels)
+         *
+         * scale_factor * (column - fill_area->x), scale_factor * (row - fill_area->y)
+         * is the point we want to source from, in the data coordinate
+         * space */
         for (row = y; row < y + cropped_area.height; row++) {
                 for (column = x; column < x + cropped_area.width; column++) {
                         uint32_t pixel_value;
 
-                        if (buffer->device_scale == scale)
+                        if (buffer->device_scale == scale) {
                                 pixel_value = data[fill_area->width * (row - fill_area->y) +
                                                    column - fill_area->x];
-                        else
+                        } else {
                                 pixel_value = ply_pixels_interpolate (data,
                                                                       fill_area->width,
                                                                       fill_area->height,
                                                                       scale_factor * column - fill_area->x,
                                                                       scale_factor * row - fill_area->y);
+                        }
                         if ((pixel_value >> 24) == 0x00)
                                 continue;
 
@@ -827,8 +828,9 @@ ply_pixel_buffer_fill_with_argb32_data_with_clip (ply_pixel_buffer_t *buffer,
 static void
 ply_pixel_buffer_copy_area (ply_pixel_buffer_t *canvas,
                             ply_pixel_buffer_t *source,
-                            int x, int y,
-                            ply_rectangle_t *cropped_area)
+                            int                 x,
+                            int                 y,
+                            ply_rectangle_t    *cropped_area)
 {
         unsigned long row;
 
@@ -1092,7 +1094,7 @@ ply_pixel_buffer_get_device_rotation (ply_pixel_buffer_t *buffer)
 }
 
 void
-ply_pixel_buffer_set_device_rotation (ply_pixel_buffer_t *buffer,
+ply_pixel_buffer_set_device_rotation (ply_pixel_buffer_t         *buffer,
                                       ply_pixel_buffer_rotation_t device_rotation)
 {
         if (buffer->device_rotation == device_rotation)
@@ -1119,7 +1121,7 @@ ply_pixel_buffer_t *
 ply_pixel_buffer_rotate_upright (ply_pixel_buffer_t *old_buffer)
 {
         ply_pixel_buffer_t *buffer;
-        int x,y, width, height;
+        int x, y, width, height;
         uint32_t pixel;
 
         width = old_buffer->area.width;

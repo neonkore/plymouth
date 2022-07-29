@@ -66,7 +66,7 @@
 
 /* For builds with libdrm < 2.4.89 */
 #ifndef DRM_MODE_ROTATE_0
-#define DRM_MODE_ROTATE_0 (1<<0)
+#define DRM_MODE_ROTATE_0 (1 << 0)
 #endif
 
 struct _ply_renderer_head
@@ -87,7 +87,7 @@ struct _ply_renderer_head
         bool                    uses_hw_rotation;
 
         int                     gamma_size;
-        uint16_t                *gamma;
+        uint16_t               *gamma;
 };
 
 struct _ply_renderer_input_source
@@ -119,49 +119,49 @@ typedef struct
 
 typedef struct
 {
-        drmModeModeInfo mode;
-        uint32_t connector_id;
-        uint32_t connector_type;
-        uint32_t controller_id;
-        uint32_t possible_controllers;
-        int device_scale;
-        int link_status;
+        drmModeModeInfo             mode;
+        uint32_t                    connector_id;
+        uint32_t                    connector_type;
+        uint32_t                    controller_id;
+        uint32_t                    possible_controllers;
+        int                         device_scale;
+        int                         link_status;
         ply_pixel_buffer_rotation_t rotation;
-        bool tiled;
-        bool connected;
-        bool uses_hw_rotation;
+        bool                        tiled;
+        bool                        connected;
+        bool                        uses_hw_rotation;
 } ply_output_t;
 
 struct _ply_renderer_backend
 {
-        ply_event_loop_t                *loop;
-        ply_terminal_t                  *terminal;
+        ply_event_loop_t           *loop;
+        ply_terminal_t             *terminal;
 
-        int                              device_fd;
-        char                            *device_name;
-        drmModeRes                      *resources;
+        int                         device_fd;
+        char                       *device_name;
+        drmModeRes                 *resources;
 
-        ply_renderer_input_source_t      input_source;
-        ply_list_t                      *heads;
-        ply_hashtable_t                 *heads_by_controller_id;
+        ply_renderer_input_source_t input_source;
+        ply_list_t                 *heads;
+        ply_hashtable_t            *heads_by_controller_id;
 
-        ply_hashtable_t                 *output_buffers;
+        ply_hashtable_t            *output_buffers;
 
-        ply_output_t                    *outputs;
-        int                              outputs_len;
-        int                              connected_count;
+        ply_output_t               *outputs;
+        int                         outputs_len;
+        int                         connected_count;
 
-        int32_t                          dither_red;
-        int32_t                          dither_green;
-        int32_t                          dither_blue;
+        int32_t                     dither_red;
+        int32_t                     dither_green;
+        int32_t                     dither_blue;
 
-        uint32_t                         is_active : 1;
-        uint32_t        requires_explicit_flushing : 1;
+        uint32_t                    is_active : 1;
+        uint32_t                    requires_explicit_flushing : 1;
 
-        int                              panel_width;
-        int                              panel_height;
-        ply_pixel_buffer_rotation_t      panel_rotation;
-        int                              panel_scale;
+        int                         panel_width;
+        int                         panel_height;
+        ply_pixel_buffer_rotation_t panel_rotation;
+        int                         panel_scale;
 };
 
 ply_renderer_plugin_interface_t *ply_renderer_backend_get_interface (void);
@@ -399,10 +399,10 @@ destroy_output_buffer (ply_renderer_backend_t *backend,
 
 static bool
 get_primary_plane_rotation (ply_renderer_backend_t *backend,
-                            uint32_t               controller_id,
-                            int                   *primary_id_ret,
-                            int                   *rotation_prop_id_ret,
-                            uint64_t              *rotation_ret)
+                            uint32_t                controller_id,
+                            int                    *primary_id_ret,
+                            int                    *rotation_prop_id_ret,
+                            uint64_t               *rotation_ret)
 {
         drmModeObjectPropertiesPtr plane_props;
         drmModePlaneResPtr plane_resources;
@@ -483,7 +483,7 @@ get_primary_plane_rotation (ply_renderer_backend_t *backend,
 
 static ply_pixel_buffer_rotation_t
 connector_orientation_prop_to_rotation (drmModePropertyPtr prop,
-                                        int orientation)
+                                        int                orientation)
 {
         const char *name = prop->enums[orientation].name;
 
@@ -504,9 +504,9 @@ connector_orientation_prop_to_rotation (drmModePropertyPtr prop,
 }
 
 static void
-ply_renderer_connector_get_rotation_and_tiled (ply_renderer_backend_t      *backend,
-                                               drmModeConnector            *connector,
-                                               ply_output_t                *output)
+ply_renderer_connector_get_rotation_and_tiled (ply_renderer_backend_t *backend,
+                                               drmModeConnector       *connector,
+                                               ply_output_t           *output)
 {
         int i, primary_id, rotation_prop_id;
         drmModePropertyPtr prop;
@@ -548,7 +548,7 @@ ply_renderer_connector_get_rotation_and_tiled (ply_renderer_backend_t      *back
                                         &primary_id, &rotation_prop_id,
                                         &rotation) &&
             rotation == DRM_MODE_ROTATE_180) {
-                ply_trace("Keeping hw 180° rotation");
+                ply_trace ("Keeping hw 180° rotation");
                 output->rotation = PLY_PIXEL_BUFFER_ROTATE_UPRIGHT;
                 output->uses_hw_rotation = true;
         }
@@ -581,10 +581,10 @@ ply_renderer_head_add_connector (ply_renderer_head_t *head,
 }
 
 static ply_renderer_head_t *
-ply_renderer_head_new (ply_renderer_backend_t     *backend,
-                       ply_output_t               *output,
-                       uint32_t                    console_buffer_id,
-                       int                         gamma_size)
+ply_renderer_head_new (ply_renderer_backend_t *backend,
+                       ply_output_t           *output,
+                       uint32_t                console_buffer_id,
+                       int                     gamma_size)
 {
         ply_renderer_head_t *head;
         int i, step;
@@ -774,7 +774,7 @@ ply_renderer_head_remove (ply_renderer_backend_t *backend,
 static void
 ply_renderer_head_remove_connector (ply_renderer_backend_t *backend,
                                     ply_renderer_head_t    *head,
-                                    uint32_t               connector_id)
+                                    uint32_t                connector_id)
 {
         int i, size = ply_array_get_size (head->connector_ids);
         uint32_t *connector_ids;
@@ -983,7 +983,6 @@ unload_backend (ply_renderer_backend_t *backend)
 
         destroy_backend (backend);
         backend = NULL;
-
 }
 
 static bool
@@ -1114,21 +1113,23 @@ get_preferred_mode (drmModeConnector *connector)
 {
         int i;
 
-        for (i = 0; i < connector->count_modes; i++)
+        for (i = 0; i < connector->count_modes; i++) {
                 if (connector->modes[i].type & DRM_MODE_TYPE_USERDEF) {
                         ply_trace ("Found user set mode %dx%d at index %d",
                                    connector->modes[i].hdisplay,
                                    connector->modes[i].vdisplay, i);
                         return &connector->modes[i];
                 }
+        }
 
-        for (i = 0; i < connector->count_modes; i++)
+        for (i = 0; i < connector->count_modes; i++) {
                 if (connector->modes[i].type & DRM_MODE_TYPE_PREFERRED) {
                         ply_trace ("Found preferred mode %dx%d at index %d",
                                    connector->modes[i].hdisplay,
                                    connector->modes[i].vdisplay, i);
                         return &connector->modes[i];
                 }
+        }
 
         return NULL;
 }
@@ -1181,7 +1182,7 @@ get_output_info (ply_renderer_backend_t *backend,
         ply_renderer_connector_get_rotation_and_tiled (backend, connector, output);
         if (output->rotation == PLY_PIXEL_BUFFER_ROTATE_COUNTER_CLOCKWISE ||
             output->rotation == PLY_PIXEL_BUFFER_ROTATE_CLOCKWISE)
-            has_90_rotation = true;
+                has_90_rotation = true;
 
         if (!output->tiled)
                 mode = get_preferred_mode (connector);
@@ -1214,7 +1215,6 @@ out:
  * This repeats until we find an assignment order which results in a controller
  * for all outputs, or we've tried all possible assignment orders.
  */
-
 static uint32_t
 find_controller_for_output (ply_renderer_backend_t *backend,
                             const ply_output_t     *outputs,
@@ -1296,7 +1296,7 @@ setup_outputs (ply_renderer_backend_t *backend,
                 count = count_setup_controllers (new_outputs, outputs_len);
                 if (count > best_count) {
                         if (best_outputs != outputs)
-                                free ((void *)best_outputs);
+                                free ((void *) best_outputs);
                         best_outputs = new_outputs;
                         best_count = count;
                 } else {
@@ -1305,14 +1305,15 @@ setup_outputs (ply_renderer_backend_t *backend,
         }
 
         if (best_outputs != outputs)
-                free ((void *)outputs);
+                free ((void *) outputs);
 
         /* Our caller is allowed to modify outputs, cast-away the const */
-        return (ply_output_t *)best_outputs;
+        return (ply_output_t *) best_outputs;
 }
 
 static void
-remove_output (ply_renderer_backend_t *backend, ply_output_t *output)
+remove_output (ply_renderer_backend_t *backend,
+               ply_output_t           *output)
 {
         ply_renderer_head_t *head;
 
@@ -1332,7 +1333,7 @@ remove_output (ply_renderer_backend_t *backend, ply_output_t *output)
  */
 static bool
 check_if_output_has_changed (ply_renderer_backend_t *backend,
-                             ply_output_t *new_output)
+                             ply_output_t           *new_output)
 {
         ply_output_t *old_output = NULL;
         int i;
@@ -1347,7 +1348,7 @@ check_if_output_has_changed (ply_renderer_backend_t *backend,
         if (!old_output || !old_output->controller_id)
                 return false;
 
-        if (memcmp(old_output, new_output, sizeof(ply_output_t)) == 0)
+        if (memcmp (old_output, new_output, sizeof(ply_output_t)) == 0)
                 return false;
 
         ply_trace ("Output for connector %u changed, removing", old_output->connector_id);
@@ -1360,7 +1361,8 @@ check_if_output_has_changed (ply_renderer_backend_t *backend,
  * Returns true if any heads were modified.
  */
 static bool
-create_heads_for_active_connectors (ply_renderer_backend_t *backend, bool change)
+create_heads_for_active_connectors (ply_renderer_backend_t *backend,
+                                    bool                    change)
 {
         int i, j, number_of_setup_outputs, outputs_len;
         ply_output_t *outputs;
@@ -1442,9 +1444,10 @@ create_heads_for_active_connectors (ply_renderer_backend_t *backend, bool change
                 }
                 outputs = setup_outputs (backend, outputs, outputs_len);
         }
-        for (i = 0; i < outputs_len; i++)
+        for (i = 0; i < outputs_len; i++) {
                 ply_trace ("Using controller %u for connector %u",
                            outputs[i].controller_id, outputs[i].connector_id);
+        }
 
         /* Step 5:
          * Create heads for all valid outputs
@@ -1812,10 +1815,10 @@ get_panel_properties (ply_renderer_backend_t      *backend,
         if (!backend->panel_width)
                 return false;
 
-        *width    = backend->panel_width;
-        *height   = backend->panel_height;
+        *width = backend->panel_width;
+        *height = backend->panel_height;
         *rotation = backend->panel_rotation;
-        *scale    = backend->panel_scale;
+        *scale = backend->panel_scale;
         return true;
 }
 

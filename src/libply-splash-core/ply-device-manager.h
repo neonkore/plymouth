@@ -29,32 +29,38 @@
 
 typedef enum
 {
-        PLY_DEVICE_MANAGER_FLAGS_NONE = 0,
+        PLY_DEVICE_MANAGER_FLAGS_NONE                   = 0,
         PLY_DEVICE_MANAGER_FLAGS_IGNORE_SERIAL_CONSOLES = 1 << 0,
-        PLY_DEVICE_MANAGER_FLAGS_IGNORE_UDEV = 1 << 1,
-        PLY_DEVICE_MANAGER_FLAGS_SKIP_RENDERERS = 1 << 2
+        PLY_DEVICE_MANAGER_FLAGS_IGNORE_UDEV            = 1 << 1,
+        PLY_DEVICE_MANAGER_FLAGS_SKIP_RENDERERS         = 1 << 2
 } ply_device_manager_flags_t;
 
 typedef struct _ply_device_manager ply_device_manager_t;
-typedef void (* ply_keyboard_added_handler_t) (void *, ply_keyboard_t *);
-typedef void (* ply_keyboard_removed_handler_t) (void *, ply_keyboard_t *);
-typedef void (* ply_pixel_display_added_handler_t) (void *, ply_pixel_display_t *);
-typedef void (* ply_pixel_display_removed_handler_t) (void *, ply_pixel_display_t *);
-typedef void (* ply_text_display_added_handler_t) (void *, ply_text_display_t *);
-typedef void (* ply_text_display_removed_handler_t) (void *, ply_text_display_t *);
+typedef void (* ply_keyboard_added_handler_t) (void *,
+                                               ply_keyboard_t *);
+typedef void (* ply_keyboard_removed_handler_t) (void *,
+                                                 ply_keyboard_t *);
+typedef void (* ply_pixel_display_added_handler_t) (void *,
+                                                    ply_pixel_display_t *);
+typedef void (* ply_pixel_display_removed_handler_t) (void *,
+                                                      ply_pixel_display_t *);
+typedef void (* ply_text_display_added_handler_t) (void *,
+                                                   ply_text_display_t *);
+typedef void (* ply_text_display_removed_handler_t) (void *,
+                                                     ply_text_display_t *);
 
 #ifndef PLY_HIDE_FUNCTION_DECLARATIONS
 ply_device_manager_t *ply_device_manager_new (const char                *default_tty,
                                               ply_device_manager_flags_t flags);
-void ply_device_manager_watch_devices (ply_device_manager_t                *manager,
-                                       double                               device_timeout,
-                                       ply_keyboard_added_handler_t         keyboard_added_handler,
-                                       ply_keyboard_removed_handler_t       keyboard_removed_handler,
-                                       ply_pixel_display_added_handler_t    pixel_display_added_handler,
-                                       ply_pixel_display_removed_handler_t  pixel_display_removed_handler,
-                                       ply_text_display_added_handler_t     text_display_added_handler,
-                                       ply_text_display_removed_handler_t   text_display_removed_handler,
-                                       void                                *data);
+void ply_device_manager_watch_devices (ply_device_manager_t               *manager,
+                                       double                              device_timeout,
+                                       ply_keyboard_added_handler_t        keyboard_added_handler,
+                                       ply_keyboard_removed_handler_t      keyboard_removed_handler,
+                                       ply_pixel_display_added_handler_t   pixel_display_added_handler,
+                                       ply_pixel_display_removed_handler_t pixel_display_removed_handler,
+                                       ply_text_display_added_handler_t    text_display_added_handler,
+                                       ply_text_display_removed_handler_t  text_display_removed_handler,
+                                       void                               *data);
 void ply_device_manager_pause (ply_device_manager_t *manager);
 void ply_device_manager_unpause (ply_device_manager_t *manager);
 bool ply_device_manager_has_serial_consoles (ply_device_manager_t *manager);

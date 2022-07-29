@@ -42,7 +42,7 @@ static script_return_t script_lib_string_char_at (script_state_t *state,
         char *text = script_obj_as_string (state->this);
         int index = script_obj_hash_get_number (state->local, "index");
         int count;
-        char charstring [2];
+        char charstring[2];
 
         if (!text || index < 0) {
                 free (text);
@@ -93,7 +93,8 @@ static script_return_t script_lib_string_length (script_state_t *state,
                                                  void           *user_data)
 {
         char *text = script_obj_as_string (state->this);
-        size_t text_length = strlen(text);
+        size_t text_length = strlen (text);
+
         free (text);
         return script_return_obj (script_obj_new_number (text_length));
 }
@@ -125,6 +126,7 @@ script_lib_string_data_t *script_lib_string_setup (script_state_t *state)
         script_obj_unref (string_hash);
         data->script_main_op = script_parse_string (script_lib_string_string, "script-lib-string.script");
         script_return_t ret = script_execute (state, data->script_main_op);
+
         script_obj_unref (ret.object);
 
         return data;

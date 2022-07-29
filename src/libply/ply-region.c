@@ -445,7 +445,8 @@ ply_region_get_rectangle_list (ply_region_t *region)
 }
 
 static int
-rectangle_compare_y (void *element_a, void *element_b)
+rectangle_compare_y (void *element_a,
+                     void *element_b)
 {
         ply_rectangle_t *rectangle_a = element_a;
         ply_rectangle_t *rectangle_b = element_b;

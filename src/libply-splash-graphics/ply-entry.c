@@ -226,7 +226,8 @@ ply_entry_draw_area (ply_entry_t        *entry,
 }
 
 void
-ply_entry_set_bullet_count (ply_entry_t *entry, int count)
+ply_entry_set_bullet_count (ply_entry_t *entry,
+                            int          count)
 {
         count = MAX (0, count);
         if (!entry->is_password || entry->number_of_bullets != count) {
@@ -261,7 +262,8 @@ ply_entry_remove_all_bullets (ply_entry_t *entry)
 }
 
 void
-ply_entry_set_text (ply_entry_t *entry, const char *text)
+ply_entry_set_text (ply_entry_t *entry,
+                    const char  *text)
 {
         if (entry->is_password || strcmp (entry->text, text) != 0) {
                 entry->is_password = false;

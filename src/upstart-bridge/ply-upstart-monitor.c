@@ -281,7 +281,8 @@ out:
 }
 
 static void
-remove_instance_internal (ply_upstart_monitor_job_t *job, const char *path)
+remove_instance_internal (ply_upstart_monitor_job_t *job,
+                          const char                *path)
 {
         ply_upstart_monitor_instance_t *instance;
         ply_list_node_t *node;
@@ -408,7 +409,9 @@ out:
 }
 
 static void
-free_job_instance (void *key, void *data, void *user_data)
+free_job_instance (void *key,
+                   void *data,
+                   void *user_data)
 {
         const char *path = key;
         ply_upstart_monitor_instance_t *instance = data;
@@ -427,7 +430,8 @@ free_job_instance (void *key, void *data, void *user_data)
 }
 
 static void
-remove_job_internal (ply_upstart_monitor_t *monitor, const char *path)
+remove_job_internal (ply_upstart_monitor_t *monitor,
+                     const char            *path)
 {
         ply_upstart_monitor_job_t *job;
         ply_list_node_t *node;
@@ -457,7 +461,8 @@ remove_job_internal (ply_upstart_monitor_t *monitor, const char *path)
 }
 
 static void
-add_job (ply_upstart_monitor_t *monitor, const char *path)
+add_job (ply_upstart_monitor_t *monitor,
+         const char            *path)
 {
         ply_upstart_monitor_job_t *job;
         DBusMessage *message;
@@ -515,7 +520,8 @@ add_job (ply_upstart_monitor_t *monitor, const char *path)
 }
 
 static void
-remove_job (ply_upstart_monitor_t *monitor, const char *path)
+remove_job (ply_upstart_monitor_t *monitor,
+            const char            *path)
 {
         ply_trace ("removing job: %s", path);
 
@@ -597,8 +603,10 @@ job_removed_handler (DBusConnection        *connection,
 }
 
 static DBusHandlerResult
-instance_added_handler (DBusConnection *connection, DBusMessage *message,
-                        ply_upstart_monitor_t *monitor, const char *path)
+instance_added_handler (DBusConnection        *connection,
+                        DBusMessage           *message,
+                        ply_upstart_monitor_t *monitor,
+                        const char            *path)
 {
         DBusError error;
         const char *signal_path;
@@ -618,8 +626,10 @@ instance_added_handler (DBusConnection *connection, DBusMessage *message,
 }
 
 static DBusHandlerResult
-instance_removed_handler (DBusConnection *connection, DBusMessage *message,
-                          ply_upstart_monitor_t *monitor, const char *path)
+instance_removed_handler (DBusConnection        *connection,
+                          DBusMessage           *message,
+                          ply_upstart_monitor_t *monitor,
+                          const char            *path)
 {
         DBusError error;
         const char *signal_path;
@@ -639,8 +649,10 @@ instance_removed_handler (DBusConnection *connection, DBusMessage *message,
 }
 
 static DBusHandlerResult
-goal_changed_handler (DBusConnection *connection, DBusMessage *message,
-                      ply_upstart_monitor_t *monitor, const char *path)
+goal_changed_handler (DBusConnection        *connection,
+                      DBusMessage           *message,
+                      ply_upstart_monitor_t *monitor,
+                      const char            *path)
 {
         DBusError error;
         const char *goal;
@@ -665,8 +677,10 @@ goal_changed_handler (DBusConnection *connection, DBusMessage *message,
 }
 
 static DBusHandlerResult
-state_changed_handler (DBusConnection *connection, DBusMessage *message,
-                       ply_upstart_monitor_t *monitor, const char *path)
+state_changed_handler (DBusConnection        *connection,
+                       DBusMessage           *message,
+                       ply_upstart_monitor_t *monitor,
+                       const char            *path)
 {
         DBusError error;
         const char *state;
@@ -706,8 +720,10 @@ state_changed_handler (DBusConnection *connection, DBusMessage *message,
 }
 
 static DBusHandlerResult
-failed_handler (DBusConnection *connection, DBusMessage *message,
-                ply_upstart_monitor_t *monitor, const char *path)
+failed_handler (DBusConnection        *connection,
+                DBusMessage           *message,
+                ply_upstart_monitor_t *monitor,
+                const char            *path)
 {
         DBusError error;
         ply_upstart_monitor_instance_t *instance;
@@ -738,7 +754,9 @@ failed_handler (DBusConnection *connection, DBusMessage *message,
 }
 
 static DBusHandlerResult
-message_handler (DBusConnection *connection, DBusMessage *message, void *data)
+message_handler (DBusConnection *connection,
+                 DBusMessage    *message,
+                 void           *data)
 {
         ply_upstart_monitor_t *monitor = data;
         const char *path;
@@ -857,7 +875,8 @@ ply_upstart_monitor_free (ply_upstart_monitor_t *monitor)
 }
 
 static void
-read_watch_handler (void *data, int fd)
+read_watch_handler (void *data,
+                    int   fd)
 {
         DBusWatch *watch = data;
 
@@ -867,7 +886,8 @@ read_watch_handler (void *data, int fd)
 }
 
 static void
-write_watch_handler (void *data, int fd)
+write_watch_handler (void *data,
+                     int   fd)
 {
         DBusWatch *watch = data;
 
@@ -877,7 +897,8 @@ write_watch_handler (void *data, int fd)
 }
 
 static dbus_bool_t
-add_watch (DBusWatch *watch, void *data)
+add_watch (DBusWatch *watch,
+           void      *data)
 {
         ply_upstart_monitor_t *monitor = data;
         unsigned int flags;
@@ -923,7 +944,8 @@ add_watch (DBusWatch *watch, void *data)
 }
 
 static void
-remove_watch (DBusWatch *watch, void *data)
+remove_watch (DBusWatch *watch,
+              void      *data)
 {
         ply_upstart_monitor_t *monitor = data;
         ply_fd_watch_t *watch_event;
@@ -941,7 +963,8 @@ remove_watch (DBusWatch *watch, void *data)
 }
 
 static void
-toggled_watch (DBusWatch *watch, void *data)
+toggled_watch (DBusWatch *watch,
+               void      *data)
 {
         if (dbus_watch_get_enabled (watch))
                 add_watch (watch, data);
@@ -950,7 +973,8 @@ toggled_watch (DBusWatch *watch, void *data)
 }
 
 static ply_upstart_monitor_timeout_t *
-timeout_user_data_new (ply_upstart_monitor_t *monitor, DBusTimeout *timeout)
+timeout_user_data_new (ply_upstart_monitor_t *monitor,
+                       DBusTimeout           *timeout)
 {
         ply_upstart_monitor_timeout_t *monitor_timeout;
 
@@ -970,7 +994,8 @@ timeout_user_data_free (void *data)
 }
 
 static void
-timeout_handler (void *data, ply_event_loop_t *loop)
+timeout_handler (void             *data,
+                 ply_event_loop_t *loop)
 {
         ply_upstart_monitor_timeout_t *monitor_timeout = data;
 
@@ -980,7 +1005,8 @@ timeout_handler (void *data, ply_event_loop_t *loop)
 }
 
 static dbus_bool_t
-add_timeout (DBusTimeout *timeout, void *data)
+add_timeout (DBusTimeout *timeout,
+             void        *data)
 {
         ply_upstart_monitor_t *monitor = data;
         int interval;
@@ -1005,7 +1031,8 @@ add_timeout (DBusTimeout *timeout, void *data)
 }
 
 static void
-remove_timeout (DBusTimeout *timeout, void *data)
+remove_timeout (DBusTimeout *timeout,
+                void        *data)
 {
         ply_upstart_monitor_t *monitor = data;
         ply_upstart_monitor_timeout_t *monitor_timeout;
@@ -1024,7 +1051,8 @@ remove_timeout (DBusTimeout *timeout, void *data)
 }
 
 static void
-toggled_timeout (DBusTimeout *timeout, void *data)
+toggled_timeout (DBusTimeout *timeout,
+                 void        *data)
 {
         if (dbus_timeout_get_enabled (timeout))
                 add_timeout (timeout, data);
@@ -1033,8 +1061,9 @@ toggled_timeout (DBusTimeout *timeout, void *data)
 }
 
 static void
-dispatch_status (DBusConnection *connection, DBusDispatchStatus new_status,
-                 void *data)
+dispatch_status (DBusConnection    *connection,
+                 DBusDispatchStatus new_status,
+                 void              *data)
 {
         ply_upstart_monitor_t *monitor = data;
         uint64_t event_payload;
@@ -1050,7 +1079,8 @@ dispatch_status (DBusConnection *connection, DBusDispatchStatus new_status,
 }
 
 static void
-dispatch (void *data, int fd)
+dispatch (void *data,
+          int   fd)
 {
         ply_upstart_monitor_t *monitor = data;
         uint64_t event_payload;

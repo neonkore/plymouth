@@ -100,7 +100,7 @@ struct _ply_keyboard
         ply_list_t                  *escape_handler_list;
         ply_list_t                  *enter_handler_list;
 
-        uint32_t is_active : 1;
+        uint32_t                     is_active : 1;
 };
 
 static bool ply_keyboard_watch_for_terminal_input (ply_keyboard_t *keyboard);
@@ -201,7 +201,7 @@ process_keyboard_input (ply_keyboard_t *keyboard,
         wchar_t key;
         ply_list_node_t *node;
 
-        if (keyboard_input[0] == KEY_ESCAPE && character_size >= 2){
+        if (keyboard_input[0] == KEY_ESCAPE && character_size >= 2) {
                 /* Escape sequence */
                 ply_buffer_append_bytes (keyboard->line_buffer,
                                          keyboard_input, character_size);
@@ -284,18 +284,18 @@ on_key_event (ply_keyboard_t *keyboard,
 
                 /* Control Sequence Introducer sequences
                  */
-                if(bytes_left >= FUNCTION_KEY_SEQUENCE_MINIMUM_LENGTH &&
-                   strncmp (bytes + i, FUNCTION_KEY_SEQUENCE_PREFIX,
-                            strlen (FUNCTION_KEY_SEQUENCE_PREFIX)) == 0) {
+                if (bytes_left >= FUNCTION_KEY_SEQUENCE_MINIMUM_LENGTH &&
+                    strncmp (bytes + i, FUNCTION_KEY_SEQUENCE_PREFIX,
+                             strlen (FUNCTION_KEY_SEQUENCE_PREFIX)) == 0) {
                         /* Special case - CSI [ after which the next character
                          * is a function key
                          */
                         process_keyboard_input (keyboard, bytes + i, 4);
                         i += 4;
                         continue;
-                } else if(bytes_left >= CSI_SEQUENCE_MINIMUM_LENGTH && /* At least CSI + final byte */
-                          strncmp (bytes + i, CSI_SEQUENCE_PREFIX,
-                                   strlen (CSI_SEQUENCE_PREFIX)) == 0) {
+                } else if (bytes_left >= CSI_SEQUENCE_MINIMUM_LENGTH && /* At least CSI + final byte */
+                           strncmp (bytes + i, CSI_SEQUENCE_PREFIX,
+                                    strlen (CSI_SEQUENCE_PREFIX)) == 0) {
                         ssize_t csi_seq_size;
                         csi_seq_size = 0;
                         for (size_t j = strlen (CSI_SEQUENCE_PREFIX); j < bytes_left; j++) {

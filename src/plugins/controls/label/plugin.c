@@ -195,7 +195,8 @@ init_pango_text_layout (cairo_t       *cairo_context,
 }
 
 static void
-size_control (ply_label_plugin_control_t *label, bool force)
+size_control (ply_label_plugin_control_t *label,
+              bool                        force)
 {
         cairo_t *cairo_context;
         PangoLayout *pango_layout;

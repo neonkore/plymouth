@@ -67,10 +67,10 @@ static void script_execute_error (void       *element,
 }
 
 
-static script_obj_t *script_evaluate_apply_function (script_state_t                                                  *state,
-                                                     script_exp_t                                                    *exp,
-                                                     script_obj_t                                                     *(*function)(script_obj_t *,
-                                                                                                         script_obj_t *))
+static script_obj_t *script_evaluate_apply_function (script_state_t *state,
+                                                     script_exp_t   *exp,
+                                                     script_obj_t *(*function)(script_obj_t *,
+                                                                               script_obj_t *))
 {
         script_obj_t *script_obj_a = script_evaluate (state, exp->data.dual.sub_a);
         script_obj_t *script_obj_b = script_evaluate (state, exp->data.dual.sub_b);
@@ -81,10 +81,10 @@ static script_obj_t *script_evaluate_apply_function (script_state_t             
         return obj;
 }
 
-static script_obj_t *script_evaluate_apply_function_and_assign (script_state_t                                                  *state,
-                                                                script_exp_t                                                    *exp,
-                                                                script_obj_t                                                     *(*function)(script_obj_t *,
-                                                                                                                    script_obj_t *))
+static script_obj_t *script_evaluate_apply_function_and_assign (script_state_t *state,
+                                                                script_exp_t   *exp,
+                                                                script_obj_t *(*function)(script_obj_t *,
+                                                                                          script_obj_t *))
 {
         script_obj_t *script_obj_a = script_evaluate (state, exp->data.dual.sub_a);
         script_obj_t *script_obj_b = script_evaluate (state, exp->data.dual.sub_b);
@@ -335,6 +335,7 @@ static script_obj_t *script_evaluate_func (script_state_t *state,
         ply_list_t *parameter_data = ply_list_new ();
 
         ply_list_node_t *node_expression = ply_list_get_first_node (parameter_expressions);
+
         while (node_expression) {
                 script_exp_t *data_exp = ply_list_node_get_data (node_expression);
                 script_obj_t *data_obj = script_evaluate (state, data_exp);
@@ -346,6 +347,7 @@ static script_obj_t *script_evaluate_func (script_state_t *state,
         script_return_t reply = script_execute_object_with_parlist (state, func_obj, this_obj, parameter_data);
 
         ply_list_node_t *node_data = ply_list_get_first_node (parameter_data);
+
         while (node_data) {
                 script_obj_t *data_obj = ply_list_node_get_data (node_data);
                 script_obj_unref (data_obj);
@@ -598,6 +600,7 @@ static script_return_t script_execute_function_with_parlist (script_state_t    *
         }
 
         script_obj_t *count_obj = script_obj_new_number (index);
+
         script_obj_hash_add_element (arg_obj, count_obj, "count");
         script_obj_hash_add_element (sub_state->local, arg_obj, "_args");
         script_obj_unref (count_obj);
@@ -607,6 +610,7 @@ static script_return_t script_execute_function_with_parlist (script_state_t    *
                 script_obj_hash_add_element (sub_state->local, this, "this");
 
         script_return_t reply;
+
         switch (function->type) {
         case SCRIPT_FUNCTION_TYPE_SCRIPT:
         {

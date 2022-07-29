@@ -53,10 +53,10 @@ void ply_boot_splash_set_keyboard (ply_boot_splash_t *splash,
 void ply_boot_splash_unset_keyboard (ply_boot_splash_t *splash);
 void ply_boot_splash_add_pixel_display (ply_boot_splash_t   *splash,
                                         ply_pixel_display_t *pixel_display);
-void ply_boot_splash_remove_pixel_display (ply_boot_splash_t  *splash,
-                                          ply_pixel_display_t *pixel_display);
-void ply_boot_splash_add_text_display (ply_boot_splash_t   *splash,
-                                       ply_text_display_t  *text_display);
+void ply_boot_splash_remove_pixel_display (ply_boot_splash_t   *splash,
+                                           ply_pixel_display_t *pixel_display);
+void ply_boot_splash_add_text_display (ply_boot_splash_t  *splash,
+                                       ply_text_display_t *text_display);
 void ply_boot_splash_remove_text_display (ply_boot_splash_t  *splash,
                                           ply_text_display_t *text_display);
 void ply_boot_splash_free (ply_boot_splash_t *splash);

@@ -355,8 +355,7 @@ on_key_answer (key_answer_state_t *answer_state,
 
         if (answer_state->command != NULL)
                 answer_via_command (answer_state->command, answer, NULL);
-        else
-        if (answer != NULL)
+        else if (answer != NULL)
                 write (STDOUT_FILENO, answer, strlen (answer));
 
         ply_event_loop_exit (answer_state->state->loop, 0);
@@ -606,6 +605,7 @@ on_keystroke_request (state_t    *state,
                                                 "keys", &keys,
                                                 NULL);
         key_answer_state_t *key_answer_state;
+
         key_answer_state = calloc (1, sizeof(key_answer_state_t));
         key_answer_state->state = state;
         key_answer_state->keys = keys;

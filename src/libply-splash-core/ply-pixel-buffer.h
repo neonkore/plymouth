@@ -49,8 +49,8 @@ typedef enum
 ply_pixel_buffer_t *ply_pixel_buffer_new (unsigned long width,
                                           unsigned long height);
 ply_pixel_buffer_t *
-ply_pixel_buffer_new_with_device_rotation (unsigned long width,
-                                           unsigned long height,
+ply_pixel_buffer_new_with_device_rotation (unsigned long               width,
+                                           unsigned long               height,
                                            ply_pixel_buffer_rotation_t device_rotation);
 void ply_pixel_buffer_free (ply_pixel_buffer_t *buffer);
 void ply_pixel_buffer_get_size (ply_pixel_buffer_t *buffer,
@@ -62,7 +62,7 @@ void ply_pixel_buffer_set_device_scale (ply_pixel_buffer_t *buffer,
 ply_pixel_buffer_rotation_t
 ply_pixel_buffer_get_device_rotation (ply_pixel_buffer_t *buffer);
 /* Note calling this removes all pushed clip-areas */
-void ply_pixel_buffer_set_device_rotation (ply_pixel_buffer_t *buffer,
+void ply_pixel_buffer_set_device_rotation (ply_pixel_buffer_t         *buffer,
                                            ply_pixel_buffer_rotation_t rotation);
 
 unsigned long ply_pixel_buffer_get_width (ply_pixel_buffer_t *buffer);

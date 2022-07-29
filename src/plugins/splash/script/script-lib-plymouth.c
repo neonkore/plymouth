@@ -51,10 +51,11 @@ static script_return_t plymouth_set_function (script_state_t *state,
 static script_return_t plymouth_set_refresh_rate (script_state_t *state,
                                                   void           *user_data)
 {
-      script_lib_plymouth_data_t *data = user_data;
-      data->refresh_rate = script_obj_hash_get_number (state->local, "value");
+        script_lib_plymouth_data_t *data = user_data;
 
-      return script_return_obj_null ();
+        data->refresh_rate = script_obj_hash_get_number (state->local, "value");
+
+        return script_return_obj_null ();
 }
 
 static script_return_t plymouth_get_mode (script_state_t *state,
@@ -92,7 +93,7 @@ static script_return_t plymouth_get_mode (script_state_t *state,
 
 script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *state,
                                                        ply_boot_splash_mode_t mode,
-                                                       int refresh_rate)
+                                                       int                    refresh_rate)
 {
         script_lib_plymouth_data_t *data = malloc (sizeof(script_lib_plymouth_data_t));
 
@@ -114,6 +115,7 @@ script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *st
         data->refresh_rate = refresh_rate;
 
         script_obj_t *plymouth_hash = script_obj_hash_get_element (state->global, "Plymouth");
+
         script_add_native_function (plymouth_hash,
                                     "SetRefreshFunction",
                                     plymouth_set_function,
@@ -213,6 +215,7 @@ script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *st
 
         data->script_main_op = script_parse_string (script_lib_plymouth_string, "script-lib-plymouth.script");
         script_return_t ret = script_execute (state, data->script_main_op);
+
         script_obj_unref (ret.object);          /* Throw anything sent back away */
 
         return data;
@@ -439,7 +442,7 @@ void script_lib_plymouth_on_hide_message (script_state_t             *state,
 
 void script_lib_plymouth_on_system_update (script_state_t             *state,
                                            script_lib_plymouth_data_t *data,
-                                           int                 progress)
+                                           int                         progress)
 {
         script_obj_t *new_status_obj = script_obj_new_number (progress);
         script_return_t ret = script_execute_object (state,
@@ -447,6 +450,7 @@ void script_lib_plymouth_on_system_update (script_state_t             *state,
                                                      NULL,
                                                      new_status_obj,
                                                      NULL);
+
         script_obj_unref (new_status_obj);
         script_obj_unref (ret.object);
 }

@@ -50,7 +50,7 @@ typedef struct _ply_boot_splash_plugin ply_boot_splash_plugin_t;
 
 typedef struct
 {
-        ply_boot_splash_plugin_t * (*create_plugin)(ply_key_file_t * key_file);
+        ply_boot_splash_plugin_t * (*create_plugin)(ply_key_file_t *key_file);
         void (*destroy_plugin)(ply_boot_splash_plugin_t *plugin);
 
         void (*set_keyboard)(ply_boot_splash_plugin_t *plugin,

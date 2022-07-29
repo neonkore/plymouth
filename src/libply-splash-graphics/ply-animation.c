@@ -281,7 +281,7 @@ out:
         }
         free (entries);
 
-        return (ply_array_get_size (animation->frames) > 0);
+        return ply_array_get_size (animation->frames) > 0;
 }
 
 bool

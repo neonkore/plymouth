@@ -58,7 +58,7 @@ typedef enum
 } script_function_type_t;
 
 typedef script_return_t (*script_native_function_t)(script_state_t *,
-                                                    void           *);
+                                                    void *);
 
 typedef struct script_function_t
 {

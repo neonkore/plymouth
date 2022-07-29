@@ -55,17 +55,19 @@ struct _ply_image
         ply_pixel_buffer_t *buffer;
 };
 
-struct bmp_file_header {
+struct bmp_file_header
+{
         uint16_t id;
         uint32_t file_size;
         uint32_t reserved;
         uint32_t bitmap_offset;
 } __attribute__((__packed__));
 
-struct bmp_dib_header {
+struct bmp_dib_header
+{
         uint32_t dib_header_size;
-        int32_t width;
-        int32_t height;
+        int32_t  width;
+        int32_t  height;
         uint16_t planes;
         uint16_t bpp;
         uint32_t compression;
@@ -136,7 +138,8 @@ transform_to_argb32 (png_struct   *png,
 }
 
 static bool
-ply_image_load_png (ply_image_t *image, FILE *fp)
+ply_image_load_png (ply_image_t *image,
+                    FILE        *fp)
 {
         png_struct *png;
         png_info *info;
@@ -211,7 +214,8 @@ ply_image_load_png (ply_image_t *image, FILE *fp)
 }
 
 static bool
-ply_image_load_bmp (ply_image_t *image, FILE *fp)
+ply_image_load_bmp (ply_image_t *image,
+                    FILE        *fp)
 {
         uint32_t x, y, src_y, width, height, bmp_pitch, *dst;
         struct bmp_file_header file_header;
@@ -242,7 +246,7 @@ ply_image_load_bmp (ply_image_t *image, FILE *fp)
 
         if (fseek (fp, file_header.bitmap_offset, SEEK_SET) != 0)
                 goto out;
-        
+
         if (fread (buf, 1, bmp_pitch * height, fp) != bmp_pitch * height)
                 goto out;
 
@@ -296,8 +300,8 @@ ply_image_load (ply_image_t *image)
         if (memcmp (header, png_header, sizeof(png_header)) == 0)
                 ret = ply_image_load_png (image, fp);
 
-        else if (((struct bmp_file_header *)header)->id == 0x4d42 &&
-                 ((struct bmp_file_header *)header)->reserved == 0)
+        else if (((struct bmp_file_header *) header)->id == 0x4d42 &&
+                 ((struct bmp_file_header *) header)->reserved == 0)
                 ret = ply_image_load_bmp (image, fp);
 
 out:
