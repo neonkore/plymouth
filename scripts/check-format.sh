@@ -17,11 +17,15 @@ if [ "$DIRTY_TREE" -ne 0 ]; then
 fi
 
 find -name '*.[ch]' -exec uncrustify -q -c latest-uncrustify-config.cfg --replace {} \;
-git diff > after
+
+echo > after
+find -name '*.[ch]' -exec git diff -- {} \; >> after
 
 git reset --hard $UPSTREAM_BRANCH
 find -name '*.[ch]' -exec uncrustify -q -c latest-uncrustify-config.cfg --replace {} \;
-git diff > before
+
+echo > before
+find -name '*.[ch]' -exec git diff -- {} \; >> before
 
 interdiff --no-revert-omitted before after > diff
 
