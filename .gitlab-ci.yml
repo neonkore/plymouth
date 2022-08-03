@@ -14,7 +14,7 @@ stages:
 
 fedora-x86_64:
   stage: build
-  image: 'registry.fedoraproject.org/fedora:35'
+  image: 'registry.fedoraproject.org/fedora:37'
   before_script:
     - dnf install -y gcc libtool intltool gtk3-devel git libpng-devel gettext-devel libxslt docbook-style-xsl cairo-devel systemd-devel systemd-udev kernel-headers libdrm-devel pango-devel make ShellCheck uncrustify patchutils
   <<: *autotools-build
