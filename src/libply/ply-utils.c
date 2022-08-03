@@ -46,7 +46,6 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <linux/fs.h>
 #include <linux/vt.h>
 
 #include <dlfcn.h>

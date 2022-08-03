@@ -27,7 +27,7 @@ find -name '*.[ch]' -exec uncrustify -q -c latest-uncrustify-config.cfg --replac
 echo > before
 find -name '*.[ch]' -exec git diff -- {} \; >> before
 
-interdiff --no-revert-omitted before after > diff
+interdiff -B --no-revert-omitted before after > diff
 
 if [ -n "$(cat diff)" ]; then
     echo "Uncrustify found style abnormalities" 2>&1
