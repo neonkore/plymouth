@@ -832,4 +832,3 @@ ply_boot_client_attach_to_event_loop (ply_boot_client_t *client,
                                        client);
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

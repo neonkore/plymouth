@@ -408,4 +408,3 @@ ply_image_convert_to_pixel_buffer (ply_image_t *image)
         return buffer;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

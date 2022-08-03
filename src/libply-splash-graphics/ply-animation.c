@@ -409,4 +409,3 @@ ply_animation_get_height (ply_animation_t *animation)
         return animation->height;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

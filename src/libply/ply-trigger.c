@@ -167,4 +167,3 @@ ply_trigger_pull (ply_trigger_t *trigger,
         if (trigger->free_address != NULL)
                 ply_trigger_free (trigger);
 }
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

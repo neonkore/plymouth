@@ -90,4 +90,3 @@ const char *ply_renderer_get_keymap (ply_renderer_t *renderer);
 #endif
 
 #endif /* PLY_RENDERER_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

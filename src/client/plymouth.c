@@ -1227,4 +1227,3 @@ out:
 
         return exit_code;
 }
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

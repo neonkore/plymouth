@@ -55,4 +55,3 @@ unsigned long ply_capslock_icon_get_height (ply_capslock_icon_t *capslock_icon);
 #endif
 
 #endif /* CAPSLOCK_ICON_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

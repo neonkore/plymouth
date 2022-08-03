@@ -135,4 +135,3 @@ void ply_boot_server_attach_to_event_loop (ply_boot_server_t *server,
 #endif
 
 #endif /* PLY_BOOT_SERVER_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

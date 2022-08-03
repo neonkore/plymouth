@@ -1322,4 +1322,3 @@ ply_event_loop_run (ply_event_loop_t *loop)
         return loop->exit_code;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

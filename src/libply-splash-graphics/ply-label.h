@@ -77,4 +77,3 @@ long ply_label_get_height (ply_label_t *label);
 #endif
 
 #endif /* PLY_LABEL_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

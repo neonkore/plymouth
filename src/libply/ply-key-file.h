@@ -65,4 +65,3 @@ void ply_key_file_foreach_entry (ply_key_file_t             *key_file,
 #endif
 
 #endif /* PLY_KEY_FILE_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

@@ -168,4 +168,3 @@ ply_pixel_buffer_t *ply_pixel_buffer_rotate_upright (ply_pixel_buffer_t *old_buf
 #endif
 
 #endif /* PLY_PIXEL_BUFFER_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

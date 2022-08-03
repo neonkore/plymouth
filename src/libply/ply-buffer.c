@@ -258,4 +258,3 @@ ply_buffer_clear (ply_buffer_t *buffer)
         buffer->size = 0;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

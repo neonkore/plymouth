@@ -453,4 +453,3 @@ ply_renderer_get_keymap (ply_renderer_t *renderer)
         return renderer->plugin_interface->get_keymap (renderer->backend);
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

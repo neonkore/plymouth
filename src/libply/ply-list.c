@@ -360,4 +360,3 @@ ply_list_node_get_data (ply_list_node_t *node)
         return node->data;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

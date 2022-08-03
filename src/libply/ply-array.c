@@ -189,4 +189,3 @@ ply_array_contains_uint32_element (ply_array_t   *array,
         return false;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

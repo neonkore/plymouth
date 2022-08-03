@@ -67,4 +67,3 @@ void ply_upstart_monitor_add_failed_handler (ply_upstart_monitor_t              
 #endif
 
 #endif
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

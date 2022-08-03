@@ -137,4 +137,3 @@ double ply_strtod (const char *str);
 #endif
 
 #endif /* PLY_UTILS_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

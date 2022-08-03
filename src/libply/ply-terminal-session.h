@@ -71,4 +71,3 @@ void ply_terminal_session_close_log (ply_terminal_session_t *session);
 #endif
 
 #endif /* PLY_TERMINAL_SESSION_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

@@ -105,4 +105,3 @@ typedef struct
 } ply_boot_splash_plugin_interface_t;
 
 #endif /* PLY_BOOT_SPLASH_PLUGIN_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

@@ -483,4 +483,3 @@ ply_key_file_load_groupless_file (ply_key_file_t *key_file)
         return key_file->groupless_group != NULL;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

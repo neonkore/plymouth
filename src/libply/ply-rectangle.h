@@ -106,4 +106,3 @@ void ply_rectangle_intersect (ply_rectangle_t *rectangle1,
 #endif
 
 #endif /* PLY_RECTANGLE_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

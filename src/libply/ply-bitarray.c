@@ -43,4 +43,3 @@ ply_bitarray_count (ply_bitarray_t *bitarray,
         return count;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

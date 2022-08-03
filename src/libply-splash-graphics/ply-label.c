@@ -314,4 +314,3 @@ ply_label_get_height (ply_label_t *label)
 
         return label->plugin_interface->get_height_of_control (label->control);
 }
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

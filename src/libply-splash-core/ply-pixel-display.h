@@ -70,4 +70,3 @@ void ply_pixel_display_unpause_updates (ply_pixel_display_t *display);
 
 #endif /* PLY_PIXEL_DISPLAY_H */
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */
