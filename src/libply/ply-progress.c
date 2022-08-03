@@ -327,4 +327,3 @@ ply_progress_status_update (ply_progress_t *progress,
         }
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

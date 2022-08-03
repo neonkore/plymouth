@@ -60,4 +60,3 @@ long ply_throbber_get_height (ply_throbber_t *throbber);
 #endif
 
 #endif /* THROBBER_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

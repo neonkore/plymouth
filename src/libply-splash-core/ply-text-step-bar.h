@@ -46,4 +46,3 @@ int ply_text_step_bar_get_number_of_columns (ply_text_step_bar_t *step_bar);
 #endif
 
 #endif /* PLY_TEXT_PULSER_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

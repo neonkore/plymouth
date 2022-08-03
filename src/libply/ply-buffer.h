@@ -55,4 +55,3 @@ void ply_buffer_clear (ply_buffer_t *buffer);
 #endif
 
 #endif /* PLY_BUFFER_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

@@ -66,4 +66,3 @@ void ply_progress_bar_set_colors (ply_progress_bar_t *bar,
 #endif
 
 #endif /* PLY_PROGRESS_BAR_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

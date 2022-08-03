@@ -1175,4 +1175,3 @@ ply_upstart_monitor_add_failed_handler (ply_upstart_monitor_t               *mon
         monitor->failed_handler = handler;
         monitor->failed_data = user_data;
 }
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

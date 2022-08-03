@@ -71,4 +71,3 @@ double ply_progress_animation_get_fraction_done (ply_progress_animation_t *progr
 #endif
 
 #endif /* PROGRESS_ANIMATION_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

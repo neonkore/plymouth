@@ -461,4 +461,3 @@ ply_region_get_sorted_rectangle_list (ply_region_t *region)
         return region->rectangle_list;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

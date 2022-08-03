@@ -43,4 +43,3 @@ void ply_progress_status_update (ply_progress_t *progress,
                                  const char     *status);
 
 #endif /* PLY_PROGRESS_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

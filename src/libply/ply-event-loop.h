@@ -88,4 +88,3 @@ ply_event_loop_process_pending_events (ply_event_loop_t *loop);
 #endif
 
 #endif
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

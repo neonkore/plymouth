@@ -54,4 +54,3 @@ unsigned long ply_keymap_icon_get_height (ply_keymap_icon_t *keymap_icon);
 #endif
 
 #endif /* KEYMAP_ICON_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

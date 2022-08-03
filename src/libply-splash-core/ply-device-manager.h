@@ -78,4 +78,3 @@ ply_terminal_t *ply_device_manager_get_default_terminal (ply_device_manager_t *m
 #endif
 
 #endif
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

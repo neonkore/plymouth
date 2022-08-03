@@ -189,4 +189,3 @@ ply_pixel_display_set_draw_handler (ply_pixel_display_t             *display,
         display->draw_handler_user_data = user_data;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

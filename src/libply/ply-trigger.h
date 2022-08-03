@@ -50,4 +50,3 @@ void ply_trigger_pull (ply_trigger_t *trigger,
 #endif
 
 #endif /* PLY_TRIGGER_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

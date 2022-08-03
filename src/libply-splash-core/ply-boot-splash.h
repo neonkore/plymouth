@@ -102,4 +102,3 @@ bool ply_boot_splash_uses_pixel_displays (ply_boot_splash_t *splash);
 #endif
 
 #endif /* PLY_BOOT_SPLASH_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

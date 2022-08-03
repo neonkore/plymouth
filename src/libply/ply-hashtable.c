@@ -275,4 +275,3 @@ ply_hashtable_get_size (ply_hashtable_t *hashtable)
         return hashtable->live_node_count;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

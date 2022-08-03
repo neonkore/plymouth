@@ -71,4 +71,3 @@ void ply_entry_set_text_color (ply_entry_t *entry,
 #endif
 
 #endif /* PLY_ENTRY_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

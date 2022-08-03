@@ -150,4 +150,3 @@ bool ply_logger_is_tracing_to_terminal (ply_logger_t *logger);
 #endif
 
 #endif /* PLY_LOGGER_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

@@ -45,4 +45,3 @@ bool ply_region_is_empty (ply_region_t *region);
 #endif
 
 #endif /* PLY_REGION_H */
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

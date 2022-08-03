@@ -333,4 +333,3 @@ ply_entry_get_height (ply_entry_t *entry)
         return entry->area.height;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */

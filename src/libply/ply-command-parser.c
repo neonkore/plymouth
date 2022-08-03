@@ -948,4 +948,3 @@ ply_command_parser_parse_arguments (ply_command_parser_t *parser,
         return parsed_arguments;
 }
 
-/* vim: set ts=4 sw=4 expandtab autoindent cindent cino={.5s,(0: */
