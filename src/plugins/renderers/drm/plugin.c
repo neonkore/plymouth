@@ -130,6 +130,7 @@ typedef struct
         bool                        tiled;
         bool                        connected;
         bool                        uses_hw_rotation;
+        bool                        is_non_desktop;
 } ply_output_t;
 
 struct _ply_renderer_backend
@@ -504,9 +505,9 @@ connector_orientation_prop_to_rotation (drmModePropertyPtr prop,
 }
 
 static void
-ply_renderer_connector_get_rotation_and_tiled (ply_renderer_backend_t *backend,
-                                               drmModeConnector       *connector,
-                                               ply_output_t           *output)
+ply_renderer_connector_get_properties (ply_renderer_backend_t *backend,
+                                       drmModeConnector       *connector,
+                                       ply_output_t           *output)
 {
         int i, primary_id, rotation_prop_id;
         drmModePropertyPtr prop;
@@ -533,6 +534,9 @@ ply_renderer_connector_get_rotation_and_tiled (ply_renderer_backend_t *backend,
                     strcmp (prop->name, "link-status") == 0) {
                         output->link_status = connector->prop_values[i];
                         ply_trace ("link-status %d", output->link_status);
+                }
+                if (strcmp (prop->name, "non-desktop") == 0) {
+                        output->is_non_desktop = connector->prop_values[i];
                 }
 
                 drmModeFreeProperty (prop);
@@ -1179,7 +1183,10 @@ get_output_info (ply_renderer_backend_t *backend,
                 goto out;
 
         output_get_controller_info (backend, connector, output);
-        ply_renderer_connector_get_rotation_and_tiled (backend, connector, output);
+        ply_renderer_connector_get_properties (backend, connector, output);
+        /* ignore non-desktop outputs */
+        if (output->is_non_desktop)
+                goto out;
         if (output->rotation == PLY_PIXEL_BUFFER_ROTATE_COUNTER_CLOCKWISE ||
             output->rotation == PLY_PIXEL_BUFFER_ROTATE_CLOCKWISE)
                 has_90_rotation = true;
