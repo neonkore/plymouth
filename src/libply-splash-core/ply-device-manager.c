@@ -302,6 +302,10 @@ create_devices_for_udev_device (ply_device_manager_t *manager,
 {
         const char *device_path;
         bool created = false;
+        bool force_fb = false;
+
+        if (manager->flags & PLY_DEVICE_MANAGER_FLAGS_FORCE_FRAME_BUFFER)
+                force_fb = true;
 
         device_path = udev_device_get_devnode (device);
 
@@ -322,6 +326,8 @@ create_devices_for_udev_device (ply_device_manager_t *manager,
                 } else if (strcmp (subsystem, SUBSYSTEM_FRAME_BUFFER) == 0) {
                         ply_trace ("found frame buffer device %s", device_path);
                         if (!fb_device_has_drm_device (manager, device))
+                                renderer_type = PLY_RENDERER_TYPE_FRAME_BUFFER;
+                        else if (force_fb)
                                 renderer_type = PLY_RENDERER_TYPE_FRAME_BUFFER;
                         else
                                 ply_trace ("ignoring, since there's a DRM device associated with it");
