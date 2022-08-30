@@ -717,6 +717,17 @@ on_quit_request (state_t    *state,
 }
 
 static void
+on_reload_request (state_t    *state,
+                   const char *command)
+{
+        ply_boot_client_tell_daemon_to_reload (state->client,
+                                               (ply_boot_client_response_handler_t)
+                                               on_success,
+                                               (ply_boot_client_response_handler_t)
+                                               on_failure, state);
+}
+
+static void
 on_update_root_fs_request (state_t    *state,
                            const char *command)
 {
@@ -1056,6 +1067,11 @@ main (int    argc,
                                         on_quit_request, &state,
                                         "retain-splash", "Don't explicitly hide boot splash on exit",
                                         PLY_COMMAND_OPTION_TYPE_FLAG, NULL);
+
+        ply_command_parser_add_command (state.command_parser,
+                                        "reload", "Tell the daemon to reload the theme",
+                                        (ply_command_handler_t)
+                                        on_reload_request, &state, NULL);
 
         if (!ply_command_parser_parse_arguments (state.command_parser, state.loop, argv, argc)) {
                 char *help_string;
