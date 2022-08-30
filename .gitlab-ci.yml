@@ -2,9 +2,12 @@ stages:
   - build
   - shellcheck
 
-.autotools-build: &autotools-build
+.check-format: &check-format
   script:
     - scripts/check-format.sh
+
+.autotools-build: &autotools-build
+  script:
     - NOCONFIGURE=1 ./autogen.sh
     - mkdir _build && cd _build
     - ../configure --prefix /usr
@@ -17,6 +20,7 @@ fedora-x86_64:
   image: 'registry.fedoraproject.org/fedora:37'
   before_script:
     - dnf install -y gcc libtool intltool gtk3-devel git libpng-devel gettext-devel libxslt docbook-style-xsl cairo-devel systemd-devel systemd-udev kernel-headers libdrm-devel pango-devel make ShellCheck uncrustify patchutils
+  <<: *check-format
   <<: *autotools-build
   only:
     - merge_requests
