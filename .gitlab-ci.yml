@@ -21,9 +21,9 @@ fedora-x86_64:
   only:
     - merge_requests
 
-debian-stable-x86_64:
+debian-unstable-x86_64:
   stage: build
-  image: debian:stable
+  image: debian:unstable
   before_script:
     - apt-get update -qq
     - apt-get install -y -qq --no-install-recommends autoconf automake autopoint bc build-essential docbook-xsl gcc gettext git intltool libdrm-dev libgtk-3-dev libpango1.0-dev libpng-dev libtool libudev-dev make pkg-config libsystemd-dev udev xsltproc shellcheck uncrustify patchutils
