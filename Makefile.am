@@ -7,7 +7,7 @@ endif
 DISTCHECK_CONFIGURE_FLAGS = --disable-tests --disable-systemd-integration
 
 EXTRA_DIST = build-tools/config.rpath ChangeLog                                \
-             README
+             README.md
 
 MAINTAINERCLEANFILES = aclocal.m4                                              \
                        config.h.in                                             \
