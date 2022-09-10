@@ -13,7 +13,7 @@ AM_PROG_CC_C_O
 AC_HEADER_STDC
 AC_C_CONST
 
-AM_INIT_AUTOMAKE([dist-xz no-dist-gzip subdir-objects])
+AM_INIT_AUTOMAKE([dist-xz no-dist-gzip subdir-objects foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AM_MAINTAINER_MODE([enable])
 
