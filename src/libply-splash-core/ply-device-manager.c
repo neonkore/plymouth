@@ -263,6 +263,40 @@ fb_device_has_drm_device (ply_device_manager_t *manager,
 }
 
 static bool
+verify_drm_device (struct udev_device *device)
+{
+        const char *id_path;
+
+        /*
+         * Simple-framebuffer devices driven by simpledrm lack information
+         * like panel-rotation info and physical size, causing the splash
+         * to briefly render on its side / without HiDPI scaling, switching
+         * to the correct rendering when the native driver loads.
+         * To avoid this treat simpledrm devices as fbdev devices and only
+         * use them after the timeout.
+         */
+        id_path = udev_device_get_property_value (device, "ID_PATH");
+        if (!ply_string_has_prefix (id_path, "platform-simple-framebuffer"))
+                return true; /* Not a SimpleDRM device */
+
+        /*
+         * With nomodeset, no native drivers will load, so SimpleDRM devices
+         * should be used immediately.
+         */
+        if (ply_kernel_command_line_has_argument ("nomodeset"))
+                return true;
+
+        /*
+         * Some firmwares leave the panel black at boot. Allow enabling SimpleDRM
+         * use from the cmdline to show something to the user ASAP.
+         */
+        if (ply_kernel_command_line_has_argument ("plymouth.use-simpledrm"))
+                return true;
+
+        return false;
+}
+
+static bool
 create_devices_for_udev_device (ply_device_manager_t *manager,
                                 struct udev_device   *device)
 {
@@ -402,40 +436,6 @@ on_drm_udev_add_or_change (ply_device_manager_t *manager,
                 free_displays_for_renderer (manager, renderer);
                 create_pixel_displays_for_renderer (manager, renderer);
         }
-}
-
-static bool
-verify_drm_device (struct udev_device *device)
-{
-        const char *id_path;
-
-        /*
-         * Simple-framebuffer devices driven by simpledrm lack information
-         * like panel-rotation info and physical size, causing the splash
-         * to briefly render on its side / without HiDPI scaling, switching
-         * to the correct rendering when the native driver loads.
-         * To avoid this treat simpledrm devices as fbdev devices and only
-         * use them after the timeout.
-         */
-        id_path = udev_device_get_property_value (device, "ID_PATH");
-        if (!ply_string_has_prefix (id_path, "platform-simple-framebuffer"))
-                return true; /* Not a SimpleDRM device */
-
-        /*
-         * With nomodeset, no native drivers will load, so SimpleDRM devices
-         * should be used immediately.
-         */
-        if (ply_kernel_command_line_has_argument ("nomodeset"))
-                return true;
-
-        /*
-         * Some firmwares leave the panel black at boot. Allow enabling SimpleDRM
-         * use from the cmdline to show something to the user ASAP.
-         */
-        if (ply_kernel_command_line_has_argument ("plymouth.use-simpledrm"))
-                return true;
-
-        return false;
 }
 
 static bool
