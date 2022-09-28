@@ -313,6 +313,10 @@ create_devices_for_udev_device (ply_device_manager_t *manager,
                 ply_trace ("device subsystem is %s", subsystem);
 
                 if (strcmp (subsystem, SUBSYSTEM_DRM) == 0) {
+                        if (!manager->device_timeout_elapsed && !verify_drm_device (device)) {
+                                ply_trace ("ignoring since we only handle SimpleDRM devices after timeout");
+                                return false;
+                        }
                         ply_trace ("found DRM device %s", device_path);
                         renderer_type = PLY_RENDERER_TYPE_DRM;
                 } else if (strcmp (subsystem, SUBSYSTEM_FRAME_BUFFER) == 0) {
@@ -458,13 +462,7 @@ verify_add_or_change (ply_device_manager_t *manager,
                 return true;
 
         subsystem = udev_device_get_subsystem (device);
-
-        if (strcmp (subsystem, SUBSYSTEM_DRM) == 0) {
-                if (!verify_drm_device (device)) {
-                        ply_trace ("ignoring since we only handle SimpleDRM devices after timeout");
-                        return false;
-                }
-        } else {
+        if (strcmp (subsystem, SUBSYSTEM_DRM)) {
                 ply_trace ("ignoring since we only handle subsystem %s devices after timeout", subsystem);
                 return false;
         }
