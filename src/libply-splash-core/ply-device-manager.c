@@ -263,6 +263,40 @@ fb_device_has_drm_device (ply_device_manager_t *manager,
 }
 
 static bool
+verify_drm_device (struct udev_device *device)
+{
+        const char *id_path;
+
+        /*
+         * Simple-framebuffer devices driven by simpledrm lack information
+         * like panel-rotation info and physical size, causing the splash
+         * to briefly render on its side / without HiDPI scaling, switching
+         * to the correct rendering when the native driver loads.
+         * To avoid this treat simpledrm devices as fbdev devices and only
+         * use them after the timeout.
+         */
+        id_path = udev_device_get_property_value (device, "ID_PATH");
+        if (!ply_string_has_prefix (id_path, "platform-simple-framebuffer"))
+                return true; /* Not a SimpleDRM device */
+
+        /*
+         * With nomodeset, no native drivers will load, so SimpleDRM devices
+         * should be used immediately.
+         */
+        if (ply_kernel_command_line_has_argument ("nomodeset"))
+                return true;
+
+        /*
+         * Some firmwares leave the panel black at boot. Allow enabling SimpleDRM
+         * use from the cmdline to show something to the user ASAP.
+         */
+        if (ply_kernel_command_line_has_argument ("plymouth.use-simpledrm"))
+                return true;
+
+        return false;
+}
+
+static bool
 create_devices_for_udev_device (ply_device_manager_t *manager,
                                 struct udev_device   *device)
 {
@@ -279,6 +313,10 @@ create_devices_for_udev_device (ply_device_manager_t *manager,
                 ply_trace ("device subsystem is %s", subsystem);
 
                 if (strcmp (subsystem, SUBSYSTEM_DRM) == 0) {
+                        if (!manager->device_timeout_elapsed && !verify_drm_device (device)) {
+                                ply_trace ("ignoring since we only handle SimpleDRM devices after timeout");
+                                return false;
+                        }
                         ply_trace ("found DRM device %s", device_path);
                         renderer_type = PLY_RENDERER_TYPE_DRM;
                 } else if (strcmp (subsystem, SUBSYSTEM_FRAME_BUFFER) == 0) {
@@ -405,40 +443,6 @@ on_drm_udev_add_or_change (ply_device_manager_t *manager,
 }
 
 static bool
-verify_drm_device (struct udev_device *device)
-{
-        const char *id_path;
-
-        /*
-         * Simple-framebuffer devices driven by simpledrm lack information
-         * like panel-rotation info and physical size, causing the splash
-         * to briefly render on its side / without HiDPI scaling, switching
-         * to the correct rendering when the native driver loads.
-         * To avoid this treat simpledrm devices as fbdev devices and only
-         * use them after the timeout.
-         */
-        id_path = udev_device_get_property_value (device, "ID_PATH");
-        if (!ply_string_has_prefix (id_path, "platform-simple-framebuffer"))
-                return true; /* Not a SimpleDRM device */
-
-        /*
-         * With nomodeset, no native drivers will load, so SimpleDRM devices
-         * should be used immediately.
-         */
-        if (ply_kernel_command_line_has_argument ("nomodeset"))
-                return true;
-
-        /*
-         * Some firmwares leave the panel black at boot. Allow enabling SimpleDRM
-         * use from the cmdline to show something to the user ASAP.
-         */
-        if (ply_kernel_command_line_has_argument ("plymouth.use-simpledrm"))
-                return true;
-
-        return false;
-}
-
-static bool
 verify_add_or_change (ply_device_manager_t *manager,
                       const char           *action,
                       const char           *device_path,
@@ -458,13 +462,7 @@ verify_add_or_change (ply_device_manager_t *manager,
                 return true;
 
         subsystem = udev_device_get_subsystem (device);
-
-        if (strcmp (subsystem, SUBSYSTEM_DRM) == 0) {
-                if (!verify_drm_device (device)) {
-                        ply_trace ("ignoring since we only handle SimpleDRM devices after timeout");
-                        return false;
-                }
-        } else {
+        if (strcmp (subsystem, SUBSYSTEM_DRM)) {
                 ply_trace ("ignoring since we only handle subsystem %s devices after timeout", subsystem);
                 return false;
         }
