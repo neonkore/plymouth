@@ -912,6 +912,45 @@ plymouth_should_show_default_splash (state_t *state)
 }
 
 static void
+on_reload (state_t *state)
+{
+        ply_trace ("reloading");
+        if (state->boot_splash != NULL) {
+                ply_boot_splash_hide (state->boot_splash);
+                ply_boot_splash_free (state->boot_splash);
+                state->boot_splash = NULL;
+        }
+
+        free (state->override_splash_path);
+        state->override_splash_path = NULL;
+        free (state->system_default_splash_path);
+        state->system_default_splash_path = NULL;
+        free (state->distribution_default_splash_path);
+        state->distribution_default_splash_path = NULL;
+
+        find_override_splash (state);
+        find_system_default_splash (state);
+        find_distribution_default_splash (state);
+
+        if (state->is_inactive) {
+                ply_trace ("reload while inactive");
+                return;
+        }
+
+        if (!state->is_shown) {
+                ply_trace ("reload while not shown");
+                return;
+        }
+
+        if (state->showing_details) {
+                show_detailed_splash (state);
+        } else {
+                show_default_splash (state);
+        }
+}
+
+
+static void
 on_show_splash (state_t *state)
 {
         bool has_displays;
@@ -1430,6 +1469,7 @@ start_boot_server (state_t *state)
                                       (ply_boot_server_reactivate_handler_t) on_reactivate,
                                       (ply_boot_server_quit_handler_t) on_quit,
                                       (ply_boot_server_has_active_vt_handler_t) on_has_active_vt,
+                                      (ply_boot_server_reload_handler_t) on_reload,
                                       state);
 
         if (!ply_boot_server_listen (server)) {

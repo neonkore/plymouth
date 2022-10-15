@@ -80,6 +80,7 @@ struct _ply_boot_server
         ply_boot_server_reactivate_handler_t          reactivate_handler;
         ply_boot_server_quit_handler_t                quit_handler;
         ply_boot_server_has_active_vt_handler_t       has_active_vt_handler;
+        ply_boot_server_reload_handler_t              reload_handler;
         void                                         *user_data;
 
         uint32_t                                      is_listening : 1;
@@ -106,6 +107,7 @@ ply_boot_server_new (ply_boot_server_update_handler_t              update_handle
                      ply_boot_server_reactivate_handler_t          reactivate_handler,
                      ply_boot_server_quit_handler_t                quit_handler,
                      ply_boot_server_has_active_vt_handler_t       has_active_vt_handler,
+                     ply_boot_server_reload_handler_t              reload_handler,
                      void                                         *user_data)
 {
         ply_boot_server_t *server;
@@ -135,6 +137,7 @@ ply_boot_server_new (ply_boot_server_update_handler_t              update_handle
         server->reactivate_handler = reactivate_handler;
         server->quit_handler = quit_handler;
         server->has_active_vt_handler = has_active_vt_handler;
+        server->reload_handler = reload_handler;
         server->user_data = user_data;
 
         return server;
@@ -545,6 +548,10 @@ ply_boot_connection_on_request (ply_boot_connection_t *connection)
                 free (argument);
                 free (command);
                 return;
+        } else if (strcmp (command, PLY_BOOT_PROTOCOL_REQUEST_TYPE_RELOAD) == 0) {
+                ply_trace ("got reload request");
+                if (server->reload_handler != NULL)
+                        server->reload_handler (server->user_data, server);
         } else if (strcmp (command, PLY_BOOT_PROTOCOL_REQUEST_TYPE_PASSWORD) == 0) {
                 ply_trigger_t *answer;
 

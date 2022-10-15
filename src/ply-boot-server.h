@@ -102,6 +102,8 @@ typedef void (*ply_boot_server_quit_handler_t) (void              *user_data,
                                                 ply_boot_server_t *server);
 typedef bool (*ply_boot_server_has_active_vt_handler_t) (void              *user_data,
                                                          ply_boot_server_t *server);
+typedef bool (*ply_boot_server_reload_handler_t) (void              *user_data,
+                                                  ply_boot_server_t *server);
 
 #ifndef PLY_HIDE_FUNCTION_DECLARATIONS
 ply_boot_server_t *ply_boot_server_new (ply_boot_server_update_handler_t              update_handler,
@@ -124,6 +126,7 @@ ply_boot_server_t *ply_boot_server_new (ply_boot_server_update_handler_t        
                                         ply_boot_server_reactivate_handler_t          reactivate_handler,
                                         ply_boot_server_quit_handler_t                quit_handler,
                                         ply_boot_server_has_active_vt_handler_t       has_active_vt_handler,
+                                        ply_boot_server_reload_handler_t              reload_handler,
                                         void                                         *user_data);
 
 void ply_boot_server_free (ply_boot_server_t *server);
