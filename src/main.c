@@ -2358,6 +2358,11 @@ main (int    argc,
             (getenv ("DISPLAY") != NULL))
                 device_manager_flags |= PLY_DEVICE_MANAGER_FLAGS_IGNORE_UDEV;
 
+        if ((ply_kernel_command_line_has_argument ("plymouth.force-frame-buffer-on-boot")) &&
+            state.mode != PLY_BOOT_SPLASH_MODE_SHUTDOWN &&
+            state.mode != PLY_BOOT_SPLASH_MODE_REBOOT)
+                device_manager_flags |= PLY_DEVICE_MANAGER_FLAGS_FORCE_FRAME_BUFFER;
+
         if (!plymouth_should_show_default_splash (&state)) {
                 /* don't bother listening for udev events or setting up a graphical renderer
                  * if we're forcing details */
