@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include "ply-input-device.h"
 #include "ply-terminal.h"
 #include "ply-event-loop.h"
 #include "ply-list.h"
@@ -76,6 +77,11 @@ typedef struct
                                      int                         *scale);
         bool (*get_capslock_state)(ply_renderer_backend_t *backend);
         const char * (*get_keymap)(ply_renderer_backend_t *backend);
+
+        void (*add_input_device)(ply_renderer_backend_t *backend,
+                                 ply_input_device_t     *input_device);
+        void (*remove_input_device)(ply_renderer_backend_t *backend,
+                                    ply_input_device_t     *input_device);
 } ply_renderer_plugin_interface_t;
 
 #endif /* PLY_RENDERER_PLUGIN_H */
