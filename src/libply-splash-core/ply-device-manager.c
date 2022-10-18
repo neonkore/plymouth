@@ -859,16 +859,26 @@ ply_device_manager_new (const char                *default_tty,
                         ply_device_manager_flags_t flags)
 {
         ply_device_manager_t *manager;
+        ply_terminal_t *terminal;
 
         manager = calloc (1, sizeof(ply_device_manager_t));
         manager->loop = NULL;
+
         manager->xkb_context = xkb_context_new (XKB_CONTEXT_NO_FLAGS);
+
         parse_vconsole_conf (manager);
+
+        terminal = ply_terminal_new (default_tty, manager->keymap);
+
+        if (!ply_terminal_is_vt (terminal)) {
+                ply_terminal_free (terminal);
+                terminal = NULL;
+        }
 
         manager->terminals = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
         manager->renderers = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
-        manager->local_console_terminal = ply_terminal_new (default_tty, manager->keymap);
         manager->input_devices = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
+        manager->local_console_terminal = terminal;
         manager->keyboards = ply_list_new ();
         manager->text_displays = ply_list_new ();
         manager->pixel_displays = ply_list_new ();
