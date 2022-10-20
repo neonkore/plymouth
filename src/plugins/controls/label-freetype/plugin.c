@@ -157,19 +157,23 @@ width_of_line (ply_label_plugin_control_t *label,
                const char                 *text)
 {
         FT_Int width = 0;
-        FT_Int last_left = 0;
+        FT_Int left_bearing = 0;
 
         while (*text != '\0' && *text != '\n') {
-                if (FT_Load_Char (label->face, *text, FT_LOAD_RENDER))
+                if(FT_Load_Char (label->face, *text, FT_LOAD_RENDER | FT_LOAD_TARGET_LIGHT))
                         continue;
 
                 width += label->face->glyph->advance.x >> 6;
-                last_left = label->face->glyph->bitmap_left;
+                left_bearing = label->face->glyph->bitmap_left;
+                /* We don't "go back" when drawing, so when left bearing is
+                 * negative (like for 'j'), we simply add to the width. */
+                if (left_bearing < 0)
+                        width += -left_bearing;
 
                 ++text;
         }
 
-        return width + last_left;
+        return width;
 }
 
 static void
@@ -319,17 +323,29 @@ draw_control (ply_label_plugin_control_t *label,
                         pen.x += (label->area.width - width_of_line (label, cur_c)) << 6;
 
                 while (*cur_c && *cur_c != '\n') {
+                        FT_Int extraAdvance = 0, positiveBearingX = 0;
                         /* TODO: Unicode support. */
                         error = FT_Load_Char (label->face, *cur_c,
                                               FT_LOAD_RENDER | FT_LOAD_TARGET_LIGHT);
                         if (error)
                                 continue;
 
+                        /* We consider negative left bearing an increment in size,
+                         * as we draw full character boxes and don't "go back" in
+                         * this plugin. Positive left bearing is treated as usual.
+                         * For definitions see
+                         * https://freetype.org/freetype2/docs/glyphs/glyphs-3.html
+                         */
+                        if (slot->bitmap_left < 0) {
+                                extraAdvance = -slot->bitmap_left;
+                        } else {
+                                positiveBearingX = slot->bitmap_left;
+                        }
                         draw_bitmap (label, target, target_size, &slot->bitmap,
-                                     (pen.x >> 6) + slot->bitmap_left,
+                                     (pen.x >> 6) + positiveBearingX,
                                      (pen.y >> 6) - slot->bitmap_top);
 
-                        pen.x += slot->advance.x;
+                        pen.x += slot->advance.x + extraAdvance;
                         pen.y += slot->advance.y;
 
                         ++cur_c;
