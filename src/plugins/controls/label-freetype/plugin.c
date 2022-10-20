@@ -314,9 +314,9 @@ draw_control (ply_label_plugin_control_t *label,
 
                 /* Start at start position (alignment) */
                 if (label->alignment == PLY_LABEL_ALIGN_CENTER)
-                        pen.x += (label->width - width_of_line (label, cur_c)) << 5;
+                        pen.x += (label->area.width - width_of_line (label, cur_c)) << 5;
                 else if (label->alignment == PLY_LABEL_ALIGN_RIGHT)
-                        pen.x += (label->width - width_of_line (label, cur_c)) << 6;
+                        pen.x += (label->area.width - width_of_line (label, cur_c)) << 6;
 
                 while (*cur_c && *cur_c != '\n') {
                         /* TODO: Unicode support. */
