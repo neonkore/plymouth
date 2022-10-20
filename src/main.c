@@ -78,7 +78,8 @@ typedef struct
 {
         ply_event_loop_t       *loop;
         ply_boot_server_t      *boot_server;
-        ply_boot_splash_t      *boot_splash;
+        ply_boot_splash_t      *primary_boot_splash;
+        ply_boot_splash_t      *detailed_boot_splash;
         ply_terminal_session_t *session;
         ply_buffer_t           *boot_buffer;
         ply_progress_t         *progress;
@@ -160,15 +161,24 @@ static void cancel_pending_delayed_show (state_t *state);
 static void prepare_logging (state_t *state);
 static void dump_debug_buffer_to_file (void);
 
+#define boot_splash_is_unset(state) \
+    (state->primary_boot_splash == NULL && state->detailed_boot_splash == NULL)
+
+#define boot_splash_foreach(state, splash) \
+    ply_boot_splash_t *_splashes[] = { state->primary_boot_splash, state->detailed_boot_splash }; \
+    for (int _i = 0; _i < PLY_NUMBER_OF_ELEMENTS; _i++) \
+            if (_splashes[_i] != NULL) \
+
 static void
 on_session_output (state_t    *state,
                    const char *output,
                    size_t      size)
 {
         ply_buffer_append_bytes (state->boot_buffer, output, size);
-        if (state->boot_splash != NULL)
-                ply_boot_splash_update_output (state->boot_splash,
-                                               output, size);
+
+        boot_splash_foreach (state, splash) {
+                ply_boot_splash_update_output (splash, output, size);
+        }
 }
 
 static void
@@ -184,9 +194,10 @@ on_update (state_t    *state,
         ply_trace ("updating status to '%s'", status);
         ply_progress_status_update (state->progress,
                                     status);
-        if (state->boot_splash != NULL)
-                ply_boot_splash_update_status (state->boot_splash,
-                                               status);
+
+        boot_splash_foreach (state, splash) {
+                ply_boot_splash_update_status (splash, status);
+        }
 }
 
 static void
@@ -213,14 +224,15 @@ on_change_mode (state_t    *state,
                 prepare_logging (state);
         }
 
-        if (state->boot_splash == NULL) {
+        if (boot_splash_is_unset (state)) {
                 ply_trace ("no splash set");
                 return;
         }
 
-        if (!ply_boot_splash_show (state->boot_splash, state->mode)) {
-                ply_trace ("failed to update splash");
-                return;
+        boot_splash_foreach (state, splash) {
+                if (!ply_boot_splash_show (splash, state->mode)) {
+                        ply_trace ("failed to update splash");
+                }
         }
 }
 
@@ -228,22 +240,24 @@ static void
 on_system_update (state_t *state,
                   int      progress)
 {
-        if (state->boot_splash == NULL) {
+        if (boot_splash_is_unset (state)) {
                 ply_trace ("no splash set");
                 return;
         }
 
         ply_trace ("setting system update to '%i'", progress);
-        if (!ply_boot_splash_system_update (state->boot_splash, progress)) {
-                ply_trace ("failed to update splash");
-                return;
+        boot_splash_foreach (state, splash) {
+                if (!ply_boot_splash_system_update (splash, progress)) {
+                        ply_trace ("failed to update splash");
+                        return;
+                }
         }
 }
 
 static void
 show_messages (state_t *state)
 {
-        if (state->boot_splash == NULL) {
+        if (boot_splash_is_unset (state)) {
                 ply_trace ("not displaying messages, since no boot splash");
                 return;
         }
@@ -255,7 +269,9 @@ show_messages (state_t *state)
 
                 ply_trace ("displaying messages");
 
-                ply_boot_splash_display_message (state->boot_splash, message);
+                boot_splash_foreach (state, splash) {
+                        ply_boot_splash_display_message (splash, message);
+                }
                 next_node = ply_list_get_next_node (state->messages, node);
                 node = next_node;
         }
@@ -348,7 +364,7 @@ show_detailed_splash (state_t *state)
 
         cancel_pending_delayed_show (state);
 
-        if (state->boot_splash != NULL)
+        if (state->detailed_boot_splash != NULL)
                 return;
 
         ply_trace ("Showing detailed splash screen");
@@ -359,7 +375,7 @@ show_detailed_splash (state_t *state)
                 return;
         }
 
-        state->boot_splash = splash;
+        state->detailed_boot_splash = splash;
 
         show_messages (state);
         update_display (state);
@@ -440,45 +456,45 @@ find_distribution_default_splash (state_t *state)
 static void
 show_default_splash (state_t *state)
 {
-        if (state->boot_splash != NULL)
+        if (state->primary_boot_splash != NULL)
                 return;
 
         ply_trace ("Showing splash screen");
         if (state->override_splash_path != NULL) {
                 ply_trace ("Trying override splash at '%s'", state->override_splash_path);
-                state->boot_splash = show_theme (state, state->override_splash_path);
+                state->primary_boot_splash = show_theme (state, state->override_splash_path);
         }
 
-        if (state->boot_splash == NULL &&
+        if (state->primary_boot_splash == NULL &&
             state->system_default_splash_path != NULL) {
                 ply_trace ("Trying system default splash");
-                state->boot_splash = show_theme (state, state->system_default_splash_path);
+                state->primary_boot_splash = show_theme (state, state->system_default_splash_path);
         }
 
-        if (state->boot_splash == NULL &&
+        if (state->primary_boot_splash == NULL &&
             state->distribution_default_splash_path != NULL) {
                 ply_trace ("Trying distribution default splash");
-                state->boot_splash = show_theme (state, state->distribution_default_splash_path);
+                state->primary_boot_splash = show_theme (state, state->distribution_default_splash_path);
         }
 
-        if (state->boot_splash == NULL) {
+        if (state->primary_boot_splash == NULL) {
                 ply_trace ("Trying old scheme for default splash");
-                state->boot_splash = show_theme (state, PLYMOUTH_THEME_PATH "default.plymouth");
+                state->primary_boot_splash = show_theme (state, PLYMOUTH_THEME_PATH "default.plymouth");
         }
 
-        if (state->boot_splash == NULL) {
+        if (state->primary_boot_splash == NULL) {
                 ply_trace ("Could not start default splash screen,"
                            "showing text splash screen");
-                state->boot_splash = show_theme (state, PLYMOUTH_THEME_PATH "text/text.plymouth");
+                state->primary_boot_splash = show_theme (state, PLYMOUTH_THEME_PATH "text/text.plymouth");
         }
 
-        if (state->boot_splash == NULL) {
+        if (state->primary_boot_splash == NULL) {
                 ply_trace ("Could not start text splash screen,"
                            "showing built-in splash screen");
-                state->boot_splash = show_theme (state, NULL);
+                state->primary_boot_splash = show_theme (state, NULL);
         }
 
-        if (state->boot_splash == NULL) {
+        if (state->primary_boot_splash == NULL) {
                 ply_error ("plymouthd: could not start boot splash: %m");
                 return;
         }
@@ -507,7 +523,7 @@ on_ask_for_password (state_t       *state,
 {
         ply_entry_trigger_t *entry_trigger;
 
-        if (state->boot_splash == NULL) {
+        if (boot_splash_is_unset (state)) {
                 /* Waiting to be shown, boot splash will
                  * arrive shortly so just sit tight
                  */
@@ -561,9 +577,11 @@ static void
 on_display_message (state_t    *state,
                     const char *message)
 {
-        if (state->boot_splash != NULL) {
-                ply_trace ("displaying message %s", message);
-                ply_boot_splash_display_message (state->boot_splash, message);
+        if (!boot_splash_is_unset (state)) {
+                boot_splash_foreach (state, splash) {
+                        ply_trace ("displaying message %s", message);
+                        ply_boot_splash_display_message (splash, message);
+                }
         } else {
                 ply_trace ("not displaying message %s as no splash", message);
         }
@@ -589,8 +607,8 @@ on_hide_message (state_t    *state,
                 if (strcmp (list_message, message) == 0) {
                         free (list_message);
                         ply_list_remove_node (state->messages, node);
-                        if (state->boot_splash != NULL) {
-                                ply_boot_splash_hide_message (state->boot_splash, message);
+                        boot_splash_foreach (state, splash) {
+                                ply_boot_splash_hide_message (splash, message);
                         }
                 }
                 node = next_node;
@@ -668,8 +686,9 @@ on_newroot (state_t    *state,
         /* Update local now that we have /usr/share/locale available */
         setlocale (LC_ALL, "");
         ply_progress_load_cache (state->progress, get_cache_file_for_mode (state->mode));
-        if (state->boot_splash != NULL)
-                ply_boot_splash_root_mounted (state->boot_splash);
+        boot_splash_foreach (state, splash) {
+                ply_boot_splash_root_mounted (splash);
+        }
 }
 
 static const char *
@@ -915,11 +934,13 @@ static void
 on_reload (state_t *state)
 {
         ply_trace ("reloading");
-        if (state->boot_splash != NULL) {
-                ply_boot_splash_hide (state->boot_splash);
-                ply_boot_splash_free (state->boot_splash);
-                state->boot_splash = NULL;
+
+        boot_splash_foreach (state, splash) {
+                ply_boot_splash_hide (splash);
+                ply_boot_splash_free (splash);
         }
+        state->primary_boot_splash = NULL;
+        state->detailed_boot_splash = NULL;
 
         free (state->override_splash_path);
         state->override_splash_path = NULL;
@@ -942,9 +963,9 @@ on_reload (state_t *state)
                 return;
         }
 
-        if (state->showing_details) {
-                show_detailed_splash (state);
-        } else {
+        show_detailed_splash (state);
+
+        if (!state->showing_details) {
                 show_default_splash (state);
         }
 }
@@ -989,7 +1010,7 @@ on_show_splash (state_t *state)
 static void
 show_splash (state_t *state)
 {
-        if (state->boot_splash != NULL)
+        if (state->primary_boot_splash != NULL)
                 return;
 
         if (!isnan (state->splash_delay)) {
@@ -1017,11 +1038,12 @@ show_splash (state_t *state)
                 }
         }
 
+        show_detailed_splash (state);
+
         if (plymouth_should_show_default_splash (state)) {
                 show_default_splash (state);
                 state->showing_details = false;
         } else {
-                show_detailed_splash (state);
                 state->showing_details = true;
         }
 }
@@ -1030,6 +1052,9 @@ static void
 on_keyboard_added (state_t        *state,
                    ply_keyboard_t *keyboard)
 {
+        ply_renderer_t *renderer;
+        ply_renderer_type_t renderer_type;
+
         ply_trace ("listening for keystrokes");
         ply_keyboard_add_input_handler (keyboard,
                                         (ply_keyboard_input_handler_t)
@@ -1047,9 +1072,17 @@ on_keyboard_added (state_t        *state,
                                         (ply_keyboard_enter_handler_t)
                                         on_enter, state);
 
-        if (state->boot_splash != NULL) {
-                ply_trace ("keyboard set after splash loaded, so attaching to splash");
-                ply_boot_splash_set_keyboard (state->boot_splash, keyboard);
+        renderer = ply_keyboard_get_renderer (keyboard);
+        renderer_type = ply_renderer_get_type (renderer);
+
+        ply_trace ("keyboard set after splash loaded, so attaching to splash");
+        switch (renderer_type) {
+        case PLY_RENDERER_TYPE_NONE:
+                ply_boot_splash_set_keyboard (state->detailed_boot_splash, keyboard);
+            break;
+        default:
+                ply_boot_splash_set_keyboard (state->primary_boot_splash, keyboard);
+            break;
         }
 }
 
@@ -1074,8 +1107,9 @@ on_keyboard_removed (state_t        *state,
                                            (ply_keyboard_enter_handler_t)
                                            on_enter);
 
-        if (state->boot_splash != NULL)
-                ply_boot_splash_unset_keyboard (state->boot_splash);
+        boot_splash_foreach (state, splash) {
+                ply_boot_splash_unset_keyboard (splash);
+        }
 }
 
 static void
@@ -1083,12 +1117,12 @@ on_pixel_display_added (state_t             *state,
                         ply_pixel_display_t *display)
 {
         if (state->is_shown) {
-                if (state->boot_splash == NULL) {
+                if (state->primary_boot_splash == NULL) {
                         ply_trace ("pixel display added before splash loaded, so loading splash now");
                         show_splash (state);
                 } else {
                         ply_trace ("pixel display added after splash loaded, so attaching to splash");
-                        ply_boot_splash_add_pixel_display (state->boot_splash, display);
+                        ply_boot_splash_add_pixel_display (state->primary_boot_splash, display);
 
                         update_display (state);
                 }
@@ -1099,10 +1133,10 @@ static void
 on_pixel_display_removed (state_t             *state,
                           ply_pixel_display_t *display)
 {
-        if (state->boot_splash == NULL)
+        if (state->primary_boot_splash == NULL)
                 return;
 
-        ply_boot_splash_remove_pixel_display (state->boot_splash, display);
+        ply_boot_splash_remove_pixel_display (state->primary_boot_splash, display);
 }
 
 static void
@@ -1110,12 +1144,19 @@ on_text_display_added (state_t            *state,
                        ply_text_display_t *display)
 {
         if (state->is_shown) {
-                if (state->boot_splash == NULL) {
+                if (boot_splash_is_unset (state)) {
                         ply_trace ("text display added before splash loaded, so loading splash now");
                         show_splash (state);
                 } else {
+                        ply_terminal_t *terminal;
+
+                        terminal = ply_text_display_get_terminal (dipslay);
                         ply_trace ("text display added after splash loaded, so attaching to splash");
-                        ply_boot_splash_add_text_display (state->boot_splash, display);
+                        if (ply_terminal_is_vt (terminal)) {
+                                ply_boot_splash_add_text_display (state->primary_boot_splash, display);
+                        } else {
+                                ply_boot_splash_add_text_display (state->detailed_boot_splash, display);
+                        }
 
                         update_display (state);
                 }
@@ -1126,10 +1167,9 @@ static void
 on_text_display_removed (state_t            *state,
                          ply_text_display_t *display)
 {
-        if (state->boot_splash == NULL)
-                return;
-
-        ply_boot_splash_remove_text_display (state->boot_splash, display);
+        boot_splash_foreach (state, splash) {
+                ply_boot_splash_remove_text_display (splash, display);
+        }
 }
 
 static void
@@ -1164,11 +1204,12 @@ static void
 quit_splash (state_t *state)
 {
         ply_trace ("quitting splash");
-        if (state->boot_splash != NULL) {
+        boot_splash_foreach (state, splash) {
                 ply_trace ("freeing splash");
-                ply_boot_splash_free (state->boot_splash);
-                state->boot_splash = NULL;
+                ply_boot_splash_free (splash);
         }
+        state->primary_boot_splash = NULL;
+        state->detailed_boot_splash = NULL;
 
         ply_device_manager_deactivate_keyboards (state->device_manager);
 
@@ -1186,17 +1227,19 @@ quit_splash (state_t *state)
 static void
 hide_splash (state_t *state)
 {
-        if (state->boot_splash && ply_boot_splash_uses_pixel_displays (state->boot_splash))
+        if (state->primary_boot_splash && ply_boot_splash_uses_pixel_displays (state->primary_boot_splash))
                 ply_device_manager_deactivate_renderers (state->device_manager);
 
         state->is_shown = false;
 
         cancel_pending_delayed_show (state);
 
-        if (state->boot_splash == NULL)
+        if (boot_splash_is_unset (state))
                 return;
 
-        ply_boot_splash_hide (state->boot_splash);
+        boot_splash_foreach (state, splash) {
+                ply_boot_splash_hide (splash);
+        }
 
         if (state->local_console_terminal != NULL)
                 ply_terminal_set_mode (state->local_console_terminal, PLY_TERMINAL_MODE_TEXT);
@@ -1218,7 +1261,7 @@ on_hide_splash (state_t *state)
         if (state->is_inactive)
                 return;
 
-        if (state->boot_splash == NULL)
+        if (boot_splash_is_unset (state))
                 return;
 
         ply_trace ("hiding boot splash");
@@ -1273,7 +1316,7 @@ deactivate_splash (state_t *state)
 {
         assert (!state->is_inactive);
 
-        if (state->boot_splash && ply_boot_splash_uses_pixel_displays (state->boot_splash))
+        if (state->primary_boot_splash && ply_boot_splash_uses_pixel_displays (state->primary_boot_splash))
                 ply_device_manager_deactivate_renderers (state->device_manager);
 
         deactivate_console (state);
@@ -1307,7 +1350,7 @@ on_boot_splash_idle (state_t *state)
                 deactivate_splash (state);
         }
 
-        state->splash_is_becoming_idle = false;
+        state->splash_is_becoming_idle--;
 }
 
 static void
@@ -1336,13 +1379,15 @@ on_deactivate (state_t       *state,
         ply_device_manager_pause (state->device_manager);
         ply_device_manager_deactivate_keyboards (state->device_manager);
 
-        if (state->boot_splash != NULL) {
+        if (!boot_splash_is_unset (state)) {
                 if (!state->splash_is_becoming_idle) {
-                        ply_boot_splash_become_idle (state->boot_splash,
-                                                     (ply_boot_splash_on_idle_handler_t)
-                                                     on_boot_splash_idle,
-                                                     state);
-                        state->splash_is_becoming_idle = true;
+                        boot_splash_foreach (state, splash) {
+                                ply_boot_splash_become_idle (splash,
+                                                             (ply_boot_splash_on_idle_handler_t)
+                                                             on_boot_splash_idle,
+                                                             state);
+                                state->splash_is_becoming_idle++;
+                        }
                 }
         } else {
                 ply_trace ("deactivating splash");
@@ -1369,7 +1414,7 @@ on_reactivate (state_t *state)
         }
 
         ply_device_manager_activate_keyboards (state->device_manager);
-        if (state->boot_splash && ply_boot_splash_uses_pixel_displays (state->boot_splash))
+        if (state->primary_boot_splash && ply_boot_splash_uses_pixel_displays (state->primary_boot_splash))
                 ply_device_manager_activate_renderers (state->device_manager);
 
         ply_device_manager_unpause (state->device_manager);
@@ -1422,13 +1467,15 @@ on_quit (state_t       *state,
                  */
                 dump_details_and_quit_splash (state);
                 quit_program (state);
-        } else if (state->boot_splash != NULL) {
+        } else if (!boot_splash_is_unset (state)) {
                 if (!state->splash_is_becoming_idle) {
-                        ply_boot_splash_become_idle (state->boot_splash,
-                                                     (ply_boot_splash_on_idle_handler_t)
-                                                     on_boot_splash_idle,
-                                                     state);
-                        state->splash_is_becoming_idle = true;
+                        boot_splash_foreach (state, splash) {
+                                ply_boot_splash_become_idle (splash,
+                                                             (ply_boot_splash_on_idle_handler_t)
+                                                             on_boot_splash_idle,
+                                                             state);
+                                state->splash_is_becoming_idle++;
+                        }
                 }
         } else {
                 quit_program (state);
@@ -1491,46 +1538,56 @@ validate_input (state_t    *state,
 {
         bool input_valid;
 
-        if (!state->boot_splash)
+        if (boot_splash_is_unset (splash))
                 return true;
-        input_valid = ply_boot_splash_validate_input (state->boot_splash, entry_text, add_text);
+
+        boot_splash_foreach (state, splash) {
+                input_valid = ply_boot_splash_validate_input (splash, entry_text, add_text);
+
+                if (!input_valid)
+                        break;
+        }
+
         return input_valid;
 }
-
 
 static void
 update_display (state_t *state)
 {
-        if (!state->boot_splash) return;
+        if (boot_splash_is_unset (splash))
+                return;
 
         ply_list_node_t *node;
         node = ply_list_get_first_node (state->entry_triggers);
-        if (node) {
-                ply_entry_trigger_t *entry_trigger = ply_list_node_get_data (node);
-                if (entry_trigger->type == PLY_ENTRY_TRIGGER_TYPE_PASSWORD) {
-                        int bullets = ply_utf8_string_get_length (ply_buffer_get_bytes (state->entry_buffer),
-                                                                  ply_buffer_get_size (state->entry_buffer));
-                        bullets = MAX (0, bullets);
-                        ply_boot_splash_display_password (state->boot_splash,
-                                                          entry_trigger->prompt,
-                                                          bullets);
-                        ply_boot_splash_display_prompt (state->boot_splash,
-                                                        entry_trigger->prompt,
-                                                        ply_buffer_get_bytes (state->entry_buffer),
-                                                        true);
-                } else if (entry_trigger->type == PLY_ENTRY_TRIGGER_TYPE_QUESTION) {
-                        ply_boot_splash_display_question (state->boot_splash,
-                                                          entry_trigger->prompt,
-                                                          ply_buffer_get_bytes (state->entry_buffer));
-                        ply_boot_splash_display_prompt (state->boot_splash,
-                                                        entry_trigger->prompt,
-                                                        ply_buffer_get_bytes (state->entry_buffer),
-                                                        false);
+
+        boot_splash_foreach (state, splash) {
+                if (node) {
+                        ply_entry_trigger_t *entry_trigger = ply_list_node_get_data (node);
+                        if (entry_trigger->type == PLY_ENTRY_TRIGGER_TYPE_PASSWORD) {
+                                int bullets = ply_utf8_string_get_length (ply_buffer_get_bytes (state->entry_buffer),
+                                                                          ply_buffer_get_size (state->entry_buffer));
+                                bullets = MAX (0, bullets);
+                                ply_boot_splash_display_password (splash,
+                                                                  entry_trigger->prompt,
+                                                                  bullets);
+                                ply_boot_splash_display_prompt (splash,
+                                                                entry_trigger->prompt,
+                                                                ply_buffer_get_bytes (state->entry_buffer),
+                                                                true);
+                        } else if (entry_trigger->type == PLY_ENTRY_TRIGGER_TYPE_QUESTION) {
+                                ply_boot_splash_display_question (splash,
+                                                                  entry_trigger->prompt,
+                                                                  ply_buffer_get_bytes (state->entry_buffer));
+                                ply_boot_splash_display_prompt (splash,
+                                                                entry_trigger->prompt,
+                                                                ply_buffer_get_bytes (state->entry_buffer),
+                                                                false);
+                        } else {
+                                ply_trace ("unkown entry type");
+                        }
                 } else {
-                        ply_trace ("unkown entry type");
+                        ply_boot_splash_display_normal (splash);
                 }
-        } else {
-                ply_boot_splash_display_normal (state->boot_splash);
         }
 }
 
@@ -1538,15 +1595,17 @@ static void
 toggle_between_splash_and_details (state_t *state)
 {
         ply_trace ("toggling between splash and details");
-        if (state->boot_splash != NULL) {
+        boot_splash_foreach (state, splash) {
                 ply_trace ("hiding and freeing current splash");
                 hide_splash (state);
-                ply_boot_splash_free (state->boot_splash);
-                state->boot_splash = NULL;
+                ply_boot_splash_free (splash);
         }
+        state->primary_boot_splash = NULL;
+        state->detailed_boot_splash = NULL;
+
+        show_detailed_splash (state);
 
         if (!state->showing_details) {
-                show_detailed_splash (state);
                 state->showing_details = true;
         } else {
                 show_default_splash (state);
@@ -2164,8 +2223,8 @@ on_term_signal (state_t *state)
          */
         if ((state->mode == PLY_BOOT_SPLASH_MODE_SHUTDOWN ||
              state->mode == PLY_BOOT_SPLASH_MODE_REBOOT) &&
-            !state->is_inactive && state->boot_splash &&
-            ply_boot_splash_uses_pixel_displays (state->boot_splash)) {
+            !state->is_inactive && state->primary_boot_splash &&
+            ply_boot_splash_uses_pixel_displays (state->primary_boot_splash)) {
                 start_plymouthd_fd_escrow ();
                 retain_splash = true;
         }
