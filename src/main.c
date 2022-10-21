@@ -984,6 +984,14 @@ on_show_splash (state_t *state)
         if (!state->is_attached && state->should_be_attached && has_displays)
                 attach_to_running_session (state);
 
+        if (state->local_console_terminal != NULL)
+                ply_terminal_set_mode (state->local_console_terminal, PLY_TERMINAL_MODE_GRAPHICS);
+
+#ifdef PLY_ENABLE_SYSTEMD_INTEGRATION
+        if (state->is_attached)
+                tell_systemd_to_print_details (state);
+#endif
+
         if (has_displays) {
                 ply_trace ("at least one display already available, so loading splash");
                 show_splash (state);
@@ -1411,10 +1419,6 @@ on_quit (state_t       *state,
         }
         state->quit_trigger = quit_trigger;
         state->should_retain_splash = retain_splash;
-
-#ifdef PLY_ENABLE_SYSTEMD_INTEGRATION
-        tell_systemd_to_stop_printing_details (state);
-#endif
 
         ply_trace ("closing log");
         if (state->session != NULL)
