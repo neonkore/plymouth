@@ -6,22 +6,20 @@ stages:
   script:
     - scripts/check-format.sh
 
-.autotools-build: &autotools-build
+.meson-build: &meson-build
   script:
-    - NOCONFIGURE=1 ./autogen.sh
-    - mkdir _build && cd _build
-    - ../configure --prefix /usr
-    - make
-    - make distcheck
+    - meson _build
+    - cd _build
+    - ninja dist
     - shellcheck -S error scripts/plymouth-*
 
 fedora-x86_64:
   stage: build
   image: 'registry.fedoraproject.org/fedora:37'
   before_script:
-    - dnf install -y gcc libtool intltool gtk3-devel git libpng-devel gettext-devel libxslt docbook-style-xsl cairo-devel systemd-devel systemd-udev kernel-headers libdrm-devel pango-devel make ShellCheck uncrustify patchutils
+    - dnf install -y gcc gtk3-devel git libpng-devel gettext-devel libxslt docbook-style-xsl cairo-devel systemd-devel systemd-udev kernel-headers libdrm-devel pango-devel make ShellCheck uncrustify patchutils meson
   <<: *check-format
-  <<: *autotools-build
+  <<: *meson-build
   only:
     - merge_requests
 
@@ -30,7 +28,7 @@ debian-unstable-x86_64:
   image: debian:unstable
   before_script:
     - apt-get update -qq
-    - apt-get install -y -qq --no-install-recommends autoconf automake autopoint bc build-essential docbook-xsl gcc gettext git intltool libdrm-dev libgtk-3-dev libpango1.0-dev libpng-dev libtool libudev-dev make pkg-config libsystemd-dev udev xsltproc shellcheck uncrustify patchutils
-  <<: *autotools-build
+    - apt-get install -y -qq --no-install-recommends bc build-essential docbook-xsl gcc gettext git libdrm-dev libgtk-3-dev libpango1.0-dev libpng-dev libudev-dev make pkg-config libsystemd-dev udev xsltproc shellcheck uncrustify patchutils meson
+  <<: *meson-build
   only:
     - merge_requests
