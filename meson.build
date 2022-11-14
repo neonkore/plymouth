@@ -19,14 +19,14 @@ pkgconfig = import('pkgconfig')
 # General variables
 plymouth_soversion = '5.0.0'
 
-plymouth_theme_path = get_option('prefix') / get_option('datadir') / 'plymouth' / 'themes'
+plymouth_theme_path = get_option('prefix') / get_option('datadir') / 'plymouth' / 'themes/'
 plymouth_plugin_path = get_option('prefix') / get_option('libdir') / 'plymouth/'
 plymouth_policy_dir = get_option('prefix') / get_option('datadir') / 'plymouth/'
 plymouth_conf_dir = get_option('prefix') / get_option('sysconfdir') / 'plymouth/'
 plymouth_time_dir = get_option('prefix') / get_option('localstatedir') / 'lib' / 'plymouth'
 
 plymouth_runtime_dir = get_option('runstatedir') / 'plymouth'
-plymouth_runtime_theme_path = plymouth_runtime_dir / 'themes'
+plymouth_runtime_theme_path = plymouth_runtime_dir / 'themes/'
 
 # Dependencies
 cc = meson.get_compiler('c')
