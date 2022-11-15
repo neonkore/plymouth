@@ -16,6 +16,10 @@ libply_sources = files(
   'ply-utils.c',
 )
 
+libply_deps = [
+  ldl_dep,
+]
+
 libply = library('ply',
   libply_sources,
   include_directories: config_h_inc,
@@ -25,6 +29,7 @@ libply = library('ply',
 
 libply_dep = declare_dependency(
   link_with: libply,
+  dependencies: libply_deps,
   include_directories: include_directories('.'),
 )
 
