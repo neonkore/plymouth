@@ -11,7 +11,7 @@ if len(sys.argv) != 2:
 input_path = pathlib.Path(sys.argv[1])
 
 variable_name = input_path.stem.replace('-', '_')
-print('static const char *{} ='.format(variable_name))
+print('static const char *{}_string ='.format(variable_name))
 
 for line in input_path.read_text().splitlines():
     # escape backlashes

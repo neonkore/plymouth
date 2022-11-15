@@ -41,7 +41,7 @@ script_plugin_src = files(
 )
 
 script_plugin = shared_module('script',
-  [ 'plugin.c', script_headers ],
+  [ script_headers, script_plugin_src ],
   dependencies: [
     libply_splash_core_dep,
     libply_splash_graphics_dep,
