@@ -8,7 +8,7 @@ stages:
 
 .meson-build: &meson-build
   script:
-    - meson _build
+    - CFLAGS="-Wl,--no-undefined" meson _build
     - cd _build
     - ninja dist
     - shellcheck -S error scripts/plymouth-*
