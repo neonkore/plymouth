@@ -38,6 +38,8 @@ libpng_dep = dependency('libpng', version: '>= 1.2.16')
 
 libudev_dep = dependency('libudev', required: get_option('udev'))
 libpango_dep = dependency('pango', required: get_option('pango'))
+libcairo_dep = dependency('cairo', required: get_option('pango'))
+libpangocairo_dep = dependency('pangocairo', required: get_option('pango'))
 libfreetype_dep = dependency('freetype2', required: get_option('freetype'))
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.14.0', required: get_option('gtk'))
 libdrm_dep = dependency('libdrm', required: get_option('drm'))

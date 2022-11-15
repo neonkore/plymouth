@@ -1,7 +1,9 @@
 label_plugin = shared_module('label-pango',
   'plugin.c',
   dependencies: [
+    libcairo_dep,
     libpango_dep,
+    libpangocairo_dep,
     libply_dep,
     libply_splash_core_dep,
     libply_splash_graphics_dep,

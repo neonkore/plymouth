@@ -18,6 +18,7 @@ libply_sources = files(
 
 libply_deps = [
   ldl_dep,
+  lm_dep,
 ]
 
 libply = library('ply',
