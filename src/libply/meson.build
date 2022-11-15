@@ -22,6 +22,7 @@ libply_deps = [
 
 libply = library('ply',
   libply_sources,
+  dependencies: libply_deps,
   include_directories: config_h_inc,
   version: plymouth_soversion,
   install: true,
