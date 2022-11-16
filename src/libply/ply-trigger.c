@@ -30,15 +30,28 @@
 #include "ply-list.h"
 #include "ply-utils.h"
 
+typedef enum
+{
+        PLY_TRIGGER_HANDLER_TYPE_HANDLER,
+        PLY_TRIGGER_HANDLER_TYPE_INSTANCE_HANDLER
+} ply_trigger_handler_type_t;
+
 typedef struct
 {
-        ply_trigger_handler_t handler;
-        void                 *user_data;
+        ply_trigger_handler_type_t handler_type;
+        union
+        {
+                ply_trigger_handler_t          handler;
+                ply_trigger_instance_handler_t instance_handler;
+        };
+        void                      *user_data;
 } ply_trigger_closure_t;
 
 struct _ply_trigger
 {
         ply_list_t     *closures;
+
+        void           *instance;
 
         ply_trigger_t **free_address;
         int             ignore_count;
@@ -91,6 +104,62 @@ ply_trigger_free (ply_trigger_t *trigger)
 }
 
 void
+ply_trigger_set_instance (ply_trigger_t *trigger,
+                          void          *instance)
+{
+        trigger->instance = instance;
+}
+
+void *
+ply_trigger_get_instance (ply_trigger_t *trigger)
+{
+        return trigger->instance;
+}
+
+void
+ply_trigger_add_instance_handler (ply_trigger_t                 *trigger,
+                                  ply_trigger_instance_handler_t handler,
+                                  void                          *user_data)
+{
+        ply_trigger_closure_t *closure;
+
+        closure = calloc (1, sizeof(ply_trigger_closure_t));
+        closure->handler_type = PLY_TRIGGER_HANDLER_TYPE_INSTANCE_HANDLER;
+        closure->instance_handler = handler;
+        closure->user_data = user_data;
+
+        ply_list_append_data (trigger->closures, closure);
+}
+
+void
+ply_trigger_remove_instance_handler (ply_trigger_t                 *trigger,
+                                     ply_trigger_instance_handler_t handler,
+                                     void                          *user_data)
+{
+        ply_list_node_t *node;
+
+        node = ply_list_get_first_node (trigger->closures);
+        while (node != NULL) {
+                ply_list_node_t *next_node;
+                ply_trigger_closure_t *closure;
+
+                closure = (ply_trigger_closure_t *) ply_list_node_get_data (node);
+
+                next_node = ply_list_get_next_node (trigger->closures, node);
+
+                if (closure->handler_type == PLY_TRIGGER_HANDLER_TYPE_INSTANCE_HANDLER &&
+                    closure->instance_handler == handler &&
+                    closure->user_data == user_data) {
+                        free (closure);
+                        ply_list_remove_node (trigger->closures, node);
+                        break;
+                }
+
+                node = next_node;
+        }
+}
+
+void
 ply_trigger_add_handler (ply_trigger_t        *trigger,
                          ply_trigger_handler_t handler,
                          void                 *user_data)
@@ -98,6 +167,7 @@ ply_trigger_add_handler (ply_trigger_t        *trigger,
         ply_trigger_closure_t *closure;
 
         closure = calloc (1, sizeof(ply_trigger_closure_t));
+        closure->handler_type = PLY_TRIGGER_HANDLER_TYPE_HANDLER;
         closure->handler = handler;
         closure->user_data = user_data;
 
@@ -120,7 +190,9 @@ ply_trigger_remove_handler (ply_trigger_t        *trigger,
 
                 next_node = ply_list_get_next_node (trigger->closures, node);
 
-                if (closure->handler == handler && closure->user_data == user_data) {
+                if (closure->handler_type == PLY_TRIGGER_HANDLER_TYPE_HANDLER &&
+                    closure->handler == handler &&
+                    closure->user_data == user_data) {
                         free (closure);
                         ply_list_remove_node (trigger->closures, node);
                         break;
@@ -158,8 +230,16 @@ ply_trigger_pull (ply_trigger_t *trigger,
                 closure = (ply_trigger_closure_t *) ply_list_node_get_data (node);
 
                 next_node = ply_list_get_next_node (trigger->closures, node);
-
-                closure->handler (closure->user_data, data, trigger);
+                switch (closure->handler_type) {
+                case PLY_TRIGGER_HANDLER_TYPE_HANDLER:
+                        closure->handler (closure->user_data, data, trigger);
+                        break;
+                case PLY_TRIGGER_HANDLER_TYPE_INSTANCE_HANDLER:
+                        closure->instance_handler (closure->user_data, trigger->instance, data, trigger);
+                        break;
+                default:
+                        break;
+                }
 
                 node = next_node;
         }
