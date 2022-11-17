@@ -1101,3 +1101,12 @@ ply_terminal_stop_watching_for_input (ply_terminal_t              *terminal,
         }
 }
 
+void
+ply_terminal_flush_input (ply_terminal_t *terminal)
+{
+        if (!terminal->is_open)
+                return;
+
+        if (tcflush (terminal->fd, TCIFLUSH) < 0)
+                ply_trace ("could not flush input buffer of terminal %s: %m", terminal->name);
+}
