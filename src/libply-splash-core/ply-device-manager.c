@@ -470,7 +470,7 @@ verify_add_or_change (ply_device_manager_t *manager,
                 return true;
 
         subsystem = udev_device_get_subsystem (device);
-        if (strcmp (subsystem, SUBSYSTEM_DRM)) {
+        if (strcmp (subsystem, SUBSYSTEM_FRAME_BUFFER) == 0) {
                 ply_trace ("ignoring since we only handle subsystem %s devices after timeout", subsystem);
                 return false;
         }
