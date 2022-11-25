@@ -458,7 +458,7 @@ verify_add_or_change (ply_device_manager_t *manager,
 {
         const char *subsystem;
 
-        if (strcmp (action, "add") && strcmp (action, "change"))
+        if (strcmp (action, "add") != 0 && strcmp (action, "change") != 0)
                 return false;
 
         if (manager->local_console_managed && manager->local_console_is_text) {
