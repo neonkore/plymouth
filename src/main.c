@@ -108,6 +108,7 @@ typedef struct
         uint32_t                is_inactive : 1;
         uint32_t                is_shown : 1;
         uint32_t                should_force_details : 1;
+        uint32_t                should_force_default_splash : 1;
         uint32_t                splash_is_becoming_idle : 1;
 
         char                   *override_splash_path;
@@ -907,6 +908,11 @@ plymouth_should_show_default_splash (state_t *state)
                 return true;
         }
 
+        if (state->should_force_default_splash) {
+                ply_trace ("using default splash because kernel command line has option \"plymouth.graphical\"");
+                return true;
+        }
+
         ply_trace ("no default splash because kernel command line lacks \"splash\" or \"rhgb\"");
         return false;
 }
@@ -1558,6 +1564,14 @@ static void
 on_escape_pressed (state_t *state)
 {
         ply_trace ("escape key pressed");
+
+        if (state->local_console_terminal != NULL) {
+                if (!ply_terminal_is_vt (state->local_console_terminal))
+                        return;
+        } else {
+                return;
+        }
+
         if (validate_input (state, "", "\e"))
                 toggle_between_splash_and_details (state);
 }
@@ -2039,8 +2053,10 @@ initialize_environment (state_t *state)
 
                 ply_trace ("checking if '%s' exists", state->default_tty);
                 if (!ply_character_device_exists (state->default_tty)) {
-                        ply_trace ("nope, forcing details mode");
-                        state->should_force_details = true;
+                        if (!state->should_force_default_splash) {
+                                ply_trace ("nope, forcing details mode");
+                                state->should_force_details = true;
+                        }
 
                         state->default_tty = find_fallback_tty (state);
                         ply_trace ("going to go with '%s'", state->default_tty);
@@ -2198,6 +2214,7 @@ main (int    argc,
         bool no_daemon = false;
         bool debug = false;
         bool ignore_serial_consoles = false;
+        bool graphical_boot = false;
         bool attach_to_session;
         ply_daemon_handle_t *daemon_handle = NULL;
         char *mode_string = NULL;
@@ -2226,6 +2243,7 @@ main (int    argc,
                                         "tty", "TTY to use instead of default", PLY_COMMAND_OPTION_TYPE_STRING,
                                         "no-boot-log", "Do not write boot log file", PLY_COMMAND_OPTION_TYPE_FLAG,
                                         "ignore-serial-consoles", "Ignore serial consoles", PLY_COMMAND_OPTION_TYPE_FLAG,
+                                        "graphical-boot", "Use graphical splashes even if the kernel console is not a VT", PLY_COMMAND_OPTION_TYPE_FLAG,
                                         NULL);
 
         if (!ply_command_parser_parse_arguments (state.command_parser, state.loop, argv, argc)) {
@@ -2247,6 +2265,7 @@ main (int    argc,
                                         "no-daemon", &no_daemon,
                                         "debug", &debug,
                                         "ignore-serial-consoles", &ignore_serial_consoles,
+                                        "graphical-boot", &graphical_boot,
                                         "debug-file", &debug_buffer_path,
                                         "pid-file", &pid_file,
                                         "tty", &tty,
@@ -2317,6 +2336,11 @@ main (int    argc,
 
         signal (SIGABRT, on_crash);
         signal (SIGSEGV, on_crash);
+
+        if (graphical_boot || ply_kernel_command_line_has_argument ("plymouth.graphical")) {
+                state.should_force_default_splash = true;
+                ignore_serial_consoles = true;
+        }
 
         /* before do anything we need to make sure we have a working
          * environment.
