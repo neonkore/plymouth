@@ -82,7 +82,7 @@ ply_keymap_icon_fill_keymap_info (ply_keymap_icon_t *keymap_icon)
 {
         const char *keymap_with_variant;
         ply_renderer_t *renderer;
-        char *keymap;
+        char *keymap, *compare_keymap;
         int i;
 
         keymap_icon->keymap_offset = -1;
@@ -95,7 +95,13 @@ ply_keymap_icon_fill_keymap_info (ply_keymap_icon_t *keymap_icon)
         keymap = ply_keymap_normalize_keymap (keymap_with_variant);
 
         for (i = 0; ply_keymap_metadata[i].name; i++) {
-                if (strcmp (ply_keymap_metadata[i].name, keymap) == 0) {
+                if (ply_keymap_metadata[i].type == PLY_LAYOUT_TERMINAL) {
+                        compare_keymap = strdup (keymap);
+                } else if (ply_keymap_metadata[i].type == PLY_LAYOUT_XKB) {
+                        compare_keymap = strdup (keymap_with_variant);
+                }
+
+                if (strcmp (ply_keymap_metadata[i].name, compare_keymap) == 0) {
                         keymap_icon->keymap_offset = ply_keymap_metadata[i].offset;
                         keymap_icon->keymap_width = ply_keymap_metadata[i].width;
                         break;
@@ -106,6 +112,7 @@ ply_keymap_icon_fill_keymap_info (ply_keymap_icon_t *keymap_icon)
                 ply_trace ("Error no pre-rendered text for '%s' keymap", keymap);
 
         free (keymap);
+        free (compare_keymap);
 }
 
 ply_keymap_icon_t *
@@ -273,4 +280,3 @@ ply_keymap_icon_get_height (ply_keymap_icon_t *keymap_icon)
 {
         return keymap_icon->height;
 }
-
