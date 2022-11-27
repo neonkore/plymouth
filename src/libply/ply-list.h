@@ -56,6 +56,9 @@ ply_list_node_t *ply_list_get_nth_node (ply_list_t *list,
 ply_list_node_t *ply_list_get_next_node (ply_list_t      *list,
                                          ply_list_node_t *node);
 void *ply_list_node_get_data (ply_list_node_t *node);
+
+#define ply_list_foreach(list, node) \
+        for (node = ply_list_get_first_node (list); node != NULL; node = ply_list_get_next_node (list, node))
 #endif
 
 #endif /* PLY_LIST_H */

@@ -46,6 +46,7 @@
 
 #include "ply-buffer.h"
 #include "ply-event-loop.h"
+#include "ply-input-device.h"
 #include "ply-list.h"
 #include "ply-logger.h"
 #include "ply-rectangle.h"
@@ -71,6 +72,7 @@ struct _ply_renderer_input_source
 {
         ply_renderer_backend_t             *backend;
         ply_fd_watch_t                     *terminal_input_watch;
+        ply_list_t                         *input_devices;
 
         ply_buffer_t                       *key_buffer;
 
@@ -108,6 +110,7 @@ struct _ply_renderer_backend
         unsigned int                row_stride;
 
         uint32_t                    is_active : 1;
+        uint32_t                    input_source_is_open : 1;
 
         void                        (*flush_area) (ply_renderer_backend_t *backend,
                                                    ply_renderer_head_t    *head,
@@ -117,6 +120,7 @@ struct _ply_renderer_backend
 ply_renderer_plugin_interface_t *ply_renderer_backend_get_interface (void);
 static void ply_renderer_head_redraw (ply_renderer_backend_t *backend,
                                       ply_renderer_head_t    *head);
+static bool using_input_device (ply_renderer_input_source_t *backend);
 static bool open_input_source (ply_renderer_backend_t      *backend,
                                ply_renderer_input_source_t *input_source);
 
@@ -260,6 +264,7 @@ create_backend (const char     *device_name,
         backend->head.map_address = MAP_FAILED;
         backend->heads = ply_list_new ();
         backend->input_source.key_buffer = ply_buffer_new ();
+        backend->input_source.input_devices = ply_list_new ();
         backend->terminal = terminal;
 
         return backend;
@@ -298,6 +303,7 @@ destroy_backend (ply_renderer_backend_t *backend)
         ply_trace ("destroying renderer backend for device %s",
                    backend->device_name);
         free (backend->device_name);
+        ply_list_free (backend->input_source.input_devices);
         uninitialize_head (backend, &backend->head);
 
         ply_list_free (backend->heads);
@@ -651,9 +657,18 @@ get_input_source (ply_renderer_backend_t *backend)
 }
 
 static void
-on_key_event (ply_renderer_input_source_t *input_source,
-              int                          terminal_fd)
+on_terminal_key_event (ply_renderer_input_source_t *input_source)
 {
+        ply_renderer_backend_t *backend = input_source->backend;
+        int terminal_fd;
+
+        if (using_input_device (input_source)) {
+                ply_terminal_flush_input (backend->terminal);
+                return;
+        }
+
+        terminal_fd = ply_terminal_get_fd (backend->terminal);
+
         ply_buffer_append_from_fd (input_source->key_buffer,
                                    terminal_fd);
 
@@ -662,10 +677,67 @@ on_key_event (ply_renderer_input_source_t *input_source,
 }
 
 static void
+on_input_device_key (ply_renderer_input_source_t *input_source,
+                     ply_input_device_t          *input_device,
+                     const char                  *text)
+{
+        ply_buffer_append_bytes (input_source->key_buffer, text, strlen (text));
+
+        if (input_source->handler != NULL)
+                input_source->handler (input_source->user_data, input_source->key_buffer, input_source);
+}
+
+static void
+on_input_leds_changed (ply_renderer_input_source_t *input_source,
+                       ply_input_device_t          *input_device)
+{
+        ply_xkb_keyboard_state_t *state;
+        ply_list_node_t *node;
+
+        state = ply_input_device_get_state (input_device);
+
+        ply_list_foreach (input_source->input_devices, node) {
+                ply_input_device_t *set_input_device = ply_list_node_get_data (node);
+                ply_input_device_set_state (set_input_device, state);
+        }
+}
+
+static void
 on_input_source_disconnected (ply_renderer_input_source_t *input_source)
 {
         ply_trace ("input source disconnected, reopening");
         open_input_source (input_source->backend, input_source);
+}
+
+static bool
+using_input_device (ply_renderer_input_source_t *input_source)
+{
+        return ply_list_get_length (input_source->input_devices) > 0;
+}
+
+static void
+watch_input_device (ply_renderer_backend_t *backend,
+                    ply_input_device_t     *input_device)
+{
+        ply_trace ("Listening for keys from device '%s'", ply_input_device_get_name (input_device));
+
+        ply_input_device_watch_for_input (input_device,
+                                          (ply_input_device_input_handler_t) on_input_device_key,
+                                          (ply_input_device_leds_changed_handler_t) on_input_leds_changed,
+                                          &backend->input_source);
+}
+
+static void
+watch_input_devices (ply_renderer_backend_t *backend)
+{
+        ply_list_node_t *node;
+        ply_renderer_input_source_t *input_source = &backend->input_source;
+
+        ply_list_foreach (input_source->input_devices, node) {
+                ply_input_device_t *input_device = ply_list_node_get_data (node);
+
+                watch_input_device (backend, input_device);
+        }
 }
 
 static bool
@@ -677,16 +749,24 @@ open_input_source (ply_renderer_backend_t      *backend,
         assert (backend != NULL);
         assert (has_input_source (backend, input_source));
 
+        if (!backend->input_source_is_open)
+                watch_input_devices (backend);
+
         if (backend->terminal == NULL)
                 return false;
 
-        terminal_fd = ply_terminal_get_fd (backend->terminal);
+        if (backend->terminal != NULL) {
+                terminal_fd = ply_terminal_get_fd (backend->terminal);
+
+                input_source->terminal_input_watch = ply_event_loop_watch_fd (backend->loop, terminal_fd, PLY_EVENT_LOOP_FD_STATUS_HAS_DATA,
+                                                                              (ply_event_handler_t) on_terminal_key_event,
+                                                                              (ply_event_handler_t)
+                                                                              on_input_source_disconnected, input_source);
+        }
 
         input_source->backend = backend;
-        input_source->terminal_input_watch = ply_event_loop_watch_fd (backend->loop, terminal_fd, PLY_EVENT_LOOP_FD_STATUS_HAS_DATA,
-                                                                      (ply_event_handler_t) on_key_event,
-                                                                      (ply_event_handler_t) on_input_source_disconnected,
-                                                                      input_source);
+        backend->input_source_is_open = true;
+
         return true;
 }
 
@@ -710,17 +790,54 @@ close_input_source (ply_renderer_backend_t      *backend,
         assert (backend != NULL);
         assert (has_input_source (backend, input_source));
 
-        if (backend->terminal == NULL)
+        if (!backend->input_source_is_open)
                 return;
 
-        ply_event_loop_stop_watching_fd (backend->loop, input_source->terminal_input_watch);
-        input_source->terminal_input_watch = NULL;
+        if (using_input_device (input_source)) {
+                ply_list_node_t *node;
+                ply_list_foreach (input_source->input_devices, node) {
+                        ply_input_device_t *input_device = ply_list_node_get_data (node);
+                        ply_input_device_stop_watching_for_input (input_device,
+                                                                  (ply_input_device_input_handler_t) on_input_device_key,
+                                                                  (ply_input_device_leds_changed_handler_t) on_input_leds_changed,
+                                                                  &backend->input_source);
+                }
+        }
+
+        if (input_source->terminal_input_watch != NULL) {
+                ply_event_loop_stop_watching_fd (backend->loop, input_source->terminal_input_watch);
+                input_source->terminal_input_watch = NULL;
+        }
+
         input_source->backend = NULL;
+
+        backend->input_source_is_open = false;
+}
+
+static ply_input_device_t *
+get_any_input_device_with_leds (ply_renderer_backend_t *backend)
+{
+        ply_list_node_t *node;
+
+        ply_list_foreach (backend->input_source.input_devices, node) {
+                ply_input_device_t *input_device;
+
+                input_device = ply_list_node_get_data (node);
+
+                if (ply_input_device_is_keyboard_with_leds (input_device))
+                        return input_device;
+        }
+
+        return NULL;
 }
 
 static bool
 get_capslock_state (ply_renderer_backend_t *backend)
 {
+        if (using_input_device (&backend->input_source)) {
+                ply_input_device_t *dev = get_any_input_device_with_leds (backend);
+                return ply_input_device_get_capslock_state (dev);
+        }
         if (!backend->terminal)
                 return false;
 
@@ -730,10 +847,62 @@ get_capslock_state (ply_renderer_backend_t *backend)
 static const char *
 get_keymap (ply_renderer_backend_t *backend)
 {
+        if (using_input_device (&backend->input_source)) {
+                ply_input_device_t *dev = get_any_input_device_with_leds (backend);
+                const char *keymap = ply_input_device_get_keymap (dev);
+                if (keymap != NULL) {
+                        return keymap;
+                }
+        }
         if (!backend->terminal)
                 return NULL;
 
         return ply_terminal_get_keymap (backend->terminal);
+}
+
+static void
+sync_input_devices (ply_renderer_backend_t *backend)
+{
+        ply_list_node_t *node;
+        ply_xkb_keyboard_state_t *xkb_state;
+        ply_input_device_t *source_input_device;
+
+        source_input_device = get_any_input_device_with_leds (backend);
+
+        if (source_input_device == NULL)
+                return;
+
+        xkb_state = ply_input_device_get_state (source_input_device);
+
+        ply_list_foreach (backend->input_source.input_devices, node) {
+                ply_input_device_t *target_input_device = ply_list_node_get_data (node);
+
+                if (source_input_device == target_input_device)
+                        continue;
+
+                ply_input_device_set_state (target_input_device, xkb_state);
+        }
+}
+
+static void
+add_input_device (ply_renderer_backend_t *backend,
+                  ply_input_device_t     *input_device)
+{
+        ply_list_append_data (backend->input_source.input_devices, input_device);
+
+        if (backend->input_source_is_open)
+                watch_input_device (backend, input_device);
+
+        sync_input_devices (backend);
+}
+
+static void
+remove_input_device (ply_renderer_backend_t *backend,
+                     ply_input_device_t     *input_device)
+{
+        ply_list_remove_data (backend->input_source.input_devices, input_device);
+
+        sync_input_devices (backend);
 }
 
 ply_renderer_plugin_interface_t *
@@ -760,8 +929,9 @@ ply_renderer_backend_get_interface (void)
                 .get_device_name              = get_device_name,
                 .get_capslock_state           = get_capslock_state,
                 .get_keymap                   = get_keymap,
+                .add_input_device             = add_input_device,
+                .remove_input_device          = remove_input_device,
         };
 
         return &plugin_interface;
 }
-
