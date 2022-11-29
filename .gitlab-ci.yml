@@ -19,8 +19,7 @@ fedora-x86_64:
   before_script:
     - dnf install -y gcc gtk3-devel git libpng-devel gettext-devel libxslt docbook-style-xsl cairo-devel systemd-devel systemd-udev kernel-headers libdrm-devel pango-devel make ShellCheck uncrustify patchutils meson binutils-gold xkeyboard-config-devel libevdev-devel
     - alternatives --set ld /usr/bin/ld.gold
-  <<: *check-format
-  <<: *meson-build
+  <<: [ *check-format, *meson-build ]
   only:
     - merge_requests
 
