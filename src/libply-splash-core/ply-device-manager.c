@@ -872,6 +872,9 @@ ply_device_manager_new (const char                *default_tty,
         manager->terminals = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
         manager->renderers = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
         manager->local_console_terminal =  ply_terminal_new (default_tty, manager->keymap);
+
+        ply_terminal_open (manager->local_console_terminal);
+
         manager->input_devices = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
         manager->keyboards = ply_list_new ();
         manager->text_displays = ply_list_new ();
