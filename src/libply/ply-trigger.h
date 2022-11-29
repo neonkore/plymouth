@@ -30,14 +30,20 @@
 
 typedef struct _ply_trigger ply_trigger_t;
 
+typedef enum
+{
+        PLY_TRIGGER_HANDLER_RESULT_CONTINUE = false,
+        PLY_TRIGGER_HANDLER_RESULT_ABORT    = true
+} ply_trigger_handler_result_t;
+
 typedef void (*ply_trigger_handler_t) (void          *user_data,
                                        const void    *trigger_data,
                                        ply_trigger_t *trigger);
 
-typedef void (*ply_trigger_instance_handler_t) (void          *user_data,
-                                                void          *instance,
-                                                const void    *trigger_data,
-                                                ply_trigger_t *trigger);
+typedef ply_trigger_handler_result_t (*ply_trigger_instance_handler_t) (void          *user_data,
+                                                                        void          *instance,
+                                                                        const void    *trigger_data,
+                                                                        ply_trigger_t *trigger);
 #ifndef PLY_HIDE_FUNCTION_DECLARATIONS
 ply_trigger_t *ply_trigger_new (ply_trigger_t **free_address);
 
