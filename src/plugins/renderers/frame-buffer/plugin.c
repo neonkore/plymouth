@@ -752,9 +752,6 @@ open_input_source (ply_renderer_backend_t      *backend,
         if (!backend->input_source_is_open)
                 watch_input_devices (backend);
 
-        if (backend->terminal == NULL)
-                return false;
-
         if (backend->terminal != NULL) {
                 terminal_fd = ply_terminal_get_fd (backend->terminal);
 
