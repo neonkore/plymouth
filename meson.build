@@ -1,15 +1,6 @@
 project('plymouth', 'c',
   meson_version: '>= 0.61',
-  version: run_command(
-    'date', '+%y.%V.' + run_command(
-      'git', 'rev-list',
-      run_command('git', 'describe', '--abbrev=0', check: true).stdout().strip() + '..HEAD',
-      '--count',
-      check: true,
-    ).stdout().strip(),
-    '-d', '@' + run_command('git', 'log', '-1', '--pretty=format:%ct', check: true).stdout().strip(),
-    check: true,
-  ).stdout().strip(),
+  version: run_command(['scripts/generate-version.sh'], check: true).stdout().strip(),
 )
 
 # Modules
