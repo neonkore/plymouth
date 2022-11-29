@@ -226,6 +226,7 @@ ply_trigger_pull (ply_trigger_t *trigger,
         while (node != NULL) {
                 ply_list_node_t *next_node;
                 ply_trigger_closure_t *closure;
+                ply_trigger_handler_result_t result = PLY_TRIGGER_HANDLER_RESULT_CONTINUE;
 
                 closure = (ply_trigger_closure_t *) ply_list_node_get_data (node);
 
@@ -235,11 +236,14 @@ ply_trigger_pull (ply_trigger_t *trigger,
                         closure->handler (closure->user_data, data, trigger);
                         break;
                 case PLY_TRIGGER_HANDLER_TYPE_INSTANCE_HANDLER:
-                        closure->instance_handler (closure->user_data, trigger->instance, data, trigger);
+                        result = closure->instance_handler (closure->user_data, trigger->instance, data, trigger);
                         break;
                 default:
                         break;
                 }
+
+                if (result == PLY_TRIGGER_HANDLER_RESULT_ABORT)
+                        break;
 
                 node = next_node;
         }
