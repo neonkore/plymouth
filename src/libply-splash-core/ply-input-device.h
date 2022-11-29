@@ -38,10 +38,16 @@ typedef enum
         PLY_KEY_HELD,
 } ply_key_direction_t;
 
+typedef enum
+{
+        PLY_INPUT_RESULT_PROPAGATED = false,
+        PLY_INPUT_RESULT_CONSUMED   = true,
+} ply_input_device_input_result_t;
+
 typedef struct _ply_input_device ply_input_device_t;
-typedef void (*ply_input_device_input_handler_t) (void               *user_data,
-                                                  ply_input_device_t *input_device,
-                                                  const char         *buf);
+typedef ply_input_device_input_result_t (*ply_input_device_input_handler_t) (void               *user_data,
+                                                                             ply_input_device_t *input_device,
+                                                                             const char         *buf);
 typedef void (*ply_input_device_leds_changed_handler_t) (void               *user_data,
                                                          ply_input_device_t *input_device);
 typedef void (*ply_input_device_disconnect_handler_t) (void               *user_data,

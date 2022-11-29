@@ -1768,17 +1768,19 @@ on_terminal_key_event (ply_renderer_input_source_t *input_source)
                 input_source->handler (input_source->user_data, input_source->key_buffer, input_source);
 }
 
-static void
+static ply_input_device_input_result_t
 on_input_device_key (ply_renderer_input_source_t *input_source,
                      ply_input_device_t          *input_device,
                      const char                  *text)
 {
-        int len = strlen (text);
-        if (len > 0)
-                ply_buffer_append_bytes (input_source->key_buffer, text, len);
+        ply_buffer_append_bytes (input_source->key_buffer, text, strlen (text));
 
-        if (input_source->handler != NULL)
-                input_source->handler (input_source->user_data, input_source->key_buffer, input_source);
+        if (input_source->handler == NULL)
+                return PLY_INPUT_RESULT_PROPAGATED;
+
+        input_source->handler (input_source->user_data, input_source->key_buffer, input_source);
+
+        return PLY_INPUT_RESULT_CONSUMED;
 }
 
 static void
