@@ -80,7 +80,7 @@ struct _ply_terminal
         struct termios       original_locked_term_attributes;
 
         char                *name;
-        const char          *keymap;
+        char                *keymap;
         int                  fd;
         int                  vt_number;
         int                  initial_vt_number;
@@ -117,9 +117,37 @@ typedef enum
 
 static ply_terminal_open_result_t ply_terminal_open_device (ply_terminal_t *terminal);
 
+static char *
+ply_terminal_parse_keymap_conf (ply_terminal_t *terminal)
+{
+        ply_key_file_t *vconsole_conf;
+        char *keymap, *old_keymap;
+
+        keymap = ply_kernel_command_line_get_key_value ("rd.vconsole.keymap=");
+        if (keymap)
+                return keymap;
+
+        keymap = ply_kernel_command_line_get_key_value ("vconsole.keymap=");
+        if (keymap)
+                return keymap;
+
+        vconsole_conf = ply_key_file_new ("/etc/vconsole.conf");
+        if (ply_key_file_load_groupless_file (vconsole_conf))
+                keymap = ply_key_file_get_value (vconsole_conf, NULL, "KEYMAP");
+        ply_key_file_free (vconsole_conf);
+
+        /* The keymap name in vconsole.conf might be quoted, strip these */
+        if (keymap && keymap[0] == '"' && keymap[strlen (keymap) - 1] == '"') {
+                old_keymap = keymap;
+                keymap = strndup (keymap + 1, strlen (keymap) - 2);
+                free (old_keymap);
+        }
+
+        return keymap;
+}
+
 ply_terminal_t *
-ply_terminal_new (const char *device_name,
-                  const char *keymap)
+ply_terminal_new (const char *device_name)
 {
         ply_terminal_t *terminal;
 
@@ -139,7 +167,7 @@ ply_terminal_new (const char *device_name,
         terminal->fd = -1;
         terminal->vt_number = -1;
         terminal->initial_vt_number = -1;
-        terminal->keymap = keymap;
+        terminal->keymap = ply_terminal_parse_keymap_conf (terminal);
         if (terminal->keymap)
                 ply_trace ("terminal %s keymap: %s", terminal->name, terminal->keymap);
 
@@ -851,6 +879,7 @@ ply_terminal_free (ply_terminal_t *terminal)
 
         free_vt_change_closures (terminal);
         free_input_closures (terminal);
+        free (terminal->keymap);
         free (terminal->name);
         free (terminal);
 }
@@ -1072,12 +1101,3 @@ ply_terminal_stop_watching_for_input (ply_terminal_t              *terminal,
         }
 }
 
-void
-ply_terminal_flush_input (ply_terminal_t *terminal)
-{
-        if (!terminal->is_open)
-                return;
-
-        if (tcflush (terminal->fd, TCIFLUSH) < 0)
-                ply_trace ("could not flush input buffer of terminal %s: %m", terminal->name);
-}

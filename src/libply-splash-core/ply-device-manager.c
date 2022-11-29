@@ -19,7 +19,6 @@
  */
 #include "config.h"
 #include "ply-device-manager.h"
-#include "ply-renderer.h"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -35,19 +34,14 @@
 #include <libudev.h>
 #endif
 
-#include <xkbcommon/xkbcommon.h>
-
 #include "ply-logger.h"
 #include "ply-event-loop.h"
 #include "ply-hashtable.h"
 #include "ply-list.h"
-#include "ply-key-file.h"
 #include "ply-utils.h"
-#include "ply-input-device.h"
 
 #define SUBSYSTEM_DRM "drm"
 #define SUBSYSTEM_FRAME_BUFFER "graphics"
-#define SUBSYSTEM_INPUT "input"
 
 #ifdef HAVE_UDEV
 static void create_devices_from_udev (ply_device_manager_t *manager);
@@ -66,18 +60,13 @@ struct _ply_device_manager
         ply_event_loop_t                   *loop;
         ply_hashtable_t                    *terminals;
         ply_hashtable_t                    *renderers;
-        ply_hashtable_t                    *input_devices;
         ply_terminal_t                     *local_console_terminal;
-        const char                         *keymap;
         ply_list_t                         *keyboards;
         ply_list_t                         *text_displays;
         ply_list_t                         *pixel_displays;
         struct udev                        *udev_context;
         struct udev_monitor                *udev_monitor;
         ply_fd_watch_t                     *fd_watch;
-
-        struct xkb_context                 *xkb_context;
-        struct xkb_keymap                  *xkb_keymap;
 
         ply_keyboard_added_handler_t        keyboard_added_handler;
         ply_keyboard_removed_handler_t      keyboard_removed_handler;
@@ -273,73 +262,6 @@ fb_device_has_drm_device (ply_device_manager_t *manager,
         return has_drm_device;
 }
 
-static void
-on_each_renderer_add_input_device (const char         *key,
-                                   ply_renderer_t     *renderer,
-                                   ply_input_device_t *input_device)
-{
-        ply_trace ("Adding input device '%s' to renderer for output device '%s'",
-                   ply_input_device_get_name (input_device),
-                   ply_renderer_get_device_name (renderer));
-
-        ply_renderer_add_input_device (renderer, input_device);
-}
-
-static void
-add_input_device_to_renderers (ply_device_manager_t *manager,
-                               ply_input_device_t   *input_device)
-{
-        const char *device_path = ply_input_device_get_path (input_device);
-        if (ply_hashtable_lookup (manager->input_devices, (void *) device_path) != NULL) {
-                ply_trace ("Input device '%s' already added, skipping...", ply_input_device_get_name (input_device));
-                ply_input_device_free (input_device);
-                return;
-        }
-        ply_hashtable_insert (manager->input_devices, (void *) device_path, input_device);
-        ply_hashtable_foreach (manager->renderers,
-                               (ply_hashtable_foreach_func_t *)
-                               on_each_renderer_add_input_device,
-                               input_device);
-}
-
-static void
-on_each_input_device_add_to_renderer (const char         *key,
-                                      ply_input_device_t *input_device,
-                                      ply_renderer_t     *renderer)
-{
-        ply_trace ("Adding input device '%s' to renderer for output device '%s'",
-                   ply_input_device_get_name (input_device),
-                   ply_renderer_get_device_name (renderer));
-
-        ply_renderer_add_input_device (renderer, input_device);
-}
-
-static void
-add_input_devices_to_renderer (ply_device_manager_t *manager,
-                               ply_renderer_t       *renderer)
-{
-        ply_hashtable_foreach (manager->input_devices,
-                               (ply_hashtable_foreach_func_t *)
-                               on_each_input_device_add_to_renderer,
-                               renderer);
-}
-static void
-on_each_input_device_remove_from_renderer (const char         *key,
-                                           ply_renderer_t     *renderer,
-                                           ply_input_device_t *input_device)
-{
-        ply_renderer_remove_input_device (renderer, input_device);
-}
-
-static void
-remove_input_device_from_renderers (ply_device_manager_t *manager,
-                                    ply_input_device_t   *input_device)
-{
-        const char *device_path = ply_input_device_get_path (input_device);
-        ply_hashtable_remove (manager->input_devices, (void *) device_path);
-        ply_hashtable_foreach (manager->renderers, (ply_hashtable_foreach_func_t *) on_each_input_device_remove_from_renderer, input_device);
-}
-
 static bool
 verify_drm_device (struct udev_device *device)
 {
@@ -378,7 +300,7 @@ static bool
 create_devices_for_udev_device (ply_device_manager_t *manager,
                                 struct udev_device   *device)
 {
-        const char *device_path, *device_sysname;
+        const char *device_path;
         bool created = false;
         bool force_fb = false;
 
@@ -386,7 +308,6 @@ create_devices_for_udev_device (ply_device_manager_t *manager,
                 force_fb = true;
 
         device_path = udev_device_get_devnode (device);
-        device_sysname = udev_device_get_sysname (device);
 
         if (device_path != NULL) {
                 const char *subsystem;
@@ -410,21 +331,6 @@ create_devices_for_udev_device (ply_device_manager_t *manager,
                                 renderer_type = PLY_RENDERER_TYPE_FRAME_BUFFER;
                         else
                                 ply_trace ("ignoring, since there's a DRM device associated with it");
-                } else if (strcmp (subsystem, SUBSYSTEM_INPUT) == 0) {
-                        if (ply_string_has_prefix (device_sysname, "event")) {
-                                ply_trace ("found input device %s", device_path);
-                                ply_input_device_t *input_device = ply_input_device_open (manager->xkb_context, manager->xkb_keymap, device_path);
-                                if (input_device != NULL) {
-                                        ply_input_device_set_disconnect_handler (input_device, (ply_input_device_disconnect_handler_t) remove_input_device_from_renderers, manager);
-                                        if (ply_input_device_is_keyboard (input_device)) {
-                                                add_input_device_to_renderers (manager, input_device);
-                                        } else {
-                                                ply_input_device_free (input_device);
-                                        }
-                                }
-                        } else {
-                                ply_trace ("Ignoring, since this is a non-evdev device");
-                        }
                 }
 
                 if (renderer_type != PLY_RENDERER_TYPE_NONE) {
@@ -471,7 +377,7 @@ create_devices_for_subsystem (ply_device_manager_t *manager,
 
         udev_list_entry_foreach (entry, udev_enumerate_get_list_entry (matches)){
                 struct udev_device *device = NULL;
-                const char *path, *node;
+                const char *path;
 
                 path = udev_list_entry_get_name (entry);
 
@@ -489,10 +395,18 @@ create_devices_for_subsystem (ply_device_manager_t *manager,
                 if (udev_device_get_is_initialized (device)) {
                         ply_trace ("device is initialized");
 
-                        node = udev_device_get_devnode (device);
-                        if (node != NULL) {
-                                ply_trace ("found node %s", node);
-                                found_device = create_devices_for_udev_device (manager, device);
+                        /* We only care about devices assigned to a (any) devices. Floating
+                         * devices should be ignored.
+                         */
+                        if (udev_device_has_tag (device, "seat")) {
+                                const char *node;
+                                node = udev_device_get_devnode (device);
+                                if (node != NULL) {
+                                        ply_trace ("found node %s", node);
+                                        found_device = create_devices_for_udev_device (manager, device);
+                                }
+                        } else {
+                                ply_trace ("device doesn't have a devices tag");
                         }
                 } else {
                         ply_trace ("it's not initialized");
@@ -544,7 +458,7 @@ verify_add_or_change (ply_device_manager_t *manager,
 {
         const char *subsystem;
 
-        if (strcmp (action, "add") != 0 && strcmp (action, "change") != 0)
+        if (strcmp (action, "add") && strcmp (action, "change"))
                 return false;
 
         if (manager->local_console_managed && manager->local_console_is_text) {
@@ -556,7 +470,7 @@ verify_add_or_change (ply_device_manager_t *manager,
                 return true;
 
         subsystem = udev_device_get_subsystem (device);
-        if (strcmp (subsystem, SUBSYSTEM_FRAME_BUFFER) == 0) {
+        if (strcmp (subsystem, SUBSYSTEM_DRM)) {
                 ply_trace ("ignoring since we only handle subsystem %s devices after timeout", subsystem);
                 return false;
         }
@@ -666,15 +580,14 @@ watch_for_udev_events (ply_device_manager_t *manager)
         if (manager->fd_watch != NULL)
                 return;
 
-        ply_trace ("watching for udev graphics device and input device add and remove events");
+        ply_trace ("watching for udev graphics device add and remove events");
 
         if (manager->udev_monitor == NULL) {
                 manager->udev_monitor = udev_monitor_new_from_netlink (manager->udev_context, "udev");
 
                 udev_monitor_filter_add_match_subsystem_devtype (manager->udev_monitor, SUBSYSTEM_DRM, NULL);
                 udev_monitor_filter_add_match_subsystem_devtype (manager->udev_monitor, SUBSYSTEM_FRAME_BUFFER, NULL);
-                if (!ply_kernel_command_line_has_argument ("plymouth.use-legacy-input"))
-                        udev_monitor_filter_add_match_subsystem_devtype (manager->udev_monitor, SUBSYSTEM_INPUT, NULL);
+                udev_monitor_filter_add_match_tag (manager->udev_monitor, "seat");
                 udev_monitor_enable_receiving (manager->udev_monitor);
         }
 
@@ -718,21 +631,6 @@ free_terminals (ply_device_manager_t *manager)
                                manager);
 }
 
-static void
-free_input_device (char                 *device,
-                   ply_input_device_t   *input_device,
-                   ply_device_manager_t *manager)
-{
-        ply_hashtable_remove (manager->input_devices, device);
-        ply_input_device_free (input_device);
-}
-
-static void
-free_input_devices (ply_device_manager_t *manager)
-{
-        ply_hashtable_foreach (manager->input_devices, (ply_hashtable_foreach_func_t *) free_input_device, manager);
-}
-
 static ply_terminal_t *
 get_terminal (ply_device_manager_t *manager,
               const char           *device_name)
@@ -759,7 +657,7 @@ get_terminal (ply_device_manager_t *manager,
         terminal = ply_hashtable_lookup (manager->terminals, full_name);
 
         if (terminal == NULL) {
-                terminal = ply_terminal_new (full_name, manager->keymap);
+                terminal = ply_terminal_new (full_name);
 
                 ply_hashtable_insert (manager->terminals,
                                       (void *) ply_terminal_get_name (terminal),
@@ -788,74 +686,6 @@ free_renderers (ply_device_manager_t *manager)
                                manager);
 }
 
-static char *
-strip_quotes (char *str)
-{
-        char *old_str;
-        if (str && str[0] == '"' && str[strlen (str) - 1] == '"') {
-                old_str = str;
-                str = strndup (str + 1, strlen (str) - 2);
-                free (old_str);
-        }
-        return str;
-}
-
-static void
-parse_vconsole_conf (ply_device_manager_t *manager)
-{
-        ply_key_file_t *vconsole_conf;
-        char *keymap = NULL, *xkb_layout = NULL, *xkb_model = NULL, *xkb_variant = NULL, *xkb_options = NULL;
-
-        keymap = ply_kernel_command_line_get_key_value ("rd.vconsole.keymap=");
-
-        if (!keymap)
-                keymap = ply_kernel_command_line_get_key_value ("vconsole.keymap=");
-
-        vconsole_conf = ply_key_file_new ("/etc/vconsole.conf");
-        if (ply_key_file_load_groupless_file (vconsole_conf)) {
-                /* The values in vconsole.conf might be quoted, strip these */
-                if (!keymap) {
-                        keymap = ply_key_file_get_value (vconsole_conf, NULL, "KEYMAP");
-                        keymap = strip_quotes (keymap);
-                }
-                xkb_layout = ply_key_file_get_value (vconsole_conf, NULL, "XKB_LAYOUT");
-                xkb_layout = strip_quotes (xkb_layout);
-
-                xkb_model = ply_key_file_get_value (vconsole_conf, NULL, "XKB_MODEL");
-                xkb_model = strip_quotes (xkb_model);
-
-                xkb_variant = ply_key_file_get_value (vconsole_conf, NULL, "XKB_VARIANT");
-                xkb_variant = strip_quotes (xkb_variant);
-
-                xkb_options = ply_key_file_get_value (vconsole_conf, NULL, "XKB_OPTIONS");
-                xkb_options = strip_quotes (xkb_options);
-        }
-        ply_key_file_free (vconsole_conf);
-
-        ply_trace ("XKB_KEYMAP: %s     KEYMAP: %s", xkb_layout, keymap);
-
-        struct xkb_rule_names xkb_keymap = {
-                .layout  = xkb_layout,
-                .model   = xkb_model,
-                .variant = xkb_variant,
-                .options = xkb_options,
-        };
-        manager->xkb_keymap = xkb_keymap_new_from_names (manager->xkb_context, &xkb_keymap, XKB_MAP_COMPILE_NO_FLAGS);
-
-        if (manager->xkb_keymap == NULL) {
-                ply_trace ("Failed to set xkb keymap of LAYOUT: %s MODEL: %s VARIANT: %s OPTIONS: %s", xkb_layout, xkb_model, xkb_variant, xkb_options);
-
-                manager->xkb_keymap = xkb_keymap_new_from_names (manager->xkb_context, NULL, XKB_MAP_COMPILE_NO_FLAGS);
-                assert (manager->xkb_keymap != NULL);
-        }
-
-        free (xkb_layout);
-        free (xkb_model);
-        free (xkb_variant);
-        free (xkb_options);
-        manager->keymap = keymap;
-}
-
 ply_device_manager_t *
 ply_device_manager_new (const char                *default_tty,
                         ply_device_manager_flags_t flags)
@@ -864,18 +694,11 @@ ply_device_manager_new (const char                *default_tty,
 
         manager = calloc (1, sizeof(ply_device_manager_t));
         manager->loop = NULL;
-
-        manager->xkb_context = xkb_context_new (XKB_CONTEXT_NO_FLAGS);
-
-        parse_vconsole_conf (manager);
-
         manager->terminals = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
         manager->renderers = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
-        manager->local_console_terminal =  ply_terminal_new (default_tty, manager->keymap);
-
+        manager->local_console_terminal = ply_terminal_new (default_tty);
         ply_terminal_open (manager->local_console_terminal);
 
-        manager->input_devices = ply_hashtable_new (ply_hashtable_string_hash, ply_hashtable_string_compare);
         manager->keyboards = ply_list_new ();
         manager->text_displays = ply_list_new ();
         manager->pixel_displays = ply_list_new ();
@@ -908,16 +731,9 @@ ply_device_manager_free (ply_device_manager_t *manager)
 
         free_terminals (manager);
         ply_hashtable_free (manager->terminals);
-        free ((void *) manager->keymap);
 
         free_renderers (manager);
         ply_hashtable_free (manager->renderers);
-
-        free_input_devices (manager);
-        ply_hashtable_free (manager->input_devices);
-
-        if (manager->xkb_context)
-                xkb_context_unref (manager->xkb_context);
 
 #ifdef HAVE_UDEV
         ply_event_loop_stop_watching_for_timeout (manager->loop,
@@ -1106,8 +922,6 @@ create_devices_for_terminal_and_renderer_type (ply_device_manager_t *manager,
                                 renderer = NULL;
                                 return true;
                         }
-
-                        add_input_devices_to_renderer (manager, renderer);
                 }
         }
 
@@ -1213,7 +1027,6 @@ create_devices_from_udev (ply_device_manager_t *manager)
 
         ply_trace ("Timeout elapsed, looking for devices from udev");
 
-        create_devices_for_subsystem (manager, SUBSYSTEM_INPUT);
         create_devices_for_subsystem (manager, SUBSYSTEM_DRM);
         create_devices_for_subsystem (manager, SUBSYSTEM_FRAME_BUFFER);
 
@@ -1276,7 +1089,6 @@ ply_device_manager_watch_devices (ply_device_manager_t               *manager,
 
 #ifdef HAVE_UDEV
         watch_for_udev_events (manager);
-        create_devices_for_subsystem (manager, SUBSYSTEM_INPUT);
         create_devices_for_subsystem (manager, SUBSYSTEM_DRM);
         ply_event_loop_watch_for_timeout (manager->loop,
                                           device_timeout,

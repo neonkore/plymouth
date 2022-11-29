@@ -1,7 +1,6 @@
 libply_splash_core_sources = files(
   'ply-boot-splash.c',
   'ply-device-manager.c',
-  'ply-input-device.c',
   'ply-keyboard.c',
   'ply-pixel-buffer.c',
   'ply-pixel-display.c',
@@ -18,9 +17,6 @@ libply_splash_core_public_deps = [
 
 libply_splash_core_private_deps = [
   lm_dep,
-  libevdev_dep,
-  xkbcommon_dep,
-  xkeyboard_config_dep,
 ]
 
 if libudev_dep.found()
@@ -53,7 +49,6 @@ libply_splash_core_headers = files(
   'ply-boot-splash-plugin.h',
   'ply-boot-splash.h',
   'ply-device-manager.h',
-  'ply-input-device.h',
   'ply-keyboard.h',
   'ply-pixel-buffer.h',
   'ply-pixel-display.h',

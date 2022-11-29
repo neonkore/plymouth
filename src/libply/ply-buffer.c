@@ -181,11 +181,9 @@ ply_buffer_append_bytes (ply_buffer_t *buffer,
 {
         assert (buffer != NULL);
         assert (bytes_in != NULL);
+        assert (length != 0);
 
         const uint8_t *bytes = bytes_in;
-
-        if (length == 0)
-                return;
 
         if (length > PLY_BUFFER_MAX_BUFFER_CAPACITY) {
                 bytes += length - (PLY_BUFFER_MAX_BUFFER_CAPACITY - 1);
@@ -259,3 +257,4 @@ ply_buffer_clear (ply_buffer_t *buffer)
         memset (buffer->data, '\0', buffer->capacity);
         buffer->size = 0;
 }
+

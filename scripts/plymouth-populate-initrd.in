@@ -33,10 +33,6 @@ ddebug() {
     [ "$verbose" = "true" ] && echo "$@"
 }
 
-dfatal() {
-    echo "$@" > /proc/self/fd/2
-}
-
 # normalize_path <path>
 # Prints the normalized path, where it removes any duplicated
 # and trailing slashes.
@@ -424,13 +420,12 @@ function usage() {
         rc=1
     fi
 
-    echo "usage: plymouth [ --verbose | -v ] { --targetdir | -t } <initrd_directory> { --x11-directory | -x } <x11_directory>" > $output
+    echo "usage: plymouth [ --verbose | -v ] { --targetdir | -t } <initrd_directory>" > $output
     exit $rc
 }
 
 verbose=false
 INITRDDIR=""
-X11_DIRECTORY="/usr/share/X11"
 while [ $# -gt 0 ]; do
     case $1 in
         --verbose|-v)
@@ -442,10 +437,6 @@ while [ $# -gt 0 ]; do
             ;;
         --help|-h)
             usage normal
-            ;;
-        --x11-directory|-x)
-            shift
-            X11_DIRECTORY="$1"
             ;;
         *)
             usage error
@@ -473,51 +464,6 @@ inst ${PLYMOUTH_LOGO_FILE} $INITRDDIR
 inst @RELEASE_FILE@ $INITRDDIR
 inst ${PLYMOUTH_POLICYDIR}/plymouthd.defaults $INITRDDIR
 inst ${PLYMOUTH_CONFDIR}/plymouthd.conf $INITRDDIR
-
-# Install xkb info
-mkdir -p "${INITRDDIR}/${X11_DIRECTORY}/xkb/"
-mkdir -p "${INITRDDIR}/${X11_DIRECTORY}/xkb/compat/"
-
-mkdir -p "${INITRDDIR}/${X11_DIRECTORY}/xkb/keycodes/"
-mkdir -p "${INITRDDIR}/${X11_DIRECTORY}/xkb/rules/"
-mkdir -p "${INITRDDIR}/${X11_DIRECTORY}/xkb/symbols/"
-mkdir -p "${INITRDDIR}/${X11_DIRECTORY}/xkb/types/"
-mkdir -p "${INITRDDIR}/${X11_DIRECTORY}/locale/"
-inst ${X11_DIRECTORY}/xkb/compat/accessx $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/basic $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/caps $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/complete $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/iso9995 $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/ledcaps $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/lednum $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/ledscroll $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/level5 $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/misc $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/mousekeys $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/compat/xfree86 $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/keycodes/aliases $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/keycodes/evdev $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/rules/evdev $INITRDDIR
-find ${X11_DIRECTORY}/xkb/symbols -maxdepth 1 ! -type d | while read file; do
-    inst $file $INITRDDIR
-done
-inst ${X11_DIRECTORY}/xkb/types/basic $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/types/complete $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/types/extra $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/types/iso9995 $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/types/level5 $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/types/mousekeys $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/types/numpad $INITRDDIR
-inst ${X11_DIRECTORY}/xkb/types/pc $INITRDDIR
-
-# In the off chance the user uses their compose key when
-# typing their password, install compose sequences
-inst ${X11_DIRECTORY}/locale/compose.dir $INITRDDIR
-grep UTF-8/Compose: ${X11_DIRECTORY}/locale/compose.dir | awk -F: '{ print $1 }' | sort -u | xargs dirname | while read DIR; do
-    find ${X11_DIRECTORY}/locale/$DIR -maxdepth 1 ! -type d | while read file; do
-        inst $file $INITRDDIR
-     done
-done
 
 if [ -z "$PLYMOUTH_THEME_NAME" ]; then
     echo "No default plymouth plugin is set" >&2

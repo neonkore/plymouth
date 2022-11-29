@@ -368,34 +368,6 @@ ply_renderer_flush_head (ply_renderer_t      *renderer,
         renderer->plugin_interface->flush_head (renderer->backend, head);
 }
 
-void
-ply_renderer_add_input_device (ply_renderer_t     *renderer,
-                               ply_input_device_t *input_device)
-{
-        assert (renderer != NULL);
-        assert (renderer->plugin_interface != NULL);
-        assert (input_device != NULL);
-
-        if (!renderer->plugin_interface->add_input_device)
-                return;
-
-        renderer->plugin_interface->add_input_device (renderer->backend, input_device);
-}
-
-void
-ply_renderer_remove_input_device (ply_renderer_t     *renderer,
-                                  ply_input_device_t *input_device)
-{
-        assert (renderer != NULL);
-        assert (renderer->plugin_interface != NULL);
-        assert (input_device != NULL);
-
-        if (!renderer->plugin_interface->remove_input_device)
-                return;
-
-        renderer->plugin_interface->remove_input_device (renderer->backend, input_device);
-}
-
 ply_renderer_input_source_t *
 ply_renderer_get_input_source (ply_renderer_t *renderer)
 {
@@ -480,3 +452,4 @@ ply_renderer_get_keymap (ply_renderer_t *renderer)
 
         return renderer->plugin_interface->get_keymap (renderer->backend);
 }
+

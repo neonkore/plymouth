@@ -55,8 +55,7 @@ typedef enum
 } ply_terminal_mode_t;
 
 #ifndef PLY_HIDE_FUNCTION_DECLARATIONS
-ply_terminal_t *ply_terminal_new (const char *device_name,
-                                  const char *keymap);
+ply_terminal_t *ply_terminal_new (const char *device_name);
 
 void ply_terminal_free (ply_terminal_t *terminal);
 
@@ -117,8 +116,7 @@ void ply_terminal_stop_watching_for_input (ply_terminal_t              *terminal
                                            ply_terminal_input_handler_t input_handler,
                                            void                        *user_data);
 
-void ply_terminal_flush_input (ply_terminal_t *terminal);
-
 #endif
 
 #endif /* PLY_TERMINAL_H */
+
