@@ -413,6 +413,9 @@ create_devices_for_udev_device (ply_device_manager_t *manager,
                 } else if (strcmp (subsystem, SUBSYSTEM_INPUT) == 0) {
                         if (ply_string_has_prefix (device_sysname, "event")) {
                                 ply_trace ("found input device %s", device_path);
+
+                                assert (manager->xkb_keymap != NULL);
+
                                 ply_input_device_t *input_device = ply_input_device_open (manager->xkb_context, manager->xkb_keymap, device_path);
                                 if (input_device != NULL) {
                                         ply_input_device_set_disconnect_handler (input_device, (ply_input_device_disconnect_handler_t) remove_input_device_from_renderers, manager);
@@ -673,7 +676,7 @@ watch_for_udev_events (ply_device_manager_t *manager)
 
                 udev_monitor_filter_add_match_subsystem_devtype (manager->udev_monitor, SUBSYSTEM_DRM, NULL);
                 udev_monitor_filter_add_match_subsystem_devtype (manager->udev_monitor, SUBSYSTEM_FRAME_BUFFER, NULL);
-                if (!ply_kernel_command_line_has_argument ("plymouth.use-legacy-input"))
+                if (!ply_kernel_command_line_has_argument ("plymouth.use-legacy-input") && manager->xkb_keymap != NULL)
                         udev_monitor_filter_add_match_subsystem_devtype (manager->udev_monitor, SUBSYSTEM_INPUT, NULL);
                 udev_monitor_enable_receiving (manager->udev_monitor);
         }
@@ -844,9 +847,6 @@ parse_vconsole_conf (ply_device_manager_t *manager)
 
         if (manager->xkb_keymap == NULL) {
                 ply_trace ("Failed to set xkb keymap of LAYOUT: %s MODEL: %s VARIANT: %s OPTIONS: %s", xkb_layout, xkb_model, xkb_variant, xkb_options);
-
-                manager->xkb_keymap = xkb_keymap_new_from_names (manager->xkb_context, NULL, XKB_MAP_COMPILE_NO_FLAGS);
-                assert (manager->xkb_keymap != NULL);
         }
 
         free (xkb_layout);
