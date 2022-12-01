@@ -26,6 +26,7 @@ plymouthd_cflags = [
   '-DPLYMOUTH_DRM_ESCROW_DIRECTORY="@0@"'.format(get_option('libexecdir') / 'plymouth'),
   '-DPLYMOUTH_LOG_DIRECTORY="@0@"'.format('/var/log'),
   '-DPLYMOUTH_SPOOL_DIRECTORY="@0@"'.format(plymouthd_spool_dir),
+  '-rdynamic',
 ]
 
 plymouthd = executable('plymouthd',
