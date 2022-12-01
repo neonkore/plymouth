@@ -463,6 +463,18 @@ create_devices_for_subsystem (ply_device_manager_t *manager,
         struct udev_list_entry *entry;
         bool found_device = false;
 
+        if (strcmp (subsystem, SUBSYSTEM_INPUT) == 0) {
+                if (ply_kernel_command_line_has_argument ("plymouth.use-legacy-input")) {
+                        ply_trace ("Not creating devices for subsystem " SUBSYSTEM_INPUT " because plymouth.use-legacy-input on command line");
+                        return false;
+                }
+
+                if (manager->xkb_keymap == NULL) {
+                        ply_trace ("Not creating devices for subsystem " SUBSYSTEM_INPUT " because there is no configure XKB layout");
+                        return false;
+                }
+        }
+
         ply_trace ("creating objects for %s devices",
                    strcmp (subsystem, SUBSYSTEM_FRAME_BUFFER) == 0 ?
                    "frame buffer" :
