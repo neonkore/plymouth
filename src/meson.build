@@ -26,13 +26,13 @@ plymouthd_cflags = [
   '-DPLYMOUTH_DRM_ESCROW_DIRECTORY="@0@"'.format(get_option('libexecdir') / 'plymouth'),
   '-DPLYMOUTH_LOG_DIRECTORY="@0@"'.format('/var/log'),
   '-DPLYMOUTH_SPOOL_DIRECTORY="@0@"'.format(plymouthd_spool_dir),
-  '-rdynamic',
 ]
 
 plymouthd = executable('plymouthd',
   plymouthd_sources,
   dependencies: plymouthd_deps,
   c_args: plymouthd_cflags,
+  export_dynamic: true,
   include_directories: config_h_inc,
   install: true,
   install_dir: get_option('sbindir'),
