@@ -545,6 +545,35 @@ fi
 PLYMOUTH_MODULE_NAME=$(grep "ModuleName *= *" ${PLYMOUTH_SYSROOT}${PLYMOUTH_THEME_DIR}/${PLYMOUTH_THEME_NAME}.plymouth | sed 's/ModuleName *= *//')
 PLYMOUTH_IMAGE_DIR=$(grep "ImageDir *= *" ${PLYMOUTH_SYSROOT}${PLYMOUTH_THEME_DIR}/${PLYMOUTH_THEME_NAME}.plymouth | sed 's/ImageDir *= *//')
 
+
+PLYMOUTH_FONT_PATH=""
+PLYMOUTH_FONT=$(grep "\bFont *= *" ${PLYMOUTH_SYSROOT}${PLYMOUTH_THEME_DIR}/${PLYMOUTH_THEME_NAME}.plymouth | sed 's/Font *= *//' | head -1)
+if [ ! -z "$PLYMOUTH_FONT" ]; then
+     PLYMOUTH_FONT_PATH=$(fc-match -f %{file} "$PLYMOUTH_FONT")
+     if [ ! -z "$PLYMOUTH_FONT_PATH" ]; then
+          inst "$PLYMOUTH_FONT_PATH" $INITRDDIR
+     fi
+fi
+
+PLYMOUTH_TITLE_FONT_PATH=""
+PLYMOUTH_TITLE_FONT=$(grep "\bTitleFont *= *" ${PLYMOUTH_SYSROOT}${PLYMOUTH_THEME_DIR}/${PLYMOUTH_THEME_NAME}.plymouth | sed 's/TitleFont *= *//' | head -1)
+if [ ! -z "$PLYMOUTH_TITLE_FONT" ]; then
+     PLYMOUTH_TITLE_FONT_PATH=$(fc-match -f %{file} "$PLYMOUTH_TITLE_FONT")
+     if [ ! -z "$PLYMOUTH_TITLE_FONT_PATH" ]; then
+          inst "$PLYMOUTH_TITLE_FONT_PATH" $INITRDDIR
+     fi
+fi
+
+PLYMOUTH_MONOSPACE_FONT_PATH=""
+PLYMOUTH_MONOSPACE_FONT=$(grep "\bMonospaceFont *= *" ${PLYMOUTH_SYSROOT}${PLYMOUTH_THEME_DIR}/${PLYMOUTH_THEME_NAME}.plymouth | sed 's/MonospaceFont *= *//' | head -1)
+if [ ! -z "$PLYMOUTH_MONOSPACE_FONT" ]; then
+     PLYMOUTH_MONOSPACE_FONT_PATH=$(fc-match -f %{file} "$PLYMOUTH_MONOSPACE_FONT")
+     if [ ! -z "$PLYMOUTH_MONOSPACE_FONT_PATH" ]; then
+          inst "$PLYMOUTH_MONOSPACE_FONT_PATH" $INITRDDIR
+     fi
+fi
+
+
 if [ ! -f ${PLYMOUTH_SYSROOT}${PLYMOUTH_PLUGIN_PATH}/${PLYMOUTH_MODULE_NAME}.so ]; then
     echo "The default plymouth plugin (${PLYMOUTH_MODULE_NAME}) doesn't exist" >&2
     exit 1
@@ -563,13 +592,17 @@ if [ "${PLYMOUTH_IMAGE_DIR}" != "${PLYMOUTH_THEME_DIR}" -a -d "${PLYMOUTH_SYSROO
      inst_recur "${PLYMOUTH_IMAGE_DIR}"
 fi
 
+DefaultFont=$(fc-match -f %{file})
+inst "$DefaultFont" $INITRDDIR
+DefaultMonospaceFont=$(fc-match -f %{file} monospace)
+inst "$DefaultMonospaceFont" $INITRDDIR
+
 if [ -f "${PLYMOUTH_PLUGIN_PATH}/label-freetype.so" ]; then
      inst ${PLYMOUTH_PLUGIN_PATH}/label-freetype.so $INITRDDIR
-     font=$(fc-match -f %{file})
-     inst "$font" $INITRDDIR
      # The label-freetype plugin expects it at this location
      mkdir -p $INITRDDIR/usr/share/fonts
-     ln -s "$font" $INITRDDIR/usr/share/fonts/Plymouth.ttf
+     ln -s "$DefaultFont" $INITRDDIR/usr/share/fonts/Plymouth.ttf
+     ln -s "$DefaultMonospaceFont" $INITRDDIR/usr/share/fonts/Plymouth-monospace.ttf
 fi
 
 if [ -L ${PLYMOUTH_SYSROOT}${PLYMOUTH_DATADIR}/plymouth/themes/default.plymouth ]; then
