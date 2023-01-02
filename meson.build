@@ -23,7 +23,8 @@ plymouth_runtime_theme_path = plymouth_runtime_dir / 'themes/'
 cc = meson.get_compiler('c')
 lm_dep = cc.find_library('m')
 lrt_dep = cc.find_library('rt')
-ldl_dep = cc.find_library('dl')
+
+ldl_dep = dependency('dl')
 
 libpng_dep = dependency('libpng', version: '>= 1.2.16')
 
