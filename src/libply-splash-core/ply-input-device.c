@@ -61,6 +61,8 @@ struct _ply_input_device
         struct xkb_compose_state *compose_state;
 
         struct libevdev          *dev;
+
+        uint32_t                  leds_state_invalid : 1;
 };
 
 static bool
@@ -204,8 +206,10 @@ on_input (ply_input_device_t *input_device)
 
                 updated_state = xkb_state_update_key (input_device->keyboard_state, keycode, xkb_key_direction);
 
-                if ((updated_state & XKB_STATE_LEDS) != 0)
+                if ((updated_state & XKB_STATE_LEDS) != 0) {
+                        input_device->leds_state_invalid = true;
                         ply_trigger_pull (input_device->leds_changed_trigger, input_device);
+                }
 
                 /* If the key is repeating, or is being pressed down */
                 if (key_state == PLY_KEY_HELD || key_state == PLY_KEY_DOWN)
@@ -384,7 +388,8 @@ ply_input_device_set_state (ply_input_device_t       *input_device,
         if (mods_depressed == xkb_state->mods_depressed &&
             mods_latched == xkb_state->mods_latched &&
             mods_locked == xkb_state->mods_locked &&
-            group == xkb_state->group)
+            group == xkb_state->group &&
+            !input_device->leds_state_invalid)
                 return;
 
         mods_depressed = xkb_state->mods_depressed;
@@ -414,6 +419,7 @@ ply_input_device_set_state (ply_input_device_t       *input_device,
         ev[i].code = SYN_REPORT;
 
         ply_write (input_device->fd, ev, sizeof(ev));
+        input_device->leds_state_invalid = false;
 }
 
 ply_xkb_keyboard_state_t
