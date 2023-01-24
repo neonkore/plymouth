@@ -833,16 +833,16 @@ parse_vconsole_conf (ply_device_manager_t *manager)
                         keymap = ply_key_file_get_value (vconsole_conf, NULL, "KEYMAP");
                         keymap = strip_quotes (keymap);
                 }
-                xkb_layout = ply_key_file_get_value (vconsole_conf, NULL, "XKB_LAYOUT");
+                xkb_layout = ply_key_file_get_value (vconsole_conf, NULL, "XKBLAYOUT");
                 xkb_layout = strip_quotes (xkb_layout);
 
-                xkb_model = ply_key_file_get_value (vconsole_conf, NULL, "XKB_MODEL");
+                xkb_model = ply_key_file_get_value (vconsole_conf, NULL, "XKBMODEL");
                 xkb_model = strip_quotes (xkb_model);
 
-                xkb_variant = ply_key_file_get_value (vconsole_conf, NULL, "XKB_VARIANT");
+                xkb_variant = ply_key_file_get_value (vconsole_conf, NULL, "XKBVARIANT");
                 xkb_variant = strip_quotes (xkb_variant);
 
-                xkb_options = ply_key_file_get_value (vconsole_conf, NULL, "XKB_OPTIONS");
+                xkb_options = ply_key_file_get_value (vconsole_conf, NULL, "XKBOPTIONS");
                 xkb_options = strip_quotes (xkb_options);
         }
         ply_key_file_free (vconsole_conf);
