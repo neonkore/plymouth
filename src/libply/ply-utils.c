@@ -777,6 +777,39 @@ ply_utf8_string_get_length (const char *string,
 }
 
 char *
+ply_utf8_string_get_substring (const char *string,
+                               size_t      offset,
+                               size_t      range)
+{
+        int charlen;
+        size_t utf8_char_count = 0;
+        size_t utf8_byte_offset = 0, utf8_byte_range = 0;
+        ssize_t range_max;
+
+        range_max = strlen (string) + 1;
+
+        while (utf8_char_count < offset && range_max >= 0) {
+                charlen = ply_utf8_character_get_size (string + utf8_byte_offset, range_max);
+                if (charlen <= 0) break;
+                utf8_char_count++;
+                utf8_byte_offset += charlen;
+                range_max -= charlen;
+        }
+
+        utf8_char_count = 0;
+
+        while (utf8_char_count <= range && range_max >= 0) {
+                charlen = ply_utf8_character_get_size (string + utf8_byte_offset + utf8_byte_range, range_max);
+                if (charlen <= 0) break;
+                utf8_char_count++;
+                utf8_byte_range += charlen;
+                range_max -= charlen;
+        }
+
+        return strndup (string + utf8_byte_offset, utf8_byte_range);
+}
+
+char *
 ply_get_process_command_line (pid_t pid)
 {
         char *path;
