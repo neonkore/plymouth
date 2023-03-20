@@ -55,6 +55,7 @@
 #include "ply-trigger.h"
 #include "ply-utils.h"
 #include "ply-progress.h"
+#include "ply-kmsg-reader.h"
 
 #define BOOT_DURATION_FILE     PLYMOUTH_TIME_DIRECTORY "/boot-duration"
 #define SHUTDOWN_DURATION_FILE PLYMOUTH_TIME_DIRECTORY "/shutdown-duration"
@@ -79,6 +80,7 @@ typedef struct
         ply_event_loop_t       *loop;
         ply_boot_server_t      *boot_server;
         ply_boot_splash_t      *boot_splash;
+        ply_kmsg_reader_t      *kmsg_reader;
         ply_terminal_session_t *session;
         ply_buffer_t           *boot_buffer;
         ply_progress_t         *progress;
@@ -93,6 +95,7 @@ typedef struct
 
         ply_trigger_t          *deactivate_trigger;
         ply_trigger_t          *quit_trigger;
+        ply_trigger_t          *kmsg_trigger;
 
         double                  start_time;
         double                  splash_delay;
@@ -142,6 +145,7 @@ static char *debug_buffer_path = NULL;
 static char *boot_log_file = NULL;
 static char *pid_file = NULL;
 static void toggle_between_splash_and_details (state_t *state);
+static void start_kmsg_reader (state_t *state);
 #ifdef PLY_ENABLE_SYSTEMD_INTEGRATION
 static void tell_systemd_to_print_details (state_t *state);
 static void tell_systemd_to_stop_printing_details (state_t *state);
@@ -157,6 +161,8 @@ static void on_backspace (state_t *state);
 static void on_quit (state_t       *state,
                      bool           retain_splash,
                      ply_trigger_t *quit_trigger);
+static void on_new_kmsg_messsage (state_t        *state,
+                                  kmsg_message_t *kmsg_message);
 static bool sh_is_init (state_t *state);
 static void cancel_pending_delayed_show (state_t *state);
 static void prepare_logging (state_t *state);
@@ -1450,6 +1456,21 @@ on_quit (state_t       *state,
         }
 }
 
+void on_new_kmsg_messsage (state_t        *state,
+                           kmsg_message_t *kmsg_message)
+{
+        long size = strlen (kmsg_message->message) + 1;
+        char output[size];
+
+        strcpy (output, kmsg_message->message);
+        strcat (output, "\n");
+
+        ply_buffer_append_bytes (state->boot_buffer, output, size);
+
+        if (state->boot_splash != NULL)
+                ply_boot_splash_update_output (state->boot_splash, output, size);
+}
+
 static bool
 on_has_active_vt (state_t *state)
 {
@@ -1567,6 +1588,27 @@ toggle_between_splash_and_details (state_t *state)
                 show_default_splash (state);
                 state->showing_details = false;
         }
+}
+
+static void
+start_kmsg_reader (state_t *state)
+{
+        ply_kmsg_reader_t *kmsg_reader = calloc (1, sizeof(ply_kmsg_reader_t));
+
+        state->kmsg_reader = kmsg_reader;
+        state->kmsg_trigger = ply_trigger_new (NULL);
+
+        kmsg_reader->kmsg_trigger = state->kmsg_trigger;
+        ply_trigger_add_handler (kmsg_reader->kmsg_trigger,
+                                 (ply_trigger_handler_t)
+                                 on_new_kmsg_messsage,
+                                 state);
+
+        kmsg_reader->kmsg_fd = open ("/dev/kmsg", O_RDWR | O_NONBLOCK);
+        if (kmsg_reader->kmsg_fd < 0)
+                return;
+
+        ply_kmsg_reader_start (kmsg_reader);
 }
 
 static void
@@ -2453,6 +2495,8 @@ main (int    argc,
         find_force_scale (&state);
 
         load_devices (&state, device_manager_flags);
+
+        start_kmsg_reader (&state);
 
         ply_trace ("entering event loop");
         exit_code = ply_event_loop_run (state.loop);
