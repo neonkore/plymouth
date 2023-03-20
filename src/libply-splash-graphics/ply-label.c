@@ -287,6 +287,30 @@ ply_label_set_font (ply_label_t *label,
 }
 
 void
+ply_label_set_hex_color (ply_label_t *label,
+                         uint32_t     hex_color)
+{
+        double red;
+        double green;
+        double blue;
+        double alpha;
+
+        red = ((double) (hex_color & 0xff000000) / 0xff000000);
+        green = ((double) (hex_color & 0x00ff0000) / 0x00ff0000);
+        blue = ((double) (hex_color & 0x0000ff00) / 0x0000ff00);
+        alpha = ((double) (hex_color & 0x000000ff) / 0x000000ff);
+
+        if (label->plugin_interface == NULL)
+                return;
+
+        label->plugin_interface->set_color_for_control (label->control,
+                                                        red,
+                                                        green,
+                                                        blue,
+                                                        alpha);
+}
+
+void
 ply_label_set_color (ply_label_t *label,
                      float        red,
                      float        green,

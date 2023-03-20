@@ -66,6 +66,8 @@ void ply_label_set_width (ply_label_t *label,
                           long         width);
 void ply_label_set_font (ply_label_t *label,
                          const char  *fontdesc);
+void ply_label_set_hex_color (ply_label_t *label,
+                              uint32_t     hex_color);
 void ply_label_set_color (ply_label_t *label,
                           float        red,
                           float        green,
