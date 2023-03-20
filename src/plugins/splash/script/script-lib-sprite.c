@@ -449,13 +449,17 @@ static void script_lib_sprite_draw_area (script_lib_display_t *display,
                     ((int) ply_pixel_buffer_get_height (sprite->image) + position_y) < (y + height))
                         script_lib_draw_brackground (pixel_buffer, &clip_area, data);
         } else {
-                script_lib_draw_brackground (pixel_buffer, &clip_area, data);
+                if (!data->plugin_console_messages_updating)
+                        script_lib_draw_brackground (pixel_buffer, &clip_area, data);
         }
 
         for (node = ply_list_get_first_node (data->sprite_list);
              node;
              node = ply_list_get_next_node (data->sprite_list, node)) {
                 int position_x, position_y;
+
+                if (data->plugin_console_messages_updating)
+                        break;
 
                 sprite = ply_list_node_get_data (node);
 
@@ -477,6 +481,10 @@ static void script_lib_sprite_draw_area (script_lib_display_t *display,
                                                                         position_y,
                                                                         &clip_area,
                                                                         sprite->opacity);
+        }
+
+        if (data->plugin_console_messages_updating == false && display->console_viewer != NULL) {
+                ply_console_viewer_draw_area (display->console_viewer, pixel_buffer, x, y, width, height);
         }
 }
 
@@ -861,6 +869,7 @@ void script_lib_sprite_destroy (script_lib_sprite_data_t *data)
              node;
              node = ply_list_get_next_node (data->displays, node)) {
                 script_lib_display_t *display = ply_list_node_get_data (node);
+                ply_console_viewer_free (display->console_viewer);
                 ply_pixel_display_set_draw_handler (display->pixel_display, NULL, NULL);
         }
 
@@ -881,4 +890,60 @@ void script_lib_sprite_destroy (script_lib_sprite_data_t *data)
         script_obj_native_class_destroy (data->class);
         free (data);
         data = NULL;
+}
+
+ply_list_t *
+script_lib_get_displays (script_lib_sprite_data_t *data)
+{
+        return data->displays;
+}
+
+void
+script_lib_console_viewer_show (script_lib_sprite_data_t *data)
+{
+        ply_list_node_t *node;
+
+        data->plugin_console_messages_updating = true;
+
+        data->full_refresh = true;
+
+        node = ply_list_get_first_node (data->displays);
+        while (node != NULL) {
+                script_lib_display_t *display;
+                ply_list_node_t *next_node;
+
+                display = ply_list_node_get_data (node);
+                next_node = ply_list_get_next_node (data->displays, node);
+
+                ply_console_viewer_show (display->console_viewer, display->pixel_display);
+
+                node = next_node;
+        }
+
+        data->plugin_console_messages_updating = false;
+}
+
+void
+script_lib_console_viewer_hide (script_lib_sprite_data_t *data)
+{
+        ply_list_node_t *node;
+
+        data->plugin_console_messages_updating = true;
+
+        data->full_refresh = true;
+
+        node = ply_list_get_first_node (data->displays);
+        while (node != NULL) {
+                script_lib_display_t *display;
+                ply_list_node_t *next_node;
+
+                display = ply_list_node_get_data (node);
+                next_node = ply_list_get_next_node (data->displays, node);
+
+                ply_console_viewer_hide (display->console_viewer);
+
+                node = next_node;
+        }
+
+        data->plugin_console_messages_updating = false;
 }

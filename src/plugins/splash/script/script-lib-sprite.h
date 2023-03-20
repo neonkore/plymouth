@@ -25,6 +25,7 @@
 #include "script.h"
 #include "ply-pixel-buffer.h"
 #include "ply-pixel-display.h"
+#include "ply-console-viewer.h"
 
 typedef struct
 {
@@ -37,6 +38,8 @@ typedef struct
         bool                       full_refresh;
         unsigned int               max_width;
         unsigned int               max_height;
+
+        bool                       plugin_console_messages_updating;
 } script_lib_sprite_data_t;
 
 typedef struct
@@ -45,6 +48,8 @@ typedef struct
         script_lib_sprite_data_t *data;
         int                       x;
         int                       y;
+
+        ply_console_viewer_t     *console_viewer;
 } script_lib_display_t;
 
 typedef struct
@@ -73,5 +78,8 @@ void script_lib_sprite_pixel_display_removed (script_lib_sprite_data_t *data,
                                               ply_pixel_display_t      *pixel_display);
 void script_lib_sprite_refresh (script_lib_sprite_data_t *data);
 void script_lib_sprite_destroy (script_lib_sprite_data_t *data);
+ply_list_t *script_lib_get_displays (script_lib_sprite_data_t *data);
+void script_lib_console_viewer_show (script_lib_sprite_data_t *data);
+void script_lib_console_viewer_hide (script_lib_sprite_data_t *data);
 
 #endif /* SCRIPT_LIB_SPRITE_H */
