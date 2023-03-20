@@ -61,6 +61,8 @@
 #include "ply-progress-animation.h"
 #include "ply-throbber.h"
 #include "ply-progress-bar.h"
+#include "ply-console-viewer.h"
+#include "ply-terminal-emulator.h"
 
 #include <linux/kd.h>
 
@@ -74,6 +76,8 @@
 
 #define PROGRESS_BAR_WIDTH  400
 #define PROGRESS_BAR_HEIGHT 5
+
+#define CONSOLE_POLLS_PER_SECOND 4
 
 #define BGRT_STATUS_ORIENTATION_OFFSET_0    (0 << 1)
 #define BGRT_STATUS_ORIENTATION_OFFSET_90   (1 << 1)
@@ -113,6 +117,8 @@ typedef struct
         ply_trigger_t            *end_trigger;
         ply_pixel_buffer_t       *background_buffer;
         int                       animation_bottom;
+
+        ply_console_viewer_t     *console_viewer;
 } view_t;
 
 typedef struct
@@ -191,6 +197,15 @@ struct _ply_boot_splash_plugin
         uint32_t                            use_firmware_background : 1;
         uint32_t                            dialog_clears_firmware_background : 1;
         uint32_t                            message_below_animation : 1;
+
+        char                               *monospace_font;
+        uint32_t                            has_new_console_messages : 1;
+        uint32_t                            plugin_console_messages_updating : 1;
+        uint32_t                            should_show_console_messages : 1;
+        ply_buffer_t                       *boot_buffer;
+        ply_terminal_emulator_t            *terminal_emulator;
+        ply_list_t                         *console_messages;
+        uint32_t                            console_text_color;
 };
 
 ply_boot_splash_plugin_interface_t *ply_boot_splash_plugin_get_interface (void);
@@ -203,6 +218,17 @@ static void become_idle (ply_boot_splash_plugin_t *plugin,
                          ply_trigger_t            *idle_trigger);
 static void view_show_message (view_t     *view,
                                const char *message);
+static bool validate_input (ply_boot_splash_plugin_t *plugin,
+                            const char               *entry_text,
+                            const char               *add_text);
+static void on_boot_output (ply_boot_splash_plugin_t *plugin,
+                            const char               *output,
+                            size_t                    size);
+static void toggle_console_messages (ply_boot_splash_plugin_t *plugin);
+static void display_console_messages (ply_boot_splash_plugin_t *plugin);
+static void on_update_console_messages (ply_boot_splash_plugin_t *plugin);
+static void hide_console_messages (ply_boot_splash_plugin_t *plugin);
+static void unhide_console_messages (ply_boot_splash_plugin_t *plugin);
 
 static view_t *
 view_new (ply_boot_splash_plugin_t *plugin,
@@ -243,6 +269,10 @@ view_new (ply_boot_splash_plugin_t *plugin,
         view->subtitle_label = ply_label_new ();
         ply_label_set_font (view->subtitle_label, plugin->font);
 
+        view->console_viewer = ply_console_viewer_new (view->display, plugin->monospace_font);
+        ply_console_viewer_attach_console_messages (view->console_viewer, plugin->console_messages);
+        ply_console_viewer_set_text_color (view->console_viewer, plugin->console_text_color);
+
         return view;
 }
 
@@ -260,6 +290,8 @@ view_free (view_t *view)
         ply_label_free (view->message_label);
         ply_label_free (view->title_label);
         ply_label_free (view->subtitle_label);
+
+        ply_console_viewer_free (view->console_viewer);
 
         if (view->background_buffer != NULL)
                 ply_pixel_buffer_free (view->background_buffer);
@@ -1175,6 +1207,18 @@ create_plugin (ply_key_file_t *key_file)
         }
         free (transition);
 
+        /* Likely only able to set the font if the font is in the initrd */
+        plugin->monospace_font = ply_key_file_get_value (key_file, "two-step", "MonospaceFont");
+
+        if (plugin->monospace_font == NULL)
+                plugin->monospace_font = strdup ("monospace 9");
+
+
+        plugin->console_text_color =
+                ply_key_file_get_long (key_file, "two-step",
+                                       "ConsoleLogTextColor",
+                                       PLY_CONSOLE_VIEWER_LOG_TEXT_COLOR);
+
         plugin->transition_duration =
                 ply_key_file_get_double (key_file, "two-step",
                                          "TransitionDuration", 0.0);
@@ -1252,6 +1296,9 @@ create_plugin (ply_key_file_t *key_file)
 
         plugin->views = ply_list_new ();
 
+        plugin->terminal_emulator = ply_terminal_emulator_new ();
+        plugin->console_messages = ply_terminal_emulator_get_console_lines (plugin->terminal_emulator);
+
         return plugin;
 }
 
@@ -1294,9 +1341,14 @@ destroy_plugin (ply_boot_splash_plugin_t *plugin)
         if (plugin->loop != NULL) {
                 stop_animation (plugin);
 
+                ply_event_loop_stop_watching_for_timeout (plugin->loop,
+                                                          (ply_event_loop_timeout_handler_t)
+                                                          on_update_console_messages, plugin);
+
                 ply_event_loop_stop_watching_for_exit (plugin->loop, (ply_event_loop_exit_handler_t)
                                                        detach_from_event_loop,
                                                        plugin);
+
                 detach_from_event_loop (plugin);
         }
 
@@ -1330,6 +1382,7 @@ destroy_plugin (ply_boot_splash_plugin_t *plugin)
 
         free (plugin->font);
         free (plugin->title_font);
+        free (plugin->monospace_font);
         free (plugin->animation_dir);
         free_views (plugin);
         free (plugin);
@@ -1631,6 +1684,10 @@ on_draw (view_t             *view,
         ply_label_draw_area (view->message_label,
                              pixel_buffer,
                              x, y, width, height);
+
+        if (plugin->plugin_console_messages_updating == false) {
+                ply_console_viewer_draw_area (view->console_viewer, pixel_buffer, x, y, width, height);
+        }
 }
 
 static void
@@ -1694,6 +1751,12 @@ show_splash_screen (ply_boot_splash_plugin_t *plugin,
 
         plugin->loop = loop;
         plugin->mode = mode;
+
+        if (boot_buffer) {
+                plugin->boot_buffer = boot_buffer;
+
+                ply_terminal_emulator_convert_boot_buffer (plugin->terminal_emulator, plugin->boot_buffer);
+        }
 
         ply_trace ("loading lock image");
         if (!ply_image_load (plugin->lock_image))
@@ -1773,6 +1836,12 @@ show_splash_screen (ply_boot_splash_plugin_t *plugin,
                 ply_trace ("couldn't load views");
                 return false;
         }
+
+        ply_event_loop_watch_for_timeout (loop,
+                                          1.0 / CONSOLE_POLLS_PER_SECOND,
+                                          (ply_event_loop_timeout_handler_t)
+                                          on_update_console_messages, plugin);
+
 
         ply_event_loop_watch_for_exit (loop, (ply_event_loop_exit_handler_t)
                                        detach_from_event_loop,
@@ -1892,6 +1961,10 @@ hide_splash_screen (ply_boot_splash_plugin_t *plugin,
         ply_trace ("hiding splash");
         if (plugin->loop != NULL) {
                 stop_animation (plugin);
+
+                ply_event_loop_stop_watching_for_timeout (plugin->loop,
+                                                          (ply_event_loop_timeout_handler_t)
+                                                          on_update_console_messages, plugin);
 
                 ply_event_loop_stop_watching_for_exit (plugin->loop, (ply_event_loop_exit_handler_t)
                                                        detach_from_event_loop,
@@ -2034,7 +2107,13 @@ display_normal (ply_boot_splash_plugin_t *plugin)
                 hide_prompt (plugin);
 
         plugin->state = PLY_BOOT_SPLASH_DISPLAY_NORMAL;
-        start_progress_animation (plugin);
+
+        if (plugin->should_show_console_messages == false) {
+                start_progress_animation (plugin);
+        } else {
+                stop_animation (plugin);
+        }
+
         redraw_views (plugin);
         unpause_views (plugin);
 }
@@ -2076,6 +2155,112 @@ display_message (ply_boot_splash_plugin_t *plugin,
         show_message (plugin, message);
 }
 
+static bool
+validate_input (ply_boot_splash_plugin_t *plugin,
+                const char               *entry_text,
+                const char               *add_text)
+{
+        if (strcmp (add_text, "\e") == 0) {
+                toggle_console_messages (plugin);
+                return false;
+        }
+
+        return true;
+}
+
+static void
+toggle_console_messages (ply_boot_splash_plugin_t *plugin)
+{
+        if (plugin->should_show_console_messages == true) {
+                plugin->should_show_console_messages = false;
+                hide_console_messages (plugin);
+        } else {
+                plugin->should_show_console_messages = true;
+                unhide_console_messages (plugin);
+        }
+}
+
+static void
+on_update_console_messages (ply_boot_splash_plugin_t *plugin)
+{
+        if (plugin->loop != NULL) {
+                ply_event_loop_watch_for_timeout (plugin->loop,
+                                                  1.0 / CONSOLE_POLLS_PER_SECOND,
+                                                  (ply_event_loop_timeout_handler_t)
+                                                  on_update_console_messages, plugin);
+        }
+
+        if (plugin->has_new_console_messages == false)
+                return;
+
+        plugin->has_new_console_messages = false;
+
+        if (plugin->should_show_console_messages == false)
+                return;
+
+        display_console_messages (plugin);
+}
+
+static void
+display_console_messages (ply_boot_splash_plugin_t *plugin)
+{
+        ply_list_node_t *node;
+        view_t *view;
+
+        pause_views (plugin);
+
+        plugin->plugin_console_messages_updating = true;
+        node = ply_list_get_first_node (plugin->views);
+        while (node != NULL) {
+                view = ply_list_node_get_data (node);
+                ply_console_viewer_show (view->console_viewer, view->display);
+                node = ply_list_get_next_node (plugin->views, node);
+        }
+        plugin->plugin_console_messages_updating = false;
+
+        redraw_views (plugin);
+        unpause_views (plugin);
+}
+
+static void
+unhide_console_messages (ply_boot_splash_plugin_t *plugin)
+{
+        plugin->should_show_console_messages = true;
+        stop_animation (plugin);
+        display_console_messages (plugin);
+}
+
+static void
+hide_console_messages (ply_boot_splash_plugin_t *plugin)
+{
+        ply_list_node_t *node;
+        view_t *view;
+
+        plugin->should_show_console_messages = false;
+
+        plugin->plugin_console_messages_updating = true;
+        node = ply_list_get_first_node (plugin->views);
+        while (node != NULL) {
+                view = ply_list_node_get_data (node);
+                ply_console_viewer_hide (view->console_viewer);
+                node = ply_list_get_next_node (plugin->views, node);
+        }
+        plugin->plugin_console_messages_updating = false;
+        if (plugin->state == PLY_BOOT_SPLASH_DISPLAY_NORMAL)
+                start_progress_animation (plugin);
+}
+
+static void
+on_boot_output (ply_boot_splash_plugin_t *plugin,
+                const char               *output,
+                size_t                    size)
+{
+        plugin->has_new_console_messages = true;
+        char *output_text = strndup (output, size);
+
+        ply_terminal_emulator_parse_lines (plugin->terminal_emulator, output_text);
+}
+
 ply_boot_splash_plugin_interface_t *
 ply_boot_splash_plugin_get_interface (void)
 {
@@ -2096,8 +2281,9 @@ ply_boot_splash_plugin_get_interface (void)
                 .display_question     = display_question,
                 .display_message      = display_message,
                 .system_update        = system_update,
+                .on_boot_output       = on_boot_output,
+                .validate_input       = validate_input,
         };
 
         return &plugin_interface;
 }
-
