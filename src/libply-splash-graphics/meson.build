@@ -1,6 +1,7 @@
 libply_splash_graphics_sources = files(
   'ply-animation.c',
   'ply-capslock-icon.c',
+  'ply-console-viewer.c',
   'ply-entry.c',
   'ply-image.c',
   'ply-keymap-icon.c',
@@ -40,6 +41,7 @@ libply_splash_graphics_dep = declare_dependency(
 libply_splash_graphics_headers = files(
   'ply-animation.h',
   'ply-capslock-icon.h',
+  'ply-console-viewer.h',
   'ply-entry.h',
   'ply-image.h',
   'ply-keymap-icon.h',
