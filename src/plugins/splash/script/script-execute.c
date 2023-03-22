@@ -148,6 +148,7 @@ static script_obj_t *script_evaluate_set (script_state_t *state,
                 asprintf (&name, "%d", index);
                 index++;
                 script_obj_hash_add_element (obj, data_obj, name);
+                script_obj_unref (data_obj);
                 free (name);
 
                 node_data = ply_list_get_next_node (parameter_data, node_data);
