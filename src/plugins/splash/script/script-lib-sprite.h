@@ -35,6 +35,8 @@ typedef struct
         uint32_t                   background_color_start;
         uint32_t                   background_color_end;
         bool                       full_refresh;
+        unsigned int               max_width;
+        unsigned int               max_height;
 } script_lib_sprite_data_t;
 
 typedef struct
@@ -65,6 +67,8 @@ typedef struct
 
 script_lib_sprite_data_t *script_lib_sprite_setup (script_state_t *state,
                                                    ply_list_t     *displays);
+void script_lib_sprite_pixel_display_added (script_lib_sprite_data_t *data,
+                                            ply_pixel_display_t      *pixel_display);
 void script_lib_sprite_pixel_display_removed (script_lib_sprite_data_t *data,
                                               ply_pixel_display_t      *pixel_display);
 void script_lib_sprite_refresh (script_lib_sprite_data_t *data);
