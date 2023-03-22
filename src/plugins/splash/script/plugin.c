@@ -392,13 +392,22 @@ add_pixel_display (ply_boot_splash_plugin_t *plugin,
                    ply_pixel_display_t      *display)
 {
         ply_list_append_data (plugin->displays, display);
+
+        if (plugin->script_sprite_lib != NULL) {
+                script_lib_sprite_pixel_display_added (plugin->script_sprite_lib, display);
+                script_lib_plymouth_on_display_hotplug (plugin->script_state, plugin->script_plymouth_lib);
+        }
 }
 
 static void
 remove_pixel_display (ply_boot_splash_plugin_t *plugin,
                       ply_pixel_display_t      *display)
 {
-        script_lib_sprite_pixel_display_removed (plugin->script_sprite_lib, display);
+        if (plugin->script_sprite_lib != NULL) {
+                script_lib_sprite_pixel_display_removed (plugin->script_sprite_lib, display);
+                script_lib_plymouth_on_display_hotplug (plugin->script_state, plugin->script_plymouth_lib);
+        }
+
         ply_list_remove_data (plugin->displays, display);
 }
 

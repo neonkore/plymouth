@@ -108,6 +108,7 @@ script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *st
         data->script_display_prompt_func = script_obj_new_null ();
         data->script_validate_input_func = script_obj_new_null ();
         data->script_display_message_func = script_obj_new_null ();
+        data->script_display_hotplug_func = script_obj_new_null ();
         data->script_hide_message_func = script_obj_new_null ();
         data->script_quit_func = script_obj_new_null ();
         data->script_system_update_func = script_obj_new_null ();
@@ -177,6 +178,12 @@ script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *st
                                     "function",
                                     NULL);
         script_add_native_function (plymouth_hash,
+                                    "SetDisplayHotplugFunction",
+                                    plymouth_set_function,
+                                    &data->script_display_hotplug_func,
+                                    "function",
+                                    NULL);
+        script_add_native_function (plymouth_hash,
                                     "SetValidateInputFunction",
                                     plymouth_set_function,
                                     &data->script_validate_input_func,
@@ -233,6 +240,7 @@ void script_lib_plymouth_destroy (script_lib_plymouth_data_t *data)
         script_obj_unref (data->script_display_password_func);
         script_obj_unref (data->script_display_question_func);
         script_obj_unref (data->script_display_prompt_func);
+        script_obj_unref (data->script_display_hotplug_func);
         script_obj_unref (data->script_validate_input_func);
         script_obj_unref (data->script_display_message_func);
         script_obj_unref (data->script_hide_message_func);
@@ -381,6 +389,16 @@ void script_lib_plymouth_on_display_prompt (script_state_t             *state,
         script_obj_unref (prompt_obj);
         script_obj_unref (entry_text_obj);
         script_obj_unref (is_secret_obj);
+        script_obj_unref (ret.object);
+}
+
+void script_lib_plymouth_on_display_hotplug (script_state_t             *state,
+                                             script_lib_plymouth_data_t *data)
+{
+        script_return_t ret = script_execute_object (state,
+                                                     data->script_display_hotplug_func,
+                                                     NULL,
+                                                     NULL);
         script_obj_unref (ret.object);
 }
 
