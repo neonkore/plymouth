@@ -451,6 +451,9 @@ static void script_lib_sprite_draw_area (script_lib_display_t *display,
 
 
         node = ply_list_get_first_node (data->sprite_list);
+        if (node == NULL)
+                return;
+
         sprite = ply_list_node_get_data (node);
 
         /* Check If the first sprite should be rendered opaque */
