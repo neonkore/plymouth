@@ -139,6 +139,7 @@ static void on_error_message (ply_buffer_t *debug_buffer,
                               size_t        number_of_bytes);
 static ply_buffer_t *debug_buffer;
 static char *debug_buffer_path = NULL;
+static char *boot_log_file = NULL;
 static char *pid_file = NULL;
 static void toggle_between_splash_and_details (state_t *state);
 #ifdef PLY_ENABLE_SYSTEMD_INTEGRATION
@@ -709,10 +710,14 @@ get_log_file_for_state (state_t *state)
 
         switch (state->mode) {
         case PLY_BOOT_SPLASH_MODE_BOOT_UP:
-                if (state->no_boot_log)
+                if (state->no_boot_log) {
                         filename = NULL;
-                else
-                        filename = PLYMOUTH_LOG_DIRECTORY "/boot.log";
+                } else {
+                        if (boot_log_file == NULL)
+                                filename = PLYMOUTH_LOG_DIRECTORY "/boot.log";
+                        else
+                                filename = boot_log_file;
+                }
                 break;
         case PLY_BOOT_SPLASH_MODE_SHUTDOWN:
         case PLY_BOOT_SPLASH_MODE_REBOOT:
@@ -1991,6 +1996,9 @@ check_logging (state_t *state)
 
         ply_trace ("checking if console messages should be redirected and logged");
 
+        if (!boot_log_file)
+                boot_log_file = ply_kernel_command_line_get_key_value ("plymouth.boot-log=");
+
         kernel_no_log = ply_kernel_command_line_has_argument ("plymouth.nolog");
         if (kernel_no_log)
                 state->no_boot_log = true;
@@ -2271,6 +2279,7 @@ main (int    argc,
                                         "ignore-serial-consoles", &ignore_serial_consoles,
                                         "graphical-boot", &graphical_boot,
                                         "debug-file", &debug_buffer_path,
+                                        "boot-log", &boot_log_file,
                                         "pid-file", &pid_file,
                                         "tty", &tty,
                                         "kernel-command-line", &kernel_command_line,
