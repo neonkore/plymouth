@@ -164,6 +164,17 @@ on_display_event (ply_renderer_backend_t *backend)
         }
 }
 
+static void
+on_timeout_event (ply_renderer_backend_t *backend,
+                  ply_event_loop_t       *loop)
+{
+        on_display_event (backend);
+
+        ply_event_loop_watch_for_timeout (loop, 0.02,
+                                          (ply_event_loop_timeout_handler_t) on_timeout_event,
+                                          backend);
+}
+
 static bool
 open_device (ply_renderer_backend_t *backend)
 {
@@ -182,6 +193,10 @@ open_device (ply_renderer_backend_t *backend)
                                                           NULL,
                                                           backend);
 
+        ply_event_loop_watch_for_timeout (backend->loop, 0.02,
+                                          (ply_event_loop_timeout_handler_t) on_timeout_event,
+                                          backend);
+
         return true;
 }
 
@@ -194,6 +209,9 @@ get_device_name (ply_renderer_backend_t *backend)
 static void
 close_device (ply_renderer_backend_t *backend)
 {
+        ply_event_loop_stop_watching_for_timeout (backend->loop,
+                                                  (ply_event_loop_timeout_handler_t) on_display_event,
+                                                  backend);
         ply_event_loop_stop_watching_fd (backend->loop, backend->display_watch);
         backend->display_watch = NULL;
         return;
