@@ -39,6 +39,7 @@
 
 /* This is used if fontconfig (fc-match) is not available, like in the initrd. */
 #define FONT_FALLBACK "/usr/share/fonts/Plymouth.ttf"
+#define MONOSPACE_FONT_FALLBACK "/usr/share/fonts/Plymouth-monospace.ttf"
 
 struct _ply_label_plugin_control
 {
@@ -58,6 +59,7 @@ struct _ply_label_plugin_control
         float                 alpha;
 
         uint32_t              is_hidden : 1;
+        uint32_t              is_monospaced : 1;
 };
 
 ply_label_plugin_interface_t *ply_label_plugin_get_interface (void);
@@ -80,10 +82,45 @@ query_fc_match ()
         return fc_match_out;
 }
 
+/* Query fontconfig, if available, for the default monospace font. */
+static const char *
+query_fc_match_monospace ()
+{
+        FILE *fp;
+        static char fc_match_out[PATH_MAX];
+
+        fp = popen ("/usr/bin/fc-match -f %{file} monospace", "r");
+        if (!fp)
+                return NULL;
+
+        fgets (fc_match_out, sizeof(fc_match_out), fp);
+
+        pclose (fp);
+
+        return fc_match_out;
+}
+
+static FT_Error
+set_font_with_fallback (ply_label_plugin_control_t *label,
+                        const char                 *primary_font_path,
+                        const char                 *fallback_font_path)
+{
+        FT_Error error;
+        if (primary_font_path)
+                error = FT_New_Face (label->library, primary_font_path, 0, &label->face);
+
+        if (!fallback_font_path || error) {
+                printf ("label-ft: trying font fallback\n");
+                error = FT_New_Face (label->library, fallback_font_path, 0, &label->face);
+        }
+
+        return error;
+}
+
 static ply_label_plugin_control_t *
 create_control (void)
 {
-        FT_Error error;
+        int error;
         ply_label_plugin_control_t *label;
         const char *font_path;
 
@@ -100,19 +137,11 @@ create_control (void)
         }
 
         font_path = query_fc_match ();
-        if (font_path)
-                error = FT_New_Face (label->library, font_path, 0, &label->face);
-
-        if (!font_path || error) {
-                printf ("label-ft: trying font fallback\n");
-                font_path = FONT_FALLBACK;
-                error = FT_New_Face (label->library, font_path, 0, &label->face);
-
-                if (error) {
-                        FT_Done_FreeType (label->library);
-                        free (label);
-                        return NULL;
-                }
+        error = set_font_with_fallback (label, font_path, FONT_FALLBACK);
+        if (error) {
+                FT_Done_FreeType (label->library);
+                free (label);
+                return NULL;
         }
 
         /* 12pt/96dpi as default */
@@ -394,12 +423,29 @@ static void
 set_font_for_control (ply_label_plugin_control_t *label,
                       const char                 *fontdesc)
 {
-        /* Only able to set size */
+        /* Only able to set size and monospaced/nonmonospaced */
 
+        int error = 0;
         char *size_str_after;
-        const char *size_str;
+        const char *size_str, *font_path;
         unsigned long size;
         bool size_in_pixels;
+
+        if (strstr (fontdesc, "Mono") || strstr (fontdesc, "mono")) {
+                if (label->is_monospaced == false) {
+                        FT_Done_Face (label->face);
+                        font_path = query_fc_match_monospace ();
+                        error = set_font_with_fallback (label, font_path, MONOSPACE_FONT_FALLBACK);
+                }
+        } else {
+                if (label->is_monospaced == true) {
+                        FT_Done_Face (label->face);
+                        font_path = query_fc_match ();
+                        error = set_font_with_fallback (label, font_path, FONT_FALLBACK);
+                }
+        }
+        if (error)
+                FT_Done_Face (label->face);
 
         size = 25; /* Default, if not set. */
         size_in_pixels = false;
