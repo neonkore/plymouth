@@ -129,6 +129,7 @@ apply_key_to_input_buffer (ply_input_device_t *input_device,
         case XKB_KEY_Escape:
                 ply_buffer_append_bytes (input_buffer, "\033", 1);
                 break;
+        case XKB_KEY_KP_Enter:
         case XKB_KEY_Return:
                 ply_buffer_append_bytes (input_buffer, "\n", 1);
                 break;
