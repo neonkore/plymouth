@@ -184,9 +184,6 @@ size_control (ply_label_plugin_control_t *label)
         FT_Int width;
         const char *text = label->text;
 
-        if (label->is_hidden)
-                return;
-
         label->area.width = 0;
         label->area.height = 0;
 
@@ -388,6 +385,7 @@ set_text_for_control (ply_label_plugin_control_t *label,
         if (label->text != text) {
                 free (label->text);
                 label->text = strdup (text);
+                size_control (label);
                 trigger_redraw (label, true);
         }
 }
