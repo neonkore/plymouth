@@ -156,21 +156,23 @@ static FT_Int
 width_of_line (ply_label_plugin_control_t *label,
                const char                 *text)
 {
+        FT_Error error;
         FT_Int width = 0;
         FT_Int left_bearing = 0;
 
         while (*text != '\0' && *text != '\n') {
-                if(FT_Load_Char (label->face, *text, FT_LOAD_RENDER | FT_LOAD_TARGET_LIGHT))
-                        continue;
+                error = FT_Load_Char (label->face, *text, FT_LOAD_RENDER | FT_LOAD_TARGET_LIGHT);
 
-                width += label->face->glyph->advance.x >> 6;
-                left_bearing = label->face->glyph->bitmap_left;
-                /* We don't "go back" when drawing, so when left bearing is
-                 * negative (like for 'j'), we simply add to the width. */
-                if (left_bearing < 0)
-                        width += -left_bearing;
+                if (!error) {
+                        width += label->face->glyph->advance.x >> 6;
+                        left_bearing = label->face->glyph->bitmap_left;
+                        /* We don't "go back" when drawing, so when left bearing is
+                         * negative (like for 'j'), we simply add to the width. */
+                        if (left_bearing < 0)
+                                width += -left_bearing;
 
-                ++text;
+                        ++text;
+                }
         }
 
         return width;
