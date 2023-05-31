@@ -360,3 +360,9 @@ ply_list_node_get_data (ply_list_node_t *node)
         return node->data;
 }
 
+void
+ply_list_node_set_data (ply_list_node_t *node,
+                        void            *data)
+{
+        node->data = data;
+}
