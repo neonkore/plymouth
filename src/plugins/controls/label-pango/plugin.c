@@ -43,6 +43,7 @@
 #include <cairo.h>
 #include <pango/pangocairo.h>
 
+#include "ply-terminal-buffer.h"
 #include "ply-pixel-buffer.h"
 #include "ply-pixel-display.h"
 #include "ply-utils.h"
@@ -164,6 +165,57 @@ get_cairo_context_for_sizing (ply_label_plugin_control_t *label)
         return cairo_context;
 }
 
+void
+look_up_rgb_color_from_terminal_color (ply_terminal_color_t  color,
+                                       uint16_t             *red,
+                                       uint16_t             *green,
+                                       uint16_t             *blue)
+{
+        switch (color) {
+        case PLY_TERMINAL_COLOR_BLACK:
+                *red = 0x0000;
+                *green = 0x0000;
+                *blue = 0x0000;
+                break;
+        case PLY_TERMINAL_COLOR_RED:
+                *red = 0xffff;
+                *green = 0x0000;
+                *blue = 0x0000;
+                break;
+        case PLY_TERMINAL_COLOR_GREEN:
+                *red = 0x0000;
+                *green = 0xffff;
+                *blue = 0x0000;
+                break;
+        case PLY_TERMINAL_COLOR_BROWN:
+                *red = 0xa5a5;
+                *green = 0x2a2a;
+                *blue = 0x2a2a;
+                break;
+        case PLY_TERMINAL_COLOR_BLUE:
+                *red = 0x0000;
+                *green = 0x0000;
+                *blue = 0xffff;
+                break;
+        case PLY_TERMINAL_COLOR_MAGENTA:
+                *red = 0xffff;
+                *green = 0x0000;
+                *blue = 0xffff;
+                break;
+        case PLY_TERMINAL_COLOR_CYAN:
+                *red = 0x0000;
+                *green = 0xffff;
+                *blue = 0xffff;
+                break;
+        case PLY_TERMINAL_COLOR_WHITE:
+        default:
+                *red = 0xffff;
+                *green = 0xffff;
+                *blue = 0xffff;
+                break;
+        }
+}
+
 static PangoLayout *
 init_pango_text_layout (cairo_t       *cairo_context,
                         char          *text,
@@ -173,6 +225,43 @@ init_pango_text_layout (cairo_t       *cairo_context,
 {
         PangoLayout *pango_layout;
         PangoFontDescription *description;
+        PangoAttrList *attribute_list;
+        ply_terminal_buffer_t *terminal_buffer;
+        ply_terminal_buffer_iterator_t iterator;
+        ply_terminal_color_t terminal_color;
+        size_t span_start, span_end;
+        const char *filtered_text;
+
+        terminal_buffer = ply_terminal_buffer_new ();
+
+        ply_terminal_buffer_inject (terminal_buffer, text, strlen (text));
+        filtered_text = ply_terminal_buffer_get_bytes (terminal_buffer, NULL);
+
+        attribute_list = pango_attr_list_new ();
+
+        ply_terminal_buffer_iterator_init (&iterator, terminal_buffer);
+
+        while (ply_terminal_buffer_iterator_next (&iterator,
+                                                  &terminal_color,
+                                                  NULL,
+                                                  &span_start,
+                                                  &span_end)) {
+                PangoAttribute *pango_color = NULL;
+                uint16_t red;
+                uint16_t green;
+                uint16_t blue;
+
+                look_up_rgb_color_from_terminal_color (terminal_color,
+                                                       &red,
+                                                       &green,
+                                                       &blue);
+
+                pango_color = pango_attr_foreground_new (red, green, blue);
+                pango_color->start_index = span_start;
+                pango_color->end_index = span_end;
+
+                pango_attr_list_insert (attribute_list, pango_color);
+        }
 
         pango_layout = pango_cairo_create_layout (cairo_context);
 
@@ -188,7 +277,11 @@ init_pango_text_layout (cairo_t       *cairo_context,
         if (width >= 0)
                 pango_layout_set_width (pango_layout, width * PANGO_SCALE);
 
-        pango_layout_set_text (pango_layout, text, -1);
+        pango_layout_set_attributes (pango_layout, attribute_list);
+
+        /* FIXME: probably need to make sure this is valid utf-8
+         */
+        pango_layout_set_text (pango_layout, filtered_text, -1);
         pango_cairo_update_layout (cairo_context, pango_layout);
 
         return pango_layout;
