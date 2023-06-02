@@ -651,3 +651,19 @@ ply_keyboard_get_renderer (ply_keyboard_t *keyboard)
         return NULL;
 }
 
+bool
+ply_keyboard_get_capslock_state (ply_keyboard_t *keyboard)
+{
+        assert (keyboard != NULL);
+
+        switch (keyboard->provider_type) {
+        case PLY_KEYBOARD_PROVIDER_TYPE_RENDERER:
+                return ply_renderer_get_capslock_state (keyboard->provider.if_renderer->renderer);
+
+
+        case PLY_KEYBOARD_PROVIDER_TYPE_TERMINAL:
+                return ply_terminal_get_capslock_state (keyboard->provider.if_terminal->terminal);
+        }
+
+        return NULL;
+}
