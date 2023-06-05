@@ -73,6 +73,7 @@ bool ply_keyboard_watch_for_input (ply_keyboard_t *keyboard);
 void ply_keyboard_stop_watching_for_input (ply_keyboard_t *keyboard);
 bool ply_keyboard_is_active (ply_keyboard_t *keyboard);
 ply_renderer_t *ply_keyboard_get_renderer (ply_keyboard_t *keyboard);
+bool ply_keyboard_get_capslock_state (ply_keyboard_t *keyboard);
 
 #endif
 

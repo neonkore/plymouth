@@ -273,7 +273,8 @@ start_script_animation (ply_boot_splash_plugin_t *plugin)
                                                              plugin->displays);
         plugin->script_plymouth_lib = script_lib_plymouth_setup (plugin->script_state,
                                                                  plugin->mode,
-                                                                 FRAMES_PER_SECOND);
+                                                                 FRAMES_PER_SECOND,
+                                                                 plugin->keyboard);
         plugin->script_math_lib = script_lib_math_setup (plugin->script_state);
         plugin->script_string_lib = script_lib_string_setup (plugin->script_state);
 

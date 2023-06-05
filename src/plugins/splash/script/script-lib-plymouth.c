@@ -19,6 +19,7 @@
  *
  * Written by: Charlie Brej <cbrej@cs.man.ac.uk>
  */
+#pragma weak ply_keyboard_get_capslock_state
 
 #include "config.h"
 
@@ -91,9 +92,28 @@ static script_return_t plymouth_get_mode (script_state_t *state,
         return script_return_obj (obj);
 }
 
+static script_return_t plymouth_get_capslock_state (script_state_t *state,
+                                                    void           *user_data)
+{
+        script_lib_plymouth_data_t *data = user_data;
+        script_obj_t *obj;
+
+        bool is_on = false;
+
+        if (ply_keyboard_get_capslock_state != NULL) {
+                is_on = ply_keyboard_get_capslock_state (data->keyboard);
+        }
+
+
+        obj = is_on ? script_obj_new_number (1) : script_obj_new_number (0);
+
+        return script_return_obj (obj);
+}
+
 script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *state,
                                                        ply_boot_splash_mode_t mode,
-                                                       int                    refresh_rate)
+                                                       int                    refresh_rate,
+                                                       ply_keyboard_t        *keyboard)
 {
         script_lib_plymouth_data_t *data = malloc (sizeof(script_lib_plymouth_data_t));
 
@@ -114,6 +134,7 @@ script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *st
         data->script_system_update_func = script_obj_new_null ();
         data->mode = mode;
         data->refresh_rate = refresh_rate;
+        data->keyboard = keyboard;
 
         script_obj_t *plymouth_hash = script_obj_hash_get_element (state->global, "Plymouth");
 
@@ -206,6 +227,11 @@ script_lib_plymouth_data_t *script_lib_plymouth_setup (script_state_t        *st
                                     plymouth_set_function,
                                     &data->script_quit_func,
                                     "function",
+                                    NULL);
+        script_add_native_function (plymouth_hash,
+                                    "GetCapslockState",
+                                    plymouth_get_capslock_state,
+                                    data,
                                     NULL);
         script_add_native_function (plymouth_hash,
                                     "GetMode",
