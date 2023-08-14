@@ -540,7 +540,7 @@ view_set_bgrt_background (view_t *view)
         /*
          * On desktops (no panel) we normally do not use the BGRT provided
          * xoffset and yoffset because the resolution they are intended for
-         * may be differtent then the resolution of the current display.
+         * may be different then the resolution of the current display.
          *
          * On some desktops (no panel) the image gets centered not only
          * horizontally, but also vertically. In this case our default of using
