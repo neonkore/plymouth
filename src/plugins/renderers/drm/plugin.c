@@ -166,6 +166,7 @@ struct _ply_renderer_backend
         int                         panel_height;
         ply_pixel_buffer_rotation_t panel_rotation;
         int                         panel_scale;
+        bool                        panel_info_set;
 };
 
 ply_renderer_plugin_interface_t *ply_renderer_backend_get_interface (void);
@@ -636,13 +637,21 @@ ply_renderer_head_new (ply_renderer_backend_t *backend,
         /* Delay flush till first actual draw */
         ply_region_clear (ply_pixel_buffer_get_updated_areas (head->pixel_buffer));
 
-        if (output->connector_type == DRM_MODE_CONNECTOR_LVDS ||
+        /*
+         * On devices without a builtin display, use the info from the first
+         * enumerated output as panel info to sensure correct BGRT scaling.
+         * Note all outputs are enumerated before this info is used, so if
+         * there is a builtin display then that will override things.
+         */
+        if (!backend->panel_info_set ||
+            output->connector_type == DRM_MODE_CONNECTOR_LVDS ||
             output->connector_type == DRM_MODE_CONNECTOR_eDP ||
             output->connector_type == DRM_MODE_CONNECTOR_DSI) {
                 backend->panel_width = output->mode.hdisplay;
                 backend->panel_height = output->mode.vdisplay;
                 backend->panel_rotation = output->rotation;
                 backend->panel_scale = output->device_scale;
+                backend->panel_info_set = true;
         }
 
         ply_list_append_data (backend->heads, head);
