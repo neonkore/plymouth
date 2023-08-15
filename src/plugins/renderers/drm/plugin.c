@@ -1230,9 +1230,13 @@ get_output_info (ply_renderer_backend_t *backend,
                 mode = &connector->modes[0];
         }
         output->mode = *mode;
-        output->device_scale = ply_get_device_scale (mode->hdisplay, mode->vdisplay,
-                                                     (!has_90_rotation) ? connector->mmWidth : connector->mmHeight,
-                                                     (!has_90_rotation) ? connector->mmHeight : connector->mmWidth);
+
+        if (backend->simpledrm)
+                output->device_scale = ply_guess_device_scale (mode->hdisplay, mode->vdisplay);
+        else
+                output->device_scale = ply_get_device_scale (mode->hdisplay, mode->vdisplay,
+                                                             (!has_90_rotation) ? connector->mmWidth : connector->mmHeight,
+                                                             (!has_90_rotation) ? connector->mmHeight : connector->mmWidth);
         output->connector_type = connector->connector_type;
         output->connected = true;
 out:
