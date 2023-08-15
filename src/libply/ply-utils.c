@@ -868,12 +868,20 @@ ply_set_device_scale (int device_scale)
 /* The minimum resolution at which we turn on a device-scale of 2 */
 #define HIDPI_LIMIT 192
 #define HIDPI_MIN_HEIGHT 1200
+#define HIDPI_MIN_WIDTH 2560 /* For heuristic / guessed device-scale */
 
-int
-ply_get_device_scale (uint32_t width,
-                      uint32_t height,
-                      uint32_t width_mm,
-                      uint32_t height_mm)
+/*
+ * If we have guessed the scale once, keep guessing to avoid
+ * changing the scale on simpledrm -> native driver switch.
+ */
+static bool guess_device_scale;
+
+static int
+get_device_scale (uint32_t width,
+                  uint32_t height,
+                  uint32_t width_mm,
+                  uint32_t height_mm,
+                  bool     guess)
 {
         int device_scale;
         double dpi_x, dpi_y;
@@ -889,6 +897,9 @@ ply_get_device_scale (uint32_t width,
 
         if (height < HIDPI_MIN_HEIGHT)
                 return 1;
+
+        if (guess)
+                return (width >= HIDPI_MIN_WIDTH) ? 2 : 1;
 
         /* Somebody encoded the aspect ratio (16/9 or 16/10)
          * instead of the physical size */
@@ -909,6 +920,23 @@ ply_get_device_scale (uint32_t width,
         }
 
         return device_scale;
+}
+
+int
+ply_get_device_scale (uint32_t width,
+                      uint32_t height,
+                      uint32_t width_mm,
+                      uint32_t height_mm)
+{
+        return get_device_scale (width, height, width_mm, height_mm,
+                                 guess_device_scale);
+}
+
+int ply_guess_device_scale (uint32_t width,
+                            uint32_t height)
+{
+        guess_device_scale = true;
+        return get_device_scale (width, height, 0, 0, true);
 }
 
 static const char *
