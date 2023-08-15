@@ -22,8 +22,8 @@ plymouthd_deps = [
 ]
 
 plymouthd_cflags = [
-  '-DPLYMOUTH_LOCALE_DIRECTORY="@0@"'.format(get_option('localedir')),
-  '-DPLYMOUTH_DRM_ESCROW_DIRECTORY="@0@"'.format(get_option('libexecdir') / 'plymouth'),
+  '-DPLYMOUTH_LOCALE_DIRECTORY="@0@"'.format(get_option('prefix') / get_option('localedir')),
+  '-DPLYMOUTH_DRM_ESCROW_DIRECTORY="@0@"'.format(get_option('prefix') / get_option('libexecdir') / 'plymouth'),
   '-DPLYMOUTH_LOG_DIRECTORY="@0@"'.format('/var/log'),
   '-DPLYMOUTH_SPOOL_DIRECTORY="@0@"'.format(plymouthd_spool_dir),
 ]
