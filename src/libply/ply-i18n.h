@@ -17,11 +17,7 @@
 #ifndef PLY_I18N_H
 #define PLY_I18N_H
 
-#ifdef ENABLE_NLS
 #include <libintl.h>
-#define _(String) dgettext (PACKAGE, String)
-#else
-#define _(String) (String)
-#endif
+#define _(String) dgettext ("plymouth", String)
 
 #endif /* PLY_I18N_H */
