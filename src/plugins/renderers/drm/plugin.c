@@ -415,7 +415,7 @@ get_primary_plane_rotation (ply_renderer_backend_t *backend,
         drmModePlaneResPtr plane_resources;
         drmModePropertyPtr prop;
         drmModePlanePtr plane;
-        uint64_t rotation;
+        uint64_t rotation = 0;
         uint32_t i, j;
         int rotation_prop_id = -1;
         int primary_id = -1;
