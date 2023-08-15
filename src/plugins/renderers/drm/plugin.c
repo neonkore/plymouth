@@ -141,6 +141,7 @@ struct _ply_renderer_backend
         ply_terminal_t             *terminal;
 
         int                         device_fd;
+        bool                        simpledrm;
         char                       *device_name;
         drmModeRes                 *resources;
 
@@ -971,6 +972,7 @@ on_active_vt_changed (ply_renderer_backend_t *backend)
 static bool
 load_driver (ply_renderer_backend_t *backend)
 {
+        drmVersion *version;
         int device_fd;
 
         ply_trace ("Opening '%s'", backend->device_name);
@@ -979,6 +981,15 @@ load_driver (ply_renderer_backend_t *backend)
         if (device_fd < 0) {
                 ply_trace ("open failed: %m");
                 return false;
+        }
+
+        version = drmGetVersion (device_fd);
+        if (version) {
+                ply_trace ("drm driver: %s", version->name);
+                if (strcmp (version->name, "simpledrm") == 0)
+                        backend->simpledrm = true;
+
+                drmFreeVersion (version);
         }
 
         backend->device_fd = device_fd;
