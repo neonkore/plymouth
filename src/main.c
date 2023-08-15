@@ -2240,7 +2240,7 @@ main (int    argc,
         state.loop = ply_event_loop_get_default ();
 
         /* Initialize the translations if they are available (!initrd) */
-        if (ply_directory_exists (PLYMOUTH_LOCALE_DIRECTORY))
+        if (ply_file_exists (PLYMOUTH_LOCALE_DIRECTORY "/nl/LC_MESSAGES/plymouth.mo"))
                 setlocale (LC_ALL, "");
 
         ply_command_parser_add_options (state.command_parser,
